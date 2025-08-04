@@ -1,0 +1,362 @@
+---
+alwaysApply: true
+---
+
+# Reglas de desarrollo para proyecto PayloadCMS + NextJS + TAILWIND 4
+
+## Claves principales del stack tecnológico
+
+- El proyecto es PayloadCMS 3.
+- Tanto el backend como el frontend es NEXTJS
+- Usa siempre Shadcn como framework de UI. 
+- Siempre usa tailwind 4 en vez de scss u otros estilos css
+- usa zustand para manejo de estados y stores cuando sea óptimo
+- Usa persist de zustand para crear almacenamiento local cuando sea necesario
+- Siempre usa iconos de la libreria tabler
+- Siempre que sea posible y tenga sentido usa server actions en vez de llamadas a Local API
+- No te olvides de tener el cuenta el tipado en los archivos typescript para evitar errores en la build del proyecto
+- **IMPORTANTE**: Todas las instalaciones de Shadcn deben hacerse con `pnpm add shadcn@latest` en lugar de `npm install`
+- **IMPORTANTE**: Todos los server actions deben organizarse en `src/actions/` agrupados por funcionalidad (ej: `src/actions/fields/`, `src/actions/apps/`)
+
+
+## Estructura obligatoria de páginas server-side
+
+### 1. Organización de páginas complejas con datos del servidor
+- SIEMPRE usar Suspense para páginas que cargan datos del servidor
+- Crear estructura de 3 niveles:
+  ```
+  /page.tsx (solo Suspense wrapper)
+  /components/PageContent.tsx (lógica principal)
+  /components/PageSkeleton.tsx (estado de carga)
+  ```
+
+### 2. Patrón de implementación estándar
+```
+typescript
+// page.tsx - Solo wrapper con Suspense
+export default function Page({ params }) {
+return (
+<Suspense fallback={<PageSkeleton />}>
+<PageContent params={params} />
+</Suspense>
+)
+}
+```
+
+// components/PageContent.tsx - Lógica principal
+export default async function PageContent({ params }) {
+// 1. Obtener datos con getPayload
+// 2. Verificaciones de seguridad (user, permissions)
+// 3. Validaciones de datos y relaciones
+// 4. Manejo de errores con notFound() o redirect()
+// 5. Renderizar componentes organizados
+}
+
+
+### 3. Componentes skeleton obligatorios
+- Crear skeleton que replique exactamente la estructura final
+- Usar `animate-pulse` de Tailwind
+- Mantener la misma estructura responsive
+- Incluir todos los elementos principales (headers, cards, grids)
+
+## Verificaciones de seguridad estándar (PayloadCMS)
+
+### 1. Flujo de autenticación obligatorio
+```
+typescript
+// En TODAS las páginas protegidas:
+const user = await getUser()
+if (!user) {
+redirect('/login')
+}
+// Para páginas de cuenta específica:
+const userSeat = await payload.find({
+collection: 'account-seats',
+where: {
+user: { equals: user.id },
+account: { equals: account.id }
+},
+limit: 1
+})
+if (!userSeat.docs.length) {
+redirect('/select-account')
+}
+```
+
+
+### 2. Validación de relaciones en PayloadCMS
+- SIEMPRE verificar que los recursos pertenecen a la cuenta correcta
+- Usar slug matching para validar rutas
+- Verificar depth: 2 para obtener relaciones completas
+- Type assertion para relaciones: `as Account`, `as App`, etc.
+
+## Organización de componentes con Shadcn
+
+### 1. Separación de responsabilidades
+- Un componente = una responsabilidad específica
+- Crear componentes pequeños y reutilizables usando Shadcn como base
+- Separar lógica de presentación
+
+### 2. Naming conventions
+- Componentes: PascalCase descriptivo (AppHeader, AppInactiveAlert)
+- Archivos: Mismo nombre que el componente
+- Props interfaces: ComponentNameProps
+
+### 3. Estructura de carpetas para páginas complejas
+```
+/[slug]/apps/[idApp]/
+├── page.tsx
+├── components/
+│ ├── PageContent.tsx
+│ ├── PageSkeleton.tsx
+│ ├── ComponentSection.tsx
+│ └── AlertComponent.tsx
+```
+
+## Tipado TypeScript estricto
+
+### 1. Interfaces obligatorias
+- Crear interface para props de cada componente
+- Usar tipos de payload-types.ts (generados automáticamente)
+- Type assertion para relaciones de PayloadCMS
+
+### 2. Tipos específicos para params
+```
+typescript
+interface ComponentProps {
+params: { idApp: string; slug: string }
+data?: SpecificPayloadType
+}
+```
+
+## ⚠️ USO OBLIGATORIO DE TIPOS DE PAYLOADCMS
+
+### 1. NUNCA duplicar interfaces que ya existen en PayloadCMS
+- **SIEMPRE** usar los tipos generados automáticamente en `src/payload-types.ts`
+- **PROHIBIDO** crear interfaces personalizadas que dupliquen las colecciones de Payload
+- **IMPORTANTE** Si necesitas resolver un error de tipado porque hay que regenerar los tipos de payload, usa "pnpm payload generate:types" o espera al usuario humano para ello, pero no generes tipados "any" u otras soluciones temporales.
+
+### 2. Importación correcta de tipos
+```
+typescript
+// ✅ CORRECTO: Usar tipos oficiales
+import type { ParameterValue, User, Account, Workflow } from '@/payload-types'
+
+// ❌ INCORRECTO: Crear interfaces duplicadas
+interface ParameterValue {
+  instance: string
+  nodeId: string
+  // ... campos duplicados
+}
+```
+
+### 3. Derivación de tipos para operaciones específicas
+```
+typescript
+// ✅ Para crear registros (omitir campos auto-generados)
+type CreateParameterValue = Omit<ParameterValue, 'id' | 'updatedAt' | 'createdAt'>
+
+// ✅ Para actualizaciones parciales
+type UpdateUser = Partial<Pick<User, 'name' | 'lastName' | 'username'>>
+
+// ✅ Para acceder a tipos anidados
+type DataSource = ParameterValue['dataSource']
+type SourceMethod = NonNullable<ParameterValue['sourceInfo']>['method']
+```
+
+### 4. Manejo de relaciones de PayloadCMS
+```
+typescript
+// ✅ Tipos para relaciones que pueden ser ID o objeto completo
+function processUser(user: string | User) {
+  const userId = typeof user === 'object' ? user.id : user
+  // ...
+}
+
+// ✅ Tipos para arrays de relaciones
+function processAccounts(accounts: (string | Account)[] | null) {
+  if (!accounts) return []
+  return accounts.map(acc => typeof acc === 'object' ? acc.id : acc)
+}
+```
+
+### 5. Validación automática con PayloadCMS
+```
+typescript
+// ✅ Los tipos de Payload incluyen validaciones automáticas
+const createRecord = async (data: CreateParameterValue) => {
+  // TypeScript valida automáticamente que:
+  // - dataSource es uno de los valores permitidos
+  // - user es opcional y del tipo correcto
+  // - sourceInfo.method es uno de los valores válidos
+  await payload.create({
+    collection: 'parameter-values',
+    data // ✅ Type-safe automáticamente
+  })
+}
+```
+
+### 6. Cuándo está permitido crear interfaces personalizadas
+```
+typescript
+// ✅ PERMITIDO: Props de componentes que no existen en Payload
+interface ComponentProps {
+  onSave: (data: ParameterValue) => void
+  isLoading: boolean
+  customField: string
+}
+
+// ✅ PERMITIDO: Tipos de respuesta de APIs externas
+interface ExternalApiResponse {
+  status: 'success' | 'error'
+  data: ParameterValue[]
+}
+
+// ✅ PERMITIDO: Tipos utilitarios específicos del negocio
+interface WorkflowExecutionContext {
+  instanceId: string
+  nodeResults: Record<string, { data: any; type: string }>
+}
+```
+
+### 7. Mantenimiento automático
+- Los tipos se actualizan automáticamente cuando cambias las colecciones
+- No necesitas sincronizar manualmente tipos personalizados
+- Los errores de TypeScript te alertan inmediatamente de cambios incompatibles
+- Las validaciones de Payload se aplican automáticamente
+
+### 8. ¿Cómo verificar si un tipo ya existe?
+1. Revisa primero `src/payload-types.ts` 
+2. Busca interfaces existentes antes de crear nuevas
+3. Si necesitas modificar, usa utilidades de TypeScript
+4. Si algo no existe en Payload, entonces puedes crear interface personalizada
+
+## UI con Shadcn + Tailwind + tabler
+
+### 1. Stack de UI obligatorio
+- Shadcn components como base de todos los elementos
+- Tailwind CSS exclusivamente para estilos personalizados
+- tabler React para TODOS los iconos
+- Zustand para estado global cuando sea necesario (con persist si requiere almacenamiento local)
+
+### 2. Patrones de diseño estándar
+- Cards: Usar Shadcn Card component con Tailwind utilities
+- Grid responsive: `grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
+- Spacing consistente: `gap-4` o `gap-6`
+- Alert patterns: Shadcn Alert + iconos de tabler
+
+### 3. Manejo de iconos dinámicos con tabler
+```
+typescript
+const IconComponent = app.appearance?.icon
+? (tablerIcons as unknown as Record<string, React.FC<any>>)[app.appearance.icon] || AlertCircle
+: AlertCircle
+// Render con color personalizable
+<IconComponent
+className="h-8 w-8"
+style={{ color: app.appearance.color || '#fa8c16' }}
+/>
+```
+
+## Server Actions y datos (NextJS + PayloadCMS)
+
+### 1. Preferir server actions siempre que sea posible
+- Usar server actions sobre API routes
+- Implementar revalidatePath después de mutaciones
+- Estructura estándar de responses
+
+### 2. Patrón de server actions
+```
+typescript
+export async function serverAction(formData: FormData) {
+try {
+const payload = await getPayload({ config })
+const user = await getUser()
+// Validaciones...
+// Operación...
+revalidatePath('/ruta-afectada')
+return {
+success: true,
+data: result,
+message: 'Operación exitosa'
+}
+} catch (error) {
+console.error('Error:', error)
+return {
+success: false,
+error: 'Mensaje de error'
+}
+}
+}
+```
+
+
+## Zustand para estado global
+
+### 1. Cuándo usar Zustand
+- Estado compartido entre múltiples componentes
+- Formularios complejos multi-step
+- Configuraciones de usuario que persisten
+
+### 2. Patrón con persist cuando sea necesario
+```
+typescript
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+interface StoreState {
+// definir estado
+}
+export const useStore = create<StoreState>()(
+persist(
+(set, get) => ({
+// implementación
+}),
+{
+name: 'store-name',
+}
+)
+)
+```
+
+## Manejo de errores estándar
+
+### 1. Patrones obligatorios en server components
+- try/catch en todas las operaciones async
+- notFound() para recursos no encontrados
+- redirect() para problemas de permisos
+- console.error para logging detallado
+
+### 2. User feedback con Shadcn
+- Toast notifications (Shadcn toast) para acciones
+- Alert components (Shadcn alert) para estados persistentes
+- Loading states con skeleton usando Tailwind animate-pulse
+
+## Responsive design con Tailwind
+
+### 1. Mobile-first approach obligatorio
+- Diseñar primero para móvil
+- Usar breakpoints de Tailwind: `md:`, `lg:`, `xl:`
+- Grids que colapsan apropiadamente
+
+### 2. Skeleton también responsive
+- Verificar que skeleton mantiene estructura responsive
+- Testing en móvil, tablet y desktop
+
+## Performance con NextJS
+
+### 1. Optimizaciones obligatorias
+- Usar Suspense para defer loading
+- Server components por defecto
+- Client components solo cuando sea necesario
+
+### 2. Caching strategy con PayloadCMS
+- Aprovechar Next.js cache automático
+- Usar revalidatePath estratégicamente en server actions
+- Cache en server actions cuando sea posible
+
+## Internacionalización
+
+### 1. Preparación para i18n
+- Textos en español por defecto
+- Usar mensajes descriptivos y consistentes
+- Estructura preparada para next-intl futuro
