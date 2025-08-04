@@ -1,8 +1,8 @@
-# 🧠 Eidetik MVP - Plataforma de Ingesta de Vídeo a Vector Store
+# 🌱 Trinoa - Plataforma de Cálculo de Huella de Carbono
 
-> **Convierte contenido audiovisual en "memoria eidética" accesible por IA**
+> **Digitaliza tu gestión de emisiones con IA**
 
-Eidetik es una plataforma API que transforma automáticamente vídeos MP4 en vectores semánticos indexables, listos para alimentar sistemas RAG (Retrieval-Augmented Generation). El MVP se enfoca en procesar vídeos y hacer que el conocimiento audiovisual sea consultable por asistentes de IA.
+Trinoa es una plataforma empresarial que automatiza el cálculo de huella de carbono mediante el procesamiento inteligente de facturas y recibos. Utilizando tecnologías de OCR e IA, convierte automáticamente documentos físicos y digitales en datos estructurados para el análisis preciso de emisiones de CO₂.
 
 [![Built with Payload CMS](https://img.shields.io/badge/Built%20with-Payload%20CMS-blue)](https://payloadcms.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)](https://www.typescriptlang.org/)
@@ -10,12 +10,22 @@ Eidetik es una plataforma API que transforma automáticamente vídeos MP4 en vec
 
 ## 🚀 Características Principales
 
-- **🎥 Ingesta de Vídeos**: Upload de MP4 vía API REST con interfaz web
-- **🤖 Procesamiento Automático**: Transcripción (Whisper) + Detección de escenas (PySceneDetect) + Descripción visual (GPT-4o Vision)
-- **🔍 Vector Store**: Embeddings multimodales indexados en Pinecone
-- **⚡ RAG Ready**: Endpoints listos para integración con sistemas de IA
-- **📊 Monitoreo**: Webhooks, logs detallados y APIs de estado
-- **🔒 Seguro**: Autenticación con API keys y validación de archivos
+- **📄 Gestión de Documentos**: Upload de facturas, recibos y documentos vía API REST con interfaz web
+- **🤖 Procesamiento Automático**: OCR avanzado + Extracción de datos con IA + Clasificación automática
+- **🔍 Análisis Inteligente**: Identificación de emisiones por categorías (combustible, electricidad, transporte, etc.)
+- **📊 Cálculos Precisos**: Algoritmos de conversión a CO₂ equivalente por sector
+- **🌱 Compensación**: Integración con programas de plantación de árboles
+- **🔒 Seguridad Empresarial**: Autenticación robusta y datos protegidos por empresa
+
+## 🌍 ¿Cómo Funciona Trinoa?
+
+Trinoa facilita a las empresas el proceso completo de medición y compensación de su huella de carbono:
+
+1. **📤 Subida de Documentos**: Los clientes cargan facturas de energía, combustible, transporte, etc.
+2. **🔍 Procesamiento IA**: OCR extrae datos clave (consumos, fechas, proveedores, montos)
+3. **📈 Análisis de Emisiones**: Algoritmos calculan CO₂ equivalente por actividad
+4. **🌳 Compensación**: Sugerencias personalizadas de plantación de árboles
+5. **📋 Reportes**: Informes detallados para certificaciones y auditorías
 
 ## 🛠️ Stack Tecnológico
 
@@ -26,10 +36,10 @@ Eidetik es una plataforma API que transforma automáticamente vídeos MP4 en vec
 | **Almacenamiento** | AWS S3 |
 | **Cola de Jobs** | Agenda (MongoDB) |
 | **Vector Store** | Pinecone |
-| **IA Services** | OpenAI (Whisper, GPT-4o Vision, text-embedding-ada-002) |
-| **Procesamiento** | FFmpeg, PySceneDetect |
-| **UI** | Shadcn/ui + Tailwind CSS + Lucide Icons |
-| **Deploy** | Render (Web Service + Background Workers) |
+| **IA Services** | OpenAI (GPT-4o Vision, text-embedding-3-small) |
+| **OCR** | Azure Document Intelligence / Tesseract |
+| **UI** | Shadcn/ui + Tailwind CSS + Tabler Icons |
+| **Deploy** | Railway (Web Service + Background Workers) |
 
 ## 📋 Requisitos Previos
 
@@ -40,6 +50,7 @@ Eidetik es una plataforma API que transforma automáticamente vídeos MP4 en vec
   - AWS S3
   - OpenAI API
   - Pinecone
+  - Azure Document Intelligence (opcional)
 
 ## 🚀 Instalación y Configuración
 
@@ -47,7 +58,7 @@ Eidetik es una plataforma API que transforma automáticamente vídeos MP4 en vec
 
 ```bash
 git clone <repository-url>
-cd eidetik
+cd trinoa
 ```
 
 ### 2. Instalar Dependencias
@@ -58,15 +69,11 @@ pnpm install
 
 ### 3. Configurar Variables de Entorno
 
-```bash
-cp .env.example .env
-```
-
 Edita `.env` con tus credenciales:
 
 ```bash
 # MongoDB Atlas
-DATABASE_URI=mongodb+srv://username:password@cluster.mongodb.net/eidetik-prod
+DATABASE_URI=mongodb+srv://username:password@cluster.mongodb.net/trinoa-prod
 
 # AWS S3
 AWS_ACCESS_KEY_ID=tu-access-key
@@ -80,8 +87,15 @@ OPENAI_API_KEY=sk-tu-api-key
 PINECONE_API_KEY=tu-pinecone-key
 PINECONE_ENVIRONMENT=us-east-1-aws
 
-# API Keys (para autenticación)
-API_KEYS=tu-api-key-1,tu-api-key-2
+# Azure Document Intelligence (opcional)
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://tu-resource.cognitiveservices.azure.com/
+AZURE_DOCUMENT_INTELLIGENCE_KEY=tu-azure-key
+
+# Payload CMS
+PAYLOAD_SECRET=tu-payload-secret
+
+# Autenticación
+JWT_SECRET=tu-jwt-secret
 ```
 
 ### 4. Iniciar Desarrollo
@@ -121,11 +135,11 @@ pnpm test:int         # Tests de integración
 pnpm test:e2e         # Tests end-to-end
 pnpm test:queue       # Test sistema de cola y workers
 pnpm test:api         # Test endpoints de la API
-pnpm test:upload      # Test endpoint de upload atómico
+pnpm test:upload      # Test endpoint de upload de documentos
 pnpm test:all         # Test completo del sistema
 
 # Workers y Monitoring
-pnpm worker:video     # Iniciar worker de procesamiento de vídeo
+pnpm worker:document  # Iniciar worker de procesamiento de documentos
 pnpm worker:embedding # Iniciar worker de generación de embeddings
 pnpm queue:monitor    # Monitor básico de la cola
 pnpm queue:monitor:detailed # Monitor avanzado con limpieza automática
@@ -133,20 +147,20 @@ pnpm queue:monitor:detailed # Monitor avanzado con limpieza automática
 
 ## 🔧 Workers de Procesamiento
 
-Eidetik incluye workers especializados que pueden ejecutarse de forma independiente para escalar horizontalmente el procesamiento.
+Trinoa incluye workers especializados para el procesamiento de documentos empresariales.
 
 ### Opción 1: Workers Integrados (Desarrollo)
 Los workers se ejecutan automáticamente cuando inicia la aplicación Next.js.
 
 ### Opción 2: Workers Separados (Producción)
 
-**Worker de Procesamiento de Vídeo:**
+**Worker de Procesamiento de Documentos:**
 ```bash
 # Script con monitoreo incluido
-pnpm tsx scripts/start-video-worker.ts
+pnpm tsx scripts/start-document-worker.ts
 
 # Con configuración personalizada
-WORKER_NAME=video-worker-prod-1 INSTANCE_ID=1 pnpm tsx scripts/start-video-worker.ts
+WORKER_NAME=document-worker-prod-1 INSTANCE_ID=1 pnpm tsx scripts/start-document-worker.ts
 ```
 
 **Worker de Generación de Embeddings:**
@@ -165,9 +179,6 @@ pnpm tsx scripts/queue-monitor.ts
 
 # Monitoreo detallado con limpieza automática
 pnpm tsx scripts/queue-monitor.ts --detailed --cleanup --interval 15
-
-# Ver opciones disponibles
-pnpm tsx scripts/queue-monitor.ts --help
 ```
 
 ### Health Check del Sistema
@@ -182,123 +193,13 @@ curl http://localhost:3000/api/health
   "services": {
     "api": { "status": "healthy", "uptime": 3600 },
     "queue": { "status": "healthy", "agenda": true, "mongodb": true },
-    "database": { "status": "healthy" }
+    "database": { "status": "healthy" },
+    "ocr": { "status": "healthy", "provider": "azure" }
   },
   "queue": {
-    "stats": { "pending": 2, "running": 1, "completed": 15, "failed": 0 }
+    "stats": { "pending": 5, "running": 2, "completed": 47, "failed": 1 }
   }
 }
-```
-
-### Variables de Entorno para Workers
-
-```bash
-# Configuración de Workers
-WORKER_NAME=video-worker-1        # Nombre único del worker
-INSTANCE_ID=1                     # ID de instancia para escalabilidad
-NODE_ENV=production               # Entorno de ejecución
-```
-
-## 🧪 Testing del Sistema
-
-Eidetik incluye un sistema completo de testing para verificar que todo funciona correctamente antes de pasar a la implementación del procesamiento de vídeo.
-
-### Tests Disponibles
-
-```bash
-# Test completo del sistema (recomendado)
-pnpm test:all
-
-# Tests individuales
-pnpm test:queue       # Sistema de cola y workers
-pnpm test:api         # Endpoints de la API
-pnpm test:upload      # Endpoint de upload atómico
-pnpm build           # Verificación de build
-pnpm type-check      # Verificación de tipos TypeScript
-```
-
-### Pre-requisitos para Testing
-
-1. **Servidor de desarrollo corriendo** (para tests de API):
-   ```bash
-   pnpm dev
-   # Esperar que aparezca "Ready in X ms"
-   ```
-
-2. **Variables de entorno configuradas** (especialmente `DATABASE_URI`):
-   ```bash
-   # Verificar que .env contiene al menos:
-   DATABASE_URI=mongodb+srv://...
-   ```
-
-### Tests Paso a Paso
-
-**1. Test Rápido (sin API):**
-```bash
-# Solo verifica build y sistema de cola
-pnpm test:queue
-```
-
-**2. Test Completo (con API):**
-```bash
-# Terminal 1: Iniciar servidor
-pnpm dev
-
-# Terminal 2: Ejecutar tests
-pnpm test:all
-```
-
-**3. Monitoreo en Tiempo Real:**
-```bash
-# Monitor básico
-pnpm queue:monitor
-
-# Monitor avanzado con limpieza automática
-pnpm queue:monitor:detailed
-```
-
-### Interpretación de Resultados
-
-**🎉 Success Rate 100%**: ✅ Sistema listo para Task 4.0 (Procesamiento de Vídeo)  
-**⚠️ Success Rate 75-99%**: Funcionalidad básica OK, revisar errores menores  
-**🚨 Success Rate <75%**: Problemas críticos, debe solucionarse antes de continuar
-
-### Troubleshooting Testing
-
-**❌ "Queue initialization failed":**
-- Verificar `DATABASE_URI` en `.env`
-- Confirmar conectividad a MongoDB Atlas
-
-**❌ "Server is not available":**
-- Verificar que `pnpm dev` esté corriendo
-- Confirmar que el puerto 3000 esté libre
-
-**❌ "Job enqueue failed":**
-- Verificar logs de Agenda en MongoDB
-- Comprobar que no hay colisiones de nombres de jobs
-
-### Output de Ejemplo
-
-```bash
-🧪 Starting Comprehensive Eidetik Test Suite
-================================================================================
-🎯 Testing: Queue System + API Endpoints + Upload Endpoint + Build Verification
-================================================================================
-
-✅ 1. Build Verification - PASSED
-✅ 2. Type Checking - PASSED  
-✅ 3. Queue System Testing - PASSED
-✅ 4. API Endpoints Testing - PASSED
-✅ 5. Upload Endpoint Testing - PASSED
-
-🏁 COMPREHENSIVE TEST RESULTS
-================================================================================
-✅ Passed Test Suites: 5
-❌ Failed Test Suites: 0
-📈 Success Rate: 100.0%
-
-🎉 ALL SYSTEMS GO! Eidetik is ready for video processing implementation.
-✨ You can proceed with Task 4.0: Video Processing Pipeline
 ```
 
 ## 📁 Estructura del Proyecto
@@ -306,126 +207,165 @@ pnpm queue:monitor:detailed
 ```
 src/
 ├── actions/          # Server Actions organizados por funcionalidad
-│   ├── jobs/         # Gestión de jobs de procesamiento
-│   └── resources/    # Gestión de recursos de vídeo
+│   ├── companies/    # Gestión de empresas cliente
+│   ├── documents/    # Gestión de documentos y facturas
+│   ├── emissions/    # Cálculos de huella de carbono
+│   └── projects/     # Proyectos de compensación
 ├── app/              # Next.js App Router
-│   ├── (frontend)/   # Interfaz web pública
+│   ├── (frontend)/   # Interfaz web para empresas
 │   └── (payload)/    # Admin panel de Payload CMS
 ├── collections/      # Colecciones de Payload CMS
+│   ├── Companies.ts  # Empresas cliente
+│   ├── Documents.ts  # Documentos procesados
+│   ├── Emissions.ts  # Registros de emisiones
+│   └── Users.ts      # Usuarios del sistema
 ├── components/       # Componentes React
 ├── lib/              # Librerías y utilidades
 │   ├── config.ts     # Configuración centralizada
 │   ├── queue.ts      # Sistema de cola (Agenda)
 │   ├── storage.ts    # AWS S3 utilities
-│   ├── pinecone.ts   # Vector store management
-│   ├── openai.ts     # AI services
-│   └── webhooks.ts   # Sistema de notificaciones
+│   ├── ocr.ts        # Servicios de OCR
+│   ├── emissions.ts  # Cálculos de CO₂
+│   └── carbon-offset.ts # Compensación de carbono
 ├── types/            # Tipos TypeScript centralizados
 └── workers/          # Workers de procesamiento
-    ├── video-processor.ts      # Procesamiento de vídeo
-    └── embedding-generator.ts  # Generación de embeddings
+    ├── document-processor.ts  # Procesamiento de documentos
+    └── embedding-generator.ts # Generación de embeddings
 ```
 
 ## 🔌 API Endpoints
 
-### Recursos de Vídeo
+### Gestión de Documentos
 
 ```http
-# Crear recurso con upload atómico (recomendado)
-POST /api/resources/upload
+# Subir documento con procesamiento automático
+POST /api/documents/upload
 Content-Type: multipart/form-data
+Authorization: Bearer YOUR_JWT_TOKEN
 Body:
   - title: string (requerido)
   - description: string (opcional)
-  - type: 'video' | 'audio' | 'pdf' | 'ppt'
+  - type: 'invoice' | 'receipt' | 'bill' | 'expense'
+  - category: 'energy' | 'transport' | 'materials' | 'waste'
   - file: File (requerido)
 
-# Crear recurso sin archivo (legacy)
-POST /api/resources
-Content-Type: application/json
-Authorization: Bearer YOUR_API_KEY
+# Consultar estado de procesamiento
+GET /api/documents/{id}
 
-# Consultar estado
-GET /api/resources/{id}
+# Ver datos extraídos
+GET /api/documents/{id}/data
 
-# Ver logs de procesamiento
-GET /api/resources/{id}/logs
+# Obtener cálculos de emisiones
+GET /api/documents/{id}/emissions
 
-# Eliminar recurso
-DELETE /api/resources/{id}
-
-# Obtener información de vectores
-GET /api/resources/{id}/vectors
+# Corregir datos extraídos
+PUT /api/documents/{id}/data
 ```
 
-### Webhooks
+### Cálculos de Huella de Carbono
 
 ```http
-# Registrar webhook
-POST /api/webhooks
-{
-  "url": "https://tu-servidor.com/webhook",
-  "events": ["resource.completed", "resource.failed"],
-  "secret": "tu-secret"
-}
+# Obtener emisiones totales de la empresa
+GET /api/companies/{id}/emissions
+
+# Calcular emisiones por período
+GET /api/companies/{id}/emissions?start=2024-01-01&end=2024-12-31
+
+# Obtener sugerencias de compensación
+GET /api/companies/{id}/offset-suggestions
+
+# Generar reporte de sostenibilidad
+GET /api/companies/{id}/sustainability-report
 ```
 
 ## 🔄 Workflow de Procesamiento
 
 ```mermaid
 graph TD
-    A[Upload MP4] --> B[Crear Resource]
-    B --> C[Encolar Job de Video]
-    C --> D[Transcripción con Whisper]
-    D --> E[Detección de Escenas]
-    E --> F[Extracción de Fotogramas]
-    F --> G[Segmentación en Chunks]
-    G --> H[Jobs de Embedding]
-    H --> I[Descripción Visual GPT-4o]
-    I --> J[Generación de Embeddings]
-    J --> K[Indexar en Pinecone]
-    K --> L[Notificar Completado]
+    A[Subir Factura/Recibo] --> B[Crear Document]
+    B --> C[Encolar Job de OCR]
+    C --> D[Extracción de Texto]
+    D --> E[Análisis con IA]
+    E --> F[Clasificación de Emisiones]
+    F --> G[Cálculo de CO₂]
+    G --> H[Indexación para Búsqueda]
+    H --> I[Actualizar Dashboard]
+    I --> J[Notificar Cliente]
+    J --> K[Sugerir Compensación]
 ```
 
-## 🎯 Métricas de Éxito del MVP
+## 🎯 Categorías de Emisiones Soportadas
 
-- **Adopción**: 5 empresas usando activamente en 3 meses
-- **Performance**: Máximo 2x la duración del vídeo para procesamiento
-- **Calidad**: >95% precisión en transcripción de audio claro
-- **Disponibilidad**: >99% uptime del servicio
+- **⚡ Energía**: Electricidad, gas natural, combustibles fósiles
+- **🚗 Transporte**: Combustible de vehículos, vuelos, transporte público
+- **🏭 Producción**: Materias primas, procesos industriales
+- **🗂️ Oficina**: Suministros, equipamiento, servicios
+- **♻️ Residuos**: Gestión de residuos, reciclaje
+- **💧 Agua**: Consumo de agua y tratamiento
+- **🌐 Digital**: Servicios en la nube, centros de datos
+
+## 🌱 Factores de Conversión
+
+Trinoa utiliza factores de emisión actualizados basados en:
+- **DEFRA** (Department for Environment, Food and Rural Affairs)
+- **EPA** (Environmental Protection Agency)
+- **IPCC** (Intergovernmental Panel on Climate Change)
+- **Estándares locales** por país y región
+
+## 🎯 Métricas de Éxito
+
+- **Precisión OCR**: >95% en facturas estándar
+- **Clasificación IA**: >90% precisión en categorización automática
+- **Tiempo de Procesamiento**: <2 minutos por documento promedio
+- **Satisfacción Cliente**: >4.5/5 en facilidad de uso
+- **Reducción de Emisiones**: Seguimiento de compensaciones realizadas
 
 ## 🗺️ Roadmap
 
-### ✅ MVP Actual (Q1 2025)
-- ✅ Ingesta y procesamiento de vídeos MP4
-- ✅ Pipeline de transcripción y vectorización
-- ✅ API REST completa
-- ✅ Interfaz web básica
+### ✅ Fase Actual (Q1 2025)
+- ✅ Procesamiento automático de facturas PDF y JPG
+- ✅ Cálculos básicos de huella de carbono
+- ✅ Dashboard empresarial
+- ✅ Autenticación segura por empresa
 
 ### 🔄 Próximas Fases
-- **Q2 2025**: Soporte para PDF y documentos
-- **Q3 2025**: Procesamiento de audio (podcasts)
-- **Q4 2025**: Presentaciones PPT y slides
-- **2026**: Portal completo con analytics
+- **Q2 2025**: Integración con APIs de proveedores energéticos
+- **Q3 2025**: Reportes automatizados para certificaciones
+- **Q4 2025**: Marketplace de compensación de carbono
+- **2026**: IA predictiva para optimización de emisiones
 
-## 🤝 Contribuir
+## 👥 Tipos de Usuario
 
-1. Fork el proyecto
-2. Crea una rama: `git checkout -b feature/nueva-funcionalidad`
-3. Commit: `git commit -m 'feat: añadir nueva funcionalidad'`
-4. Push: `git push origin feature/nueva-funcionalidad`
-5. Abre un Pull Request
+### 🏢 Empresas Cliente
+- Acceso a dashboard personalizado
+- Subida y gestión de documentos
+- Visualización de huella de carbono
+- Descarga de reportes
+
+### 🛠️ Administradores Trinoa
+- Gestión de empresas cliente
+- Supervisión de procesamiento
+- Configuración de factores de emisión
+- Analytics del sistema
+
+## 🔒 Seguridad y Privacidad
+
+- **Encriptación**: Todos los documentos se almacenan encriptados
+- **Aislamiento**: Datos completamente separados por empresa
+- **Auditoría**: Logs completos de acceso y modificaciones
+- **GDPR**: Cumplimiento total con regulaciones de privacidad
+- **Backup**: Respaldos automáticos y recuperación de desastres
 
 ## 📞 Soporte
 
-- **Documentación**: Revisa los [PRDs y tasks](./tasks/) del proyecto
-- **Issues**: Reporta problemas en GitHub Issues
+- **Documentación**: Revisa la documentación técnica en `/docs`
+- **Issues**: Reporta problemas técnicos internamente
 - **Desarrollo**: Sigue las [reglas de desarrollo](./.cursorrules)
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
+Este proyecto es propiedad privada de Trinoa. Uso interno únicamente.
 
 ---
 
-**Eidetik** - _Convirtiendo conocimiento audiovisual en memoria eidética para IA_ 🧠✨
+**Trinoa** - _Simplificando la sostenibilidad empresarial con tecnología_ 🌱🤖
