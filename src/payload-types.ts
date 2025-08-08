@@ -186,13 +186,13 @@ export interface Media {
   /**
    * Type of media content
    */
-  mediaType?: ('video' | 'image' | 'audio' | 'frame') | null;
+  mediaType?: ('document' | 'image') | null;
   /**
-   * Duration in seconds (will be populated after video processing)
+   * Number of pages (for PDF documents)
    */
-  duration?: number | null;
+  pages?: number | null;
   /**
-   * Tags for organizing and searching media files
+   * Tags for organizing and searching documents and images
    */
   tags?:
     | {
@@ -281,81 +281,61 @@ export interface Resource {
     | boolean
     | null;
   /**
-   * Transcripción completa generada por Whisper (auto-generado)
+   * Texto extraído del documento (auto-generado)
    */
-  transcription?: string | null;
+  extractedText?: string | null;
   /**
-   * Transcripción en formato SRT para subtítulos (auto-generado)
-   */
-  transcriptionSrt?: string | null;
-  /**
-   * Descripción general del vídeo generada por IA (auto-generado)
+   * Descripción general del documento generada por IA (auto-generado)
    */
   description?: string | null;
   /**
-   * Screenshots extraídos del vídeo con descripciones IA (auto-generado)
+   * Páginas del documento con contenido extraído (auto-generado)
    */
-  screenshots?:
+  documentPages?:
     | {
         /**
-         * Archivo de imagen del screenshot
+         * Número de página
          */
-        image: string | Media;
+        pageNumber: number;
         /**
-         * Timestamp en milisegundos cuando se capturó el screenshot
+         * Texto extraído de esta página
          */
-        timestamp: number;
+        extractedText: string;
         /**
-         * Descripción corta del screenshot (1-2 frases)
+         * Resumen del contenido de la página generado por IA
          */
-        shortDescription: string;
-        /**
-         * Descripción detallada del screenshot (3-4 frases con detalles)
-         */
-        description: string;
+        summary?: string | null;
         id?: string | null;
       }[]
     | null;
   /**
-   * Chunks de 15 segundos del vídeo con transcripción y descripciones (auto-generado)
+   * Segmentos de texto del documento para generar embeddings (auto-generado)
    */
   chunks?:
     | {
         /**
-         * Tiempo de inicio del chunk en milisegundos
+         * Índice del segmento de texto
          */
-        timeStart: number;
+        chunkIndex: number;
         /**
-         * Tiempo de fin del chunk en milisegundos
+         * Número de página de origen (para PDFs)
          */
-        timeEnd: number;
+        pageNumber?: number | null;
         /**
-         * Transcripción parcial del chunk (JSON con tiempos)
+         * Contenido de texto del segmento
          */
-        transcription: string;
+        content: string;
         /**
-         * Descripción generada por IA de lo que ocurre en este chunk
+         * Resumen del contenido generado por IA
          */
-        description: string;
-        /**
-         * IDs de screenshots que pertenecen a este chunk
-         */
-        screenshots?:
-          | {
-              /**
-               * ID del screenshot que cae en este rango temporal
-               */
-              screenshotId: string;
-              id?: string | null;
-            }[]
-          | null;
+        summary?: string | null;
         id?: string | null;
       }[]
     | null;
   /**
    * Tipo de recurso a procesar
    */
-  type: 'video' | 'audio' | 'pdf' | 'ppt';
+  type: 'document' | 'image';
   /**
    * Archivo multimedia subido
    */
@@ -403,13 +383,13 @@ export interface Resource {
    */
   processingMetadata?: {
     /**
-     * Duración del contenido en segundos
+     * Número de páginas del documento
      */
-    duration?: number | null;
+    pages?: number | null;
     /**
-     * Número de segmentos generados
+     * Número de segmentos de texto generados
      */
-    segments?: number | null;
+    textChunks?: number | null;
     /**
      * Número de vectores creados en Pinecone
      */
@@ -420,7 +400,7 @@ export interface Resource {
     jobIds?:
       | {
           jobId?: string | null;
-          type?: ('video-processing' | 'embedding-generation') | null;
+          type?: ('document-processing' | 'embedding-generation') | null;
           id?: string | null;
         }[]
       | null;
@@ -887,7 +867,7 @@ export interface MediaSelect<T extends boolean = true> {
   title?: T;
   description?: T;
   mediaType?: T;
-  duration?: T;
+  pages?: T;
   tags?:
     | T
     | {
@@ -950,31 +930,23 @@ export interface ResourcesSelect<T extends boolean = true> {
   namespace?: T;
   filters?: T;
   user_metadata?: T;
-  transcription?: T;
-  transcriptionSrt?: T;
+  extractedText?: T;
   description?: T;
-  screenshots?:
+  documentPages?:
     | T
     | {
-        image?: T;
-        timestamp?: T;
-        shortDescription?: T;
-        description?: T;
+        pageNumber?: T;
+        extractedText?: T;
+        summary?: T;
         id?: T;
       };
   chunks?:
     | T
     | {
-        timeStart?: T;
-        timeEnd?: T;
-        transcription?: T;
-        description?: T;
-        screenshots?:
-          | T
-          | {
-              screenshotId?: T;
-              id?: T;
-            };
+        chunkIndex?: T;
+        pageNumber?: T;
+        content?: T;
+        summary?: T;
         id?: T;
       };
   type?: T;
@@ -994,8 +966,8 @@ export interface ResourcesSelect<T extends boolean = true> {
   processingMetadata?:
     | T
     | {
-        duration?: T;
-        segments?: T;
+        pages?: T;
+        textChunks?: T;
         vectorsGenerated?: T;
         jobIds?:
           | T

@@ -307,8 +307,7 @@ export class VideoTranscriber {
         collection: 'resources',
         id: resourceId,
         data: {
-          transcription: transcriptionResult.conversationJson,
-          transcriptionSrt: transcriptionResult.srtFormat,
+          extractedText: transcriptionResult.conversationJson,
           status: 'processing',
           progress: 40, // Transcripción completada, continúa pipeline
         },

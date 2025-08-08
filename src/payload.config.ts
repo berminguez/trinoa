@@ -54,15 +54,11 @@ export default buildConfig({
           s3Storage({
             collections: {
               media: {
-                // Configuración específica para vídeos grandes
+                // Configuración específica para documentos (PDFs e imágenes)
                 signedDownloads: {
                   shouldUseSignedURL: ({ collection, filename, req }) => {
-                    // Usar URLs firmadas para archivos de vídeo (mejor performance)
-                    return (
-                      filename.endsWith('.mp4') ||
-                      filename.endsWith('.mov') ||
-                      filename.endsWith('.avi')
-                    )
+                    // Usar URLs firmadas para archivos PDF (mejor seguridad)
+                    return filename.endsWith('.pdf') || filename.endsWith('.PDF')
                   },
                 },
               },

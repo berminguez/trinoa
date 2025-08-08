@@ -1,22 +1,22 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { VideoTable } from './VideoTable'
+import { DocumentTable } from './VideoTable'
 import type { Resource } from '@/payload-types'
 
-interface VideoTableContainerProps {
+interface DocumentTableContainerProps {
   initialResources: Resource[]
   projectId: string
   onResourceAdded?: (resource: Resource) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
 }
 
-export function VideoTableContainer({
+export function DocumentTableContainer({
   initialResources,
   projectId,
   onResourceAdded,
   onResourceUploadFailed,
-}: VideoTableContainerProps) {
+}: DocumentTableContainerProps) {
   // Estado local para manejar los recursos con optimistic updates
   const [resources, setResources] = useState<Resource[]>(initialResources)
 
@@ -76,7 +76,7 @@ export function VideoTableContainer({
   }, [initialResources])
 
   return (
-    <VideoTable
+    <DocumentTable
       resources={resources}
       projectId={projectId}
       onAddResource={addResource}

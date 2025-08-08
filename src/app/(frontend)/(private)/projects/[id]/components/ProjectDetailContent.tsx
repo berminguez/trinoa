@@ -5,7 +5,7 @@ import config from '@payload-config'
 import type { Project } from '@/payload-types'
 
 import { ProjectDetailHeader } from './ProjectDetailHeader'
-import { VideoTableContainer } from './VideoTableContainer'
+import { DocumentTableContainer } from './VideoTableContainer'
 
 interface ProjectDetailContentProps {
   projectId: string
@@ -83,7 +83,11 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
   return (
     <div className='flex-1 space-y-6 p-4 pt-6'>
       <ProjectDetailHeader project={project} user={user} />
-      <VideoTableContainer initialResources={resources.docs} projectId={projectId} />
+      <DocumentTableContainer
+        initialResources={resources.docs}
+        projectId={projectId}
+        key={resources.docs.length} // Force re-render when resources change
+      />
     </div>
   )
 }

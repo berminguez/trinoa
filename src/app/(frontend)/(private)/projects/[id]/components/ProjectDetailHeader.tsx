@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { updateProjectAction } from '@/actions/projects/updateProject'
 import { useProjectsStore } from '@/stores/projects-store'
-import { VideoUploadModal } from './VideoUploadModal'
+import { DocumentUploadModal } from './DocumentUploadModal'
 import type { Project, User, Resource } from '@/payload-types'
 
 interface ProjectDetailHeaderProps {
@@ -24,6 +24,7 @@ interface ProjectDetailHeaderProps {
   user: User
   onResourceUploaded?: (resource: Resource) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
+  onResourceAdded?: (resource: Resource) => void
 }
 
 export function ProjectDetailHeader({
@@ -31,6 +32,7 @@ export function ProjectDetailHeader({
   user,
   onResourceUploaded,
   onResourceUploadFailed,
+  onResourceAdded,
 }: ProjectDetailHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(project.title)
@@ -239,10 +241,11 @@ export function ProjectDetailHeader({
           </div>
         </div>
 
-        <VideoUploadModal
+        <DocumentUploadModal
           project={project}
           onUploadComplete={() => {
-            // Refrescar datos si es necesario
+            // Refrescar la página para obtener los datos más recientes
+            window.location.reload()
           }}
           onResourceUploaded={onResourceUploaded}
           onResourceUploadFailed={onResourceUploadFailed}

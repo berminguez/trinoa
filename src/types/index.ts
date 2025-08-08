@@ -56,8 +56,10 @@ export interface EmbeddingJob {
   triggeredBy: 'video-processing' | 'manual' | 'api'
   chunks: VideoChunk[]
   metadata?: {
-    videoTitle?: string
+    videoTitle?: string // Mantener para compatibilidad
+    documentTitle?: string // Para documentos
     totalDuration?: number
+    totalPages?: number // Para documentos PDF
     chunkCount?: number
   }
 }

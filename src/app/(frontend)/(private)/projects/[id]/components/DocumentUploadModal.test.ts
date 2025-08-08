@@ -5,7 +5,7 @@
 /**
  * Tests unitarios para el modal de subida de documentos
  * 
- * Ejecutar con: tsx src/app/(frontend)/(private)/projects/[id]/components/VideoUploadModal.test.ts
+ * Ejecutar con: tsx src/app/(frontend)/(private)/projects/[id]/components/DocumentUploadModal.test.ts
  */
 
 // Helper para simular assertions simples
@@ -398,7 +398,7 @@ async function runAllTests() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   runAllTests()
     .then(() => {
-      console.log('\n🔧 Para ejecutar: npx tsx src/app/(frontend)/(private)/projects/[id]/components/VideoUploadModal.test.ts')
+      console.log('\n🔧 Para ejecutar: npx tsx src/app/(frontend)/(private)/projects/[id]/components/DocumentUploadModal.test.ts')
       process.exit(0)
     })
     .catch((error) => {
