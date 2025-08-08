@@ -878,10 +878,7 @@ export const Resources: CollectionConfig = {
         }
 
         if (operation === 'create' && data.type === 'video') {
-          data.status = 'processing'
-          data.startedAt = new Date().toISOString()
-
-          // Obtener información del archivo
+          // Obtener información del archivo (para log inicial)
           const file = await req.payload.findByID({
             collection: 'media',
             id: data.file,
@@ -955,6 +952,145 @@ export const Resources: CollectionConfig = {
                 ],
               },
             })
+          }
+        }
+
+        // Hook de automatización: disparar webhook N8n al crear cualquier recurso
+        if (operation === 'create') {
+          try {
+            // Leer configuración global con overrideAccess para bypass de permisos
+            const configuracion: any = await req.payload.findGlobal({
+              slug: 'configuracion' as any,
+              depth: 0,
+              overrideAccess: true,
+            } as any)
+
+            const automation = configuracion?.automationEndpoint
+            if (!automation || !automation.enabled || !automation.url) {
+              return
+            }
+
+            const method = String(automation.httpMethod || 'POST').toUpperCase()
+            const url = String(automation.url)
+
+            const headers: Record<string, string> = {
+              'User-Agent': 'Trinoa-Automation/1.0',
+            }
+
+            if (automation?.bearerToken) {
+              headers['Authorization'] = String(automation.bearerToken)
+            }
+
+            if (Array.isArray(automation.extraHeaders)) {
+              for (const h of automation.extraHeaders) {
+                if (h?.key && typeof h.key === 'string') {
+                  headers[h.key] = String(h.value ?? '')
+                }
+              }
+            }
+
+            let fetchUrl = url
+            const init: RequestInit = { method }
+
+            // Intentar obtener URL del media
+            let fileUrl: string | null = null
+            try {
+              const media =
+                typeof (doc as any).file === 'string'
+                  ? await req.payload.findByID({
+                      collection: 'media',
+                      id: String((doc as any).file),
+                    })
+                  : ((doc as any).file as any)
+              fileUrl = (media as any)?.url ?? null
+            } catch {}
+
+            if (method === 'GET') {
+              const u = new URL(url)
+              u.searchParams.set('event', 'resource.created')
+              u.searchParams.set('resourceId', String(doc.id))
+              u.searchParams.set('namespace', String((doc as any).namespace || ''))
+              u.searchParams.set('type', String((doc as any).type || ''))
+              if (fileUrl) u.searchParams.set('fileUrl', String(fileUrl))
+              fetchUrl = u.toString()
+              if (automation.sendResourceBody) {
+                // Para GET, si se desea enviar el recurso, lo añadimos como query compacta
+                try {
+                  u.searchParams.set('resource', encodeURIComponent(JSON.stringify(doc)))
+                  fetchUrl = u.toString()
+                } catch {}
+              }
+            } else {
+              if (automation.sendResourceBody) {
+                headers['Content-Type'] = 'application/json'
+                init.body = JSON.stringify({
+                  event: 'resource.created',
+                  fileUrl,
+                  resource: doc,
+                })
+              }
+            }
+
+            init.headers = headers
+
+            const res = await fetch(fetchUrl, init)
+            const ok = res.ok
+            const status = res.status
+            let responseText = ''
+            try {
+              responseText = await res.text()
+            } catch {}
+
+            // Añadir log del webhook
+            const currentLogs = Array.isArray((doc as any).logs) ? (doc as any).logs : []
+            const newLog = {
+              step: 'automation-webhook',
+              status: ok ? ('success' as const) : ('error' as const),
+              at: new Date().toISOString(),
+              details: ok
+                ? `Webhook enviado correctamente (status ${status})`
+                : `Webhook falló (status ${status})`,
+              data: {
+                url: fetchUrl,
+                method,
+                headers: Object.keys(headers),
+                responsePreview: responseText?.slice(0, 300),
+              },
+            }
+
+            // Si la respuesta fue OK, marcamos el recurso como processing
+            const updateData: any = { logs: [...currentLogs, newLog] }
+            if (ok) {
+              updateData.status = 'processing'
+              updateData.startedAt = (doc as any).startedAt || new Date().toISOString()
+            }
+
+            await req.payload.update({
+              collection: 'resources',
+              id: String(doc.id),
+              data: updateData,
+            })
+          } catch (error) {
+            // No interrumpir el flujo por errores del webhook; solo loggear
+            try {
+              const current = await req.payload.findByID({
+                collection: 'resources',
+                id: String(doc.id),
+              })
+              const currentLogs = Array.isArray((current as any).logs) ? (current as any).logs : []
+              const errLog = {
+                step: 'automation-webhook',
+                status: 'error' as const,
+                at: new Date().toISOString(),
+                details: 'Excepción al enviar webhook',
+                data: { error: String(error) },
+              }
+              await req.payload.update({
+                collection: 'resources',
+                id: String(doc.id),
+                data: { logs: [...currentLogs, errLog] },
+              })
+            } catch {}
           }
         }
 

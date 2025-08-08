@@ -100,8 +100,12 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    configuracion: Configuracion;
+  };
+  globalsSelect: {
+    configuracion: ConfiguracionSelect<false> | ConfiguracionSelect<true>;
+  };
   locale: null;
   user: User & {
     collection: 'users';
@@ -1152,6 +1156,169 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * Ajustes generales del sitio: empresa, SEO, redes sociales y automatizaciones.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "configuracion".
+ */
+export interface Configuracion {
+  id: string;
+  company: {
+    name: string;
+    shortName?: string | null;
+    taxId?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    address?: {
+      street?: string | null;
+      city?: string | null;
+      province?: string | null;
+      postalCode?: string | null;
+      country?: string | null;
+      extra?: string | null;
+    };
+  };
+  brand?: {
+    siteName?: string | null;
+    siteDescription?: string | null;
+    logo?: (string | null) | Media;
+    favicon?: (string | null) | Media;
+    defaultOgImage?: (string | null) | Media;
+    themeColor?: string | null;
+  };
+  seo?: {
+    defaultTitle?: string | null;
+    defaultDescription?: string | null;
+    keywords?: string | null;
+    baseUrl?: string | null;
+  };
+  social?: {
+    twitter?: string | null;
+    facebook?: string | null;
+    instagram?: string | null;
+    linkedin?: string | null;
+    youtube?: string | null;
+    tiktok?: string | null;
+    github?: string | null;
+    telegram?: string | null;
+    whatsapp?: string | null;
+  };
+  analytics?: {
+    googleAnalyticsId?: string | null;
+    metaPixelId?: string | null;
+  };
+  /**
+   * Configura el webhook de N8n que se invoca al crear un Recurso.
+   */
+  automationEndpoint?: {
+    enabled?: boolean | null;
+    url?: string | null;
+    httpMethod?: ('POST' | 'GET') | null;
+    authType?: ('none' | 'bearer') | null;
+    /**
+     * Se enviará como Authorization: Bearer <token>
+     */
+    bearerToken?: string | null;
+    sendResourceBody?: boolean | null;
+    /**
+     * Headers personalizados clave/valor
+     */
+    extraHeaders?:
+      | {
+          key?: string | null;
+          value?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "configuracion_select".
+ */
+export interface ConfiguracionSelect<T extends boolean = true> {
+  company?:
+    | T
+    | {
+        name?: T;
+        shortName?: T;
+        taxId?: T;
+        email?: T;
+        phone?: T;
+        website?: T;
+        address?:
+          | T
+          | {
+              street?: T;
+              city?: T;
+              province?: T;
+              postalCode?: T;
+              country?: T;
+              extra?: T;
+            };
+      };
+  brand?:
+    | T
+    | {
+        siteName?: T;
+        siteDescription?: T;
+        logo?: T;
+        favicon?: T;
+        defaultOgImage?: T;
+        themeColor?: T;
+      };
+  seo?:
+    | T
+    | {
+        defaultTitle?: T;
+        defaultDescription?: T;
+        keywords?: T;
+        baseUrl?: T;
+      };
+  social?:
+    | T
+    | {
+        twitter?: T;
+        facebook?: T;
+        instagram?: T;
+        linkedin?: T;
+        youtube?: T;
+        tiktok?: T;
+        github?: T;
+        telegram?: T;
+        whatsapp?: T;
+      };
+  analytics?:
+    | T
+    | {
+        googleAnalyticsId?: T;
+        metaPixelId?: T;
+      };
+  automationEndpoint?:
+    | T
+    | {
+        enabled?: T;
+        url?: T;
+        httpMethod?: T;
+        authType?: T;
+        bearerToken?: T;
+        sendResourceBody?: T;
+        extraHeaders?:
+          | T
+          | {
+              key?: T;
+              value?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

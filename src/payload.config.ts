@@ -15,6 +15,7 @@ import { Projects } from './collections/Projects'
 import { Resources } from './collections/Resources'
 import { Subscriptions } from './collections/Subscriptions'
 import { Users } from './collections/Users'
+import { Configuracion } from './globals/Configuracion'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -27,6 +28,7 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Resources, Projects, ApiKeys, Conversations, Messages, Subscriptions],
+  globals: [Configuracion],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
