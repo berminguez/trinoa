@@ -93,17 +93,31 @@ const eslintConfig = [
     },
   },
   {
-    files: [
-      'src/lib/**/*',
-      'src/workers/**/*',
-      'src/actions/**/*',
-      'src/app/my-route/**/*',
-      '**/*.test.*',
-      '**/*.spec.*',
-    ],
+    files: ['src/lib/**/*', 'src/workers/**/*', 'src/actions/**/*', 'src/app/my-route/**/*'],
     rules: {
       // Structure base files and tests have placeholder parameters
       '@typescript-eslint/no-unused-vars': 'off',
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.*', '**/*.spec.*'],
+    rules: {
+      // En tests permitimos patrones más laxos y desactivamos regla de hooks
+      'react-hooks/rules-of-hooks': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: false,
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^(_|ignore)',
+        },
+      ],
       'no-console': 'off',
     },
   },
