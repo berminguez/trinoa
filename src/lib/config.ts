@@ -41,8 +41,8 @@ export const CONFIG = {
   WORKER_RETRY_DELAY: parseInt(process.env.WORKER_RETRY_DELAY || '5000'),
 
   // File limits
-  MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE || '2147483648'), // 2GB
-  MAX_VIDEO_DURATION: parseInt(process.env.MAX_VIDEO_DURATION || '7200'), // 2 hours
+  MAX_FILE_SIZE: parseInt(process.env.MAX_FILE_SIZE || '104857600'), // 100MB para documentos
+  MAX_DOCUMENT_PAGES: parseInt(process.env.MAX_DOCUMENT_PAGES || '500'), // Máximo páginas para PDFs
 
   // Rate limiting
   RATE_LIMIT_UPLOAD: parseInt(process.env.RATE_LIMIT_UPLOAD || '10'),
@@ -52,18 +52,19 @@ export const CONFIG = {
   MCP_HOST: process.env.EIDETIK_MCP_HOST || 'localhost:8081',
 } as const
 
-// Constantes del procesamiento de video
-export const VIDEO_PROCESSING = {
-  CHUNK_SIZE_MIN: 30, // segundos
-  CHUNK_SIZE_MAX: 60, // segundos
-  FRAME_EXTRACTION_INTERVAL: 5, // cada 5 segundos
-  SUPPORTED_FORMATS: ['mp4', 'mov', 'avi', 'mkv'] as const,
+// Constantes del procesamiento de documentos
+export const DOCUMENT_PROCESSING = {
+  SUPPORTED_FORMATS: ['pdf', 'jpg', 'jpeg', 'png', 'webp'] as const,
   SUPPORTED_MIME_TYPES: [
-    'video/mp4',
-    'video/quicktime',
-    'video/x-msvideo',
-    'video/x-matroska',
+    'application/pdf',
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
   ] as const,
+  // Configuración para procesamiento OCR futuro
+  OCR_LANGUAGE: 'spa+eng', // Español e inglés
+  OCR_ENGINE_MODE: 3, // Default engine mode
 } as const
 
 // Constantes de embeddings

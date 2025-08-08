@@ -2,7 +2,7 @@
 // EIDETIK MVP - VALIDACIONES DE ARCHIVOS
 // ============================================================================
 
-import { CONFIG, VIDEO_PROCESSING } from './config'
+import { CONFIG, DOCUMENT_PROCESSING } from './config'
 
 // ============================================================================
 // TIPOS PARA VALIDACIONES
@@ -14,23 +14,27 @@ export interface FileValidationResult {
   warnings?: string[]
   metadata?: {
     duration?: number
+    pages?: number
     size: number
     mimeType: string
     format?: string
   }
 }
 
-export interface VideoFile {
+export interface DocumentFile {
   size: number
   mimeType: string
   filename?: string
 }
 
+// Mantener VideoFile para compatibilidad
+export type VideoFile = DocumentFile
+
 // ============================================================================
 // VALIDACIONES BÁSICAS DE ARCHIVO
 // ============================================================================
 
-export function validateFileSize(file: VideoFile): FileValidationResult {
+export function validateFileSize(file: DocumentFile): FileValidationResult {
   const fileSize = file.size
 
   if (fileSize > CONFIG.MAX_FILE_SIZE) {
@@ -46,9 +50,9 @@ export function validateFileSize(file: VideoFile): FileValidationResult {
 
   const warnings: string[] = []
 
-  // Warning si el archivo es muy grande (>1GB)
-  if (fileSize > 1024 * 1024 * 1024) {
-    warnings.push(`Large file detected (${formatBytes(fileSize)}). Processing may take longer.`)
+  // Warning si el archivo es muy grande (>50MB)
+  if (fileSize > 50 * 1024 * 1024) {
+    warnings.push(`Large document detected (${formatBytes(fileSize)}). Processing may take longer.`)
   }
 
   return {
@@ -61,9 +65,9 @@ export function validateFileSize(file: VideoFile): FileValidationResult {
   }
 }
 
-export function validateMimeType(file: VideoFile): FileValidationResult {
+export function validateMimeType(file: DocumentFile): FileValidationResult {
   const { mimeType } = file
-  const supportedTypes = VIDEO_PROCESSING.SUPPORTED_MIME_TYPES as readonly string[]
+  const supportedTypes = DOCUMENT_PROCESSING.SUPPORTED_MIME_TYPES as readonly string[]
 
   if (!supportedTypes.includes(mimeType)) {
     return {
@@ -86,10 +90,10 @@ export function validateMimeType(file: VideoFile): FileValidationResult {
 }
 
 // ============================================================================
-// VALIDACIONES ESPECÍFICAS DE VÍDEO
+// VALIDACIONES ESPECÍFICAS DE DOCUMENTOS
 // ============================================================================
 
-export function validateVideoFile(file: VideoFile): FileValidationResult {
+export function validateDocumentFile(file: DocumentFile): FileValidationResult {
   // Validar tamaño
   const sizeValidation = validateFileSize(file)
   if (!sizeValidation.isValid) {
@@ -105,7 +109,7 @@ export function validateVideoFile(file: VideoFile): FileValidationResult {
   // Validar extensión del archivo
   const fileName = file.filename || ''
   const extension = fileName.split('.').pop()?.toLowerCase()
-  const supportedFormats = VIDEO_PROCESSING.SUPPORTED_FORMATS as readonly string[]
+  const supportedFormats = DOCUMENT_PROCESSING.SUPPORTED_FORMATS as readonly string[]
 
   if (!extension || !supportedFormats.includes(extension)) {
     return {
@@ -133,35 +137,50 @@ export function validateVideoFile(file: VideoFile): FileValidationResult {
   }
 }
 
+// Mantener función original para compatibilidad
+export const validateVideoFile = validateDocumentFile
+
 // ============================================================================
-// VALIDACIONES DE DURACIÓN
+// VALIDACIONES DE DOCUMENTOS PDF
 // ============================================================================
 
-export function validateVideoDuration(duration: number): FileValidationResult {
-  if (duration > CONFIG.MAX_VIDEO_DURATION) {
+export function validateDocumentPages(pages: number): FileValidationResult {
+  if (pages > CONFIG.MAX_DOCUMENT_PAGES) {
     return {
       isValid: false,
-      error: `Video duration ${formatDuration(duration)} exceeds maximum allowed duration of ${formatDuration(CONFIG.MAX_VIDEO_DURATION)}`,
+      error: `Document has ${pages} pages, exceeding maximum allowed pages of ${CONFIG.MAX_DOCUMENT_PAGES}`,
       metadata: {
-        duration,
+        pages,
         size: 0,
-        mimeType: 'video/*',
+        mimeType: 'application/pdf',
       },
     }
   }
 
   const warnings: string[] = []
 
-  // Warning para vídeos muy largos (>1 hora)
-  if (duration > 3600) {
-    warnings.push(
-      `Long video detected (${formatDuration(duration)}). Processing may take significant time.`,
-    )
+  // Warning para documentos muy largos (>100 páginas)
+  if (pages > 100) {
+    warnings.push(`Large document detected (${pages} pages). Processing may take significant time.`)
   }
 
   return {
     isValid: true,
     warnings: warnings.length > 0 ? warnings : undefined,
+    metadata: {
+      pages,
+      size: 0,
+      mimeType: 'application/pdf',
+    },
+  }
+}
+
+// Mantener función original para compatibilidad
+export const validateVideoDuration: (duration: number) => FileValidationResult = (
+  duration: number,
+) => {
+  return {
+    isValid: true,
     metadata: {
       duration,
       size: 0,
@@ -202,12 +221,12 @@ export function formatDuration(seconds: number): string {
 // HOOKS DE VALIDACIÓN PARA PAYLOAD
 // ============================================================================
 
-export const validateMediaFileHook = ({ data }: { data: { file?: VideoFile } }) => {
+export const validateMediaFileHook = ({ data }: { data: { file?: DocumentFile } }) => {
   if (!data?.file) {
     throw new Error('No file provided for upload')
   }
 
-  const validation = validateVideoFile(data.file)
+  const validation = validateDocumentFile(data.file)
 
   if (!validation.isValid) {
     throw new Error(validation.error)

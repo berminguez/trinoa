@@ -3,13 +3,15 @@
 import { useState, useCallback } from 'react'
 import axios, { type AxiosProgressEvent } from 'axios'
 import { toast } from 'sonner'
+import { addFileId } from '@/lib/utils/fileUtils'
 
 export interface UploadFile extends File {
   id: string
   progress: number
   status: 'pending' | 'uploading' | 'completed' | 'error' | 'validating'
   error?: string
-  duration?: number
+        duration?: number
+  pages?: number
   validationComplete?: boolean
   tempResourceId?: string // ID temporal para optimistic updates
   _originalFile?: File // Referencia al File original para APIs que lo requieren
@@ -41,9 +43,9 @@ export function useProjectUpload({
   const [files, setFiles] = useState<UploadFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
 
-  // Función para validar duración de video
-  const validateVideoDuration = useCallback(
-    (file: File): Promise<{ isValid: boolean; duration?: number; error?: string }> => {
+  // Función para validar documentos
+  const validateDocumentFile = useCallback(
+    (file: File): Promise<{ isValid: boolean; pages?: number; error?: string }> => {
       return new Promise((resolve) => {
         // Validar que el archivo sea válido antes de procesarlo
         if (!file || !(file instanceof File) || !file.name || !file.size) {
@@ -56,99 +58,81 @@ export function useProjectUpload({
 
         // Validar que el archivo no esté vacío
         if (file.size === 0) {
+          console.error(`❌ [VALIDATION] File is empty:`, {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+          })
           resolve({
             isValid: false,
-            error: 'File is empty',
+            error: 'File is empty or corrupted',
           })
           return
         }
 
-        const video = document.createElement('video')
-        let url: string
-
-        try {
-          // Usar el archivo original si está disponible
-          const fileToUse = (file as any)._originalFile || file
-          url = URL.createObjectURL(fileToUse)
-        } catch (error) {
-          console.error('Failed to create object URL:', error)
+                // Validación simple para documentos
+        console.log(`📜 [VALIDATION] Starting validation for file:`, {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          isFile: file instanceof File,
+        })
+        
+        // Validar extensión de archivo
+        const isValidDocument = /\.(pdf|jpe?g|png|webp)$/i.test(file.name)
+        if (!isValidDocument) {
           resolve({
             isValid: false,
-            error: 'Cannot process file - invalid file format',
+            error: 'File must be a document (PDF, JPG, PNG, WebP)',
           })
           return
         }
 
-        // Timeout para evitar que se cuelgue la validación
-        const timeoutId = setTimeout(() => {
-          URL.revokeObjectURL(url)
-          resolve({
-            isValid: false,
-            error: 'Video validation timeout - file may be corrupted or unsupported',
-          })
-        }, 10000) // 10 segundos timeout
-
-        video.onloadedmetadata = () => {
-          clearTimeout(timeoutId)
-          const duration = video.duration
-          URL.revokeObjectURL(url)
-
-          // Verificar si la duración es válida (no NaN, no Infinity)
-          if (!isFinite(duration) || isNaN(duration)) {
-            resolve({
-              isValid: false,
-              error: 'Could not determine video duration - file may be corrupted',
-            })
-            return
-          }
-
-          // Validar duración: entre 4 segundos y 2 horas (7200 segundos)
-          if (duration < 4) {
-            resolve({
-              isValid: false,
-              duration,
-              error: 'Video must be at least 4 seconds long',
-            })
-          } else if (duration > 7200) {
-            // 2 horas = 7200 segundos
-            resolve({
-              isValid: false,
-              duration,
-              error: 'Video cannot exceed 2 hours in length',
-            })
-          } else {
-            resolve({
-              isValid: true,
-              duration,
-            })
-          }
+        // Validar tipo MIME adicional para mayor seguridad
+        const validMimeTypes = [
+          'application/pdf',
+          'image/jpeg', 
+          'image/jpg',
+          'image/png', 
+          'image/webp'
+        ]
+        
+        if (file.type && !validMimeTypes.includes(file.type)) {
+          console.warn(`File ${file.name} has unexpected MIME type: ${file.type}`)
+          // No falla la validación, solo advierte, ya que algunos browsers pueden reportar MIME types incorrectos
         }
 
-        video.onerror = (error) => {
-          clearTimeout(timeoutId)
-          URL.revokeObjectURL(url)
-          console.error('Video validation error:', error)
+        // Validar tamaño de archivo (100MB máximo)
+        const maxSize = 100 * 1024 * 1024 // 100MB
+        if (file.size > maxSize) {
           resolve({
             isValid: false,
-            error: 'Cannot read video file - format may not be supported or file is corrupted',
+            error: 'File size must be less than 100MB',
           })
+          return
         }
 
-        // Configurar el video para mejor compatibilidad
-        video.preload = 'metadata'
-        video.muted = true
-        video.playsInline = true
+                // Para PDFs podríamos agregar validación de páginas aquí en el futuro
+        // Por ahora, simplemente validamos que sea un archivo válido
+        
+        const isPDF = file.name.toLowerCase().endsWith('.pdf')
+        console.log(`✅ [VALIDATION] Document validated successfully:`, {
+          name: file.name,
+          size: `${(file.size / (1024 * 1024)).toFixed(1)}MB`,
+          type: file.type,
+          extension: file.name.split('.').pop()?.toLowerCase(),
+          isPDF,
+        })
 
-        try {
-          video.src = url
-        } catch (error) {
-          clearTimeout(timeoutId)
-          URL.revokeObjectURL(url)
-          resolve({
-            isValid: false,
-            error: 'Failed to load video file',
-          })
+        // Toast informativo para PDFs
+        if (isPDF) {
+          console.log(`📄 [PDF] PDF file detected: ${file.name}`)
         }
+
+        resolve({
+          isValid: true,
+          pages: undefined, // Podríamos implementar detección de páginas aquí
+        })
       })
     },
     [],
@@ -168,7 +152,12 @@ export function useProjectUpload({
         }
       }
 
-      console.log('Validating file:', file.name, 'Size:', file.size, 'Type:', file.type)
+      console.log('🔍 [VALIDATE] Validating file:', {
+        name: file.name, 
+        size: file.size, 
+        type: file.type,
+        hasOriginalFile: !!(file as any)._originalFile,
+      })
 
       // Marcar como validando
       const validatingFile: UploadFile = {
@@ -177,33 +166,25 @@ export function useProjectUpload({
       }
 
       try {
-        // Validar duración
-        const durationValidation = await validateVideoDuration(file)
+        // Validar documento - usar el archivo original si está disponible
+        const fileToValidate = (file as any)._originalFile || file
+        console.log('📂 [VALIDATE] Using file for validation:', {
+          name: fileToValidate.name,
+          size: fileToValidate.size,
+          type: fileToValidate.type,
+          isOriginal: fileToValidate === (file as any)._originalFile,
+        })
+        const documentValidation = await validateDocumentFile(fileToValidate)
 
-        if (!durationValidation.isValid) {
-          // Si falla la validación, permitir continuar con advertencia pero validación básica
-          console.warn('Video validation failed for:', file.name, durationValidation.error)
+        if (!documentValidation.isValid) {
+          // Si falla la validación, devolver error
+          console.warn('Document validation failed for:', file.name, documentValidation.error)
 
-          // Validación básica: solo verificar que sea un archivo de video por extensión
-          const isVideoFile = /\.(mp4|mov|avi|webm|mkv|wmv|flv)$/i.test(file.name)
-
-          if (!isVideoFile) {
-            return {
-              ...validatingFile,
-              status: 'error',
-              error: 'File must be a video file (MP4, MOV, AVI, WebM, MKV, WMV, FLV)',
-              validationComplete: true,
-            }
-          }
-
-          // Si es un archivo de video pero falla la validación de duración,
-          // permitir continuar con advertencia
           return {
             ...validatingFile,
-            status: 'pending',
-            duration: durationValidation.duration || undefined,
+            status: 'error',
+            error: documentValidation.error,
             validationComplete: true,
-            error: undefined, // Limpiar error para permitir upload
           }
         }
 
@@ -211,16 +192,16 @@ export function useProjectUpload({
         return {
           ...validatingFile,
           status: 'pending',
-          duration: durationValidation.duration,
+          pages: documentValidation.pages,
           validationComplete: true,
         }
       } catch (error) {
         console.error('Validation error for:', file.name, error)
 
         // Fallback: validación básica por extensión
-        const isVideoFile = /\.(mp4|mov|avi|webm|mkv|wmv|flv)$/i.test(file.name)
+        const isDocumentFile = /\.(pdf|jpe?g|png|webp)$/i.test(file.name)
 
-        if (isVideoFile) {
+        if (isDocumentFile) {
           // Permitir continuar con advertencia
           return {
             ...validatingFile,
@@ -233,12 +214,12 @@ export function useProjectUpload({
         return {
           ...validatingFile,
           status: 'error',
-          error: 'Failed to validate video file',
+          error: 'Failed to validate document file',
           validationComplete: true,
         }
       }
     },
-    [validateVideoDuration],
+    [validateDocumentFile],
   )
 
   // Función para subir un archivo individual
@@ -248,15 +229,27 @@ export function useProjectUpload({
       console.log('🚀 [UPLOAD SINGLE] File object:', file)
       console.log('🚀 [UPLOAD SINGLE] ProjectId:', projectId)
 
+      // ⭐ GENERAR NOMBRE ÚNICO para evitar colisiones
+      const uniqueFileName = addFileId(file.name)
+      
       const formData = new FormData()
-      formData.append('file', file._originalFile || file)
+      
+      // Crear un nuevo objeto File con el nombre único
+      const uniqueFile = new File([file._originalFile || file], uniqueFileName, {
+        type: file.type,
+        lastModified: file.lastModified || Date.now(),
+      })
+      
+      formData.append('file', uniqueFile)
       formData.append('projectId', projectId)
 
       // Campos requeridos por la API
-      formData.append('title', file.name.replace(/\.[^/.]+$/, '')) // Nombre sin extensión
-      formData.append('namespace', `project-${projectId}-videos`) // Namespace único por proyecto
-      formData.append('type', 'video')
-      formData.append('description', `Video uploaded: ${file.name}`)
+      formData.append('title', uniqueFileName.replace(/\.[^/.]+$/, '')) // Nombre sin extensión
+      // Detectar tipo de documento automáticamente
+      const fileType = file.type?.includes('pdf') ? 'document' : 'image'
+      formData.append('namespace', `project-${projectId}-documents`) // Namespace único por proyecto
+      formData.append('type', fileType)
+      formData.append('description', `Document uploaded: ${uniqueFileName}`)
 
       // Generar ID temporal para optimistic update
       const tempResourceId = `temp-${file.id}-${Date.now()}`
@@ -265,9 +258,9 @@ export function useProjectUpload({
       const tempResource = {
         id: tempResourceId,
         title: file.name.replace(/\.[^/.]+$/, ''), // Nombre sin extensión
-        type: 'video',
+        type: file.type?.includes('pdf') ? 'document' : 'image',
         status: 'uploading',
-        duration: file.duration || 0,
+        pages: file.pages || undefined,
         project: projectId,
         file: {
           id: tempResourceId,
@@ -611,7 +604,7 @@ export function useProjectUpload({
               : 'All files processed successfully',
         })
 
-        // Llamar callback si se provee (para actualizar tabla de videos)
+        // Llamar callback si se provee (para actualizar tabla de documentos)
         if (onUploadComplete) {
           onUploadComplete()
         }

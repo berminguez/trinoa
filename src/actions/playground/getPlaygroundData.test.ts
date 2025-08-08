@@ -39,7 +39,7 @@ function createMockPayloadResource(overrides: Partial<Resource> = {}): Resource 
     title: 'Test Resource',
     project: 'proj-123',
     namespace: 'test-namespace',
-    type: 'video',
+    type: 'document',
     status: 'completed',
     progress: 100,
     file: 'file-123',
@@ -92,7 +92,7 @@ try {
     id: 'res-123',
     title: 'Introduction Video',
     project: 'proj-456',
-    type: 'video',
+    type: 'document',
     status: 'completed',
   })
 
@@ -106,7 +106,7 @@ try {
     id: 'res-456',
     title: 'Neural Networks Explained',
     project: mockProject,
-    type: 'video',
+    type: 'document',
     status: 'processing',
   })
 
@@ -121,7 +121,7 @@ try {
       title: resource.title,
       projectId,
       projectTitle,
-      type: resource.type,
+      type: resource.type as any, // Conversión temporal para mantener compatibilidad
       status: resource.status,
     }
   }

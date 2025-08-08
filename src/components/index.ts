@@ -1,7 +1,7 @@
 // ============================================================================
-// EIDETIK MVP - COMPONENTS EXPORT
+// TRINOA - COMPONENTS EXPORT
 // ============================================================================
 
-// TODO: Implementar componentes en sub-tareas 6.1-6.9
-export { VideoUploader } from './VideoUploader'
+// TODO: Implementar componentes para documentos
+export { DocumentUploader } from './DocumentUploader'
 export { ResourceList } from './ResourceList'

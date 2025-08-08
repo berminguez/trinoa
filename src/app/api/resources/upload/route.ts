@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 
 import { validateVideoFile } from '@/lib/validation'
+import { addFileId } from '@/lib/utils/fileUtils'
 import config from '@payload-config'
 
 import type { Media, Resource } from '@/payload-types'
@@ -378,7 +379,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         file: {
           data: Buffer.from(await file.arrayBuffer()),
           mimetype: file.type,
-          name: file.name,
+          name: addFileId(file.name), // ⭐ AÑADIR IDENTIFICADOR ÚNICO
           size: file.size,
         },
       })) as Media

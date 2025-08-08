@@ -25,7 +25,7 @@ export function ProjectVideosTable({ resources, projectId }: ProjectVideosTableP
           <div className='text-center py-12'>
             <IconVideo className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
             <h3 className='text-lg font-semibold mb-2'>No videos yet</h3>
-            <p className='text-muted-foreground'>Upload videos to start building your project</p>
+            <p className='text-muted-foreground'>Sube documentos para empezar a construir tu proyecto</p>
           </div>
         ) : (
           // Tabla de videos

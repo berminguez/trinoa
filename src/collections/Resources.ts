@@ -3,13 +3,7 @@ import { PineconeManager } from '../lib/pinecone'
 import { QueueManager } from '../lib/queue'
 import { StorageManager } from '../lib/storage'
 
-import type {
-  VideoProcessingJob,
-  EmbeddingJob,
-  VideoChunk,
-  TranscriptionSegment,
-  Media,
-} from '../types'
+import type { EmbeddingJob, Media } from '../types'
 import type { CollectionConfig } from 'payload'
 
 export const Resources: CollectionConfig = {
@@ -85,19 +79,10 @@ export const Resources: CollectionConfig = {
       },
     },
     {
-      name: 'transcription',
+      name: 'extractedText',
       type: 'textarea',
       admin: {
-        description: 'Transcripción completa generada por Whisper (auto-generado)',
-        readOnly: true,
-        condition: (data) => data.status !== 'pending',
-      },
-    },
-    {
-      name: 'transcriptionSrt',
-      type: 'textarea',
-      admin: {
-        description: 'Transcripción en formato SRT para subtítulos (auto-generado)',
+        description: 'Texto extraído del documento (auto-generado)',
         readOnly: true,
         condition: (data) => data.status !== 'pending',
       },
@@ -106,51 +91,41 @@ export const Resources: CollectionConfig = {
       name: 'description',
       type: 'textarea',
       admin: {
-        description: 'Descripción general del vídeo generada por IA (auto-generado)',
+        description: 'Descripción general del documento generada por IA (auto-generado)',
         readOnly: true,
         condition: (data) => data.status === 'completed',
       },
     },
     {
-      name: 'screenshots',
+      name: 'documentPages',
       type: 'array',
       admin: {
-        description: 'Screenshots extraídos del vídeo con descripciones IA (auto-generado)',
+        description: 'Páginas del documento con contenido extraído (auto-generado)',
         readOnly: true,
-        condition: (data) => data.status !== 'pending',
+        condition: (data) => data.status !== 'pending' && data.type === 'document',
       },
       fields: [
         {
-          name: 'image',
-          type: 'relationship',
-          relationTo: 'media',
-          required: true,
-          admin: {
-            description: 'Archivo de imagen del screenshot',
-          },
-        },
-        {
-          name: 'timestamp',
+          name: 'pageNumber',
           type: 'number',
           required: true,
           admin: {
-            description: 'Timestamp en milisegundos cuando se capturó el screenshot',
+            description: 'Número de página',
           },
         },
         {
-          name: 'shortDescription',
-          type: 'text',
-          required: true,
-          admin: {
-            description: 'Descripción corta del screenshot (1-2 frases)',
-          },
-        },
-        {
-          name: 'description',
+          name: 'extractedText',
           type: 'textarea',
           required: true,
           admin: {
-            description: 'Descripción detallada del screenshot (3-4 frases con detalles)',
+            description: 'Texto extraído de esta página',
+          },
+        },
+        {
+          name: 'summary',
+          type: 'textarea',
+          admin: {
+            description: 'Resumen del contenido de la página generado por IA',
           },
         },
       ],
@@ -159,60 +134,40 @@ export const Resources: CollectionConfig = {
       name: 'chunks',
       type: 'array',
       admin: {
-        description:
-          'Chunks de 15 segundos del vídeo con transcripción y descripciones (auto-generado)',
+        description: 'Segmentos de texto del documento para generar embeddings (auto-generado)',
         readOnly: true,
         condition: (data) => data.status !== 'pending',
       },
       fields: [
         {
-          name: 'timeStart',
+          name: 'chunkIndex',
           type: 'number',
           required: true,
           admin: {
-            description: 'Tiempo de inicio del chunk en milisegundos',
+            description: 'Índice del segmento de texto',
           },
         },
         {
-          name: 'timeEnd',
+          name: 'pageNumber',
           type: 'number',
-          required: true,
           admin: {
-            description: 'Tiempo de fin del chunk en milisegundos',
+            description: 'Número de página de origen (para PDFs)',
           },
         },
         {
-          name: 'transcription',
+          name: 'content',
           type: 'textarea',
           required: true,
           admin: {
-            description: 'Transcripción parcial del chunk (JSON con tiempos)',
+            description: 'Contenido de texto del segmento',
           },
         },
         {
-          name: 'description',
+          name: 'summary',
           type: 'textarea',
-          required: true,
           admin: {
-            description: 'Descripción generada por IA de lo que ocurre en este chunk',
+            description: 'Resumen del contenido generado por IA',
           },
-        },
-        {
-          name: 'screenshots',
-          type: 'array',
-          admin: {
-            description: 'IDs de screenshots que pertenecen a este chunk',
-          },
-          fields: [
-            {
-              name: 'screenshotId',
-              type: 'text',
-              required: true,
-              admin: {
-                description: 'ID del screenshot que cae en este rango temporal',
-              },
-            },
-          ],
         },
       ],
     },
@@ -220,12 +175,10 @@ export const Resources: CollectionConfig = {
       name: 'type',
       type: 'select',
       required: true,
-      defaultValue: 'video',
+      defaultValue: 'document',
       options: [
-        { label: 'Vídeo', value: 'video' },
-        { label: 'Audio', value: 'audio' },
-        { label: 'PDF', value: 'pdf' },
-        { label: 'PPT', value: 'ppt' },
+        { label: 'Documento PDF', value: 'document' },
+        { label: 'Imagen', value: 'image' },
       ],
       admin: {
         description: 'Tipo de recurso a procesar',
@@ -331,18 +284,18 @@ export const Resources: CollectionConfig = {
       },
       fields: [
         {
-          name: 'duration',
+          name: 'pages',
           type: 'number',
           admin: {
-            description: 'Duración del contenido en segundos',
+            description: 'Número de páginas del documento',
             readOnly: true,
           },
         },
         {
-          name: 'segments',
+          name: 'textChunks',
           type: 'number',
           admin: {
-            description: 'Número de segmentos generados',
+            description: 'Número de segmentos de texto generados',
             readOnly: true,
           },
         },
@@ -370,7 +323,7 @@ export const Resources: CollectionConfig = {
               name: 'type',
               type: 'select',
               options: [
-                { label: 'Video Processing', value: 'video-processing' },
+                { label: 'Document Processing', value: 'document-processing' },
                 { label: 'Embedding Generation', value: 'embedding-generation' },
               ],
             },
@@ -566,7 +519,7 @@ export const Resources: CollectionConfig = {
               {
                 error: 'Resource must be completed before generating embeddings',
                 currentStatus: resource.status,
-                message: 'Please wait for video processing to complete first',
+                message: 'Please wait for document processing to complete first',
               },
               { status: 400 },
             )
@@ -582,37 +535,22 @@ export const Resources: CollectionConfig = {
             )
           }
 
-          // Convertir chunks de PayloadCMS al formato VideoChunk esperado por EmbeddingJob
-          const embeddingChunks: VideoChunk[] = resource.chunks.map((chunk: any, index: number) => {
-            // Parsear transcripción si es string JSON
-            let transcription: TranscriptionSegment[] = []
-            if (typeof chunk.transcription === 'string') {
-              try {
-                transcription = JSON.parse(chunk.transcription)
-              } catch (error) {
-                console.warn(`Failed to parse transcription for chunk ${index}:`, error)
-                transcription = []
-              }
-            } else if (Array.isArray(chunk.transcription)) {
-              transcription = chunk.transcription
-            }
+          // Convertir chunks de PayloadCMS al formato esperado por EmbeddingJob
+          const embeddingChunks: any[] = resource.chunks.map((chunk: any, index: number) => {
+            // Procesar contenido del chunk de documento
+            const content = chunk.content || ''
 
             return {
               id: index + 1,
-              start_ms: chunk.timeStart,
-              end_ms: chunk.timeEnd,
               namespace: resource.namespace,
               resourceId: resource.id,
               chunkIndex: index,
-              timeStart: chunk.timeStart, // Compatibilidad legacy
-              timeEnd: chunk.timeEnd, // Compatibilidad legacy
-              transcription: transcription,
-              description: chunk.description || '',
-              screenshots: chunk.screenshots?.map((s: any) => s.screenshotId || s.id || '') || [],
+              pageNumber: chunk.pageNumber || 1,
+              content: content,
+              summary: chunk.summary || '',
               metadata: {
-                chunkDuration: chunk.timeEnd - chunk.timeStart,
-                transcriptionText: transcription.map((t) => t.text).join(' '),
-                screenshotCount: chunk.screenshots?.length || 0,
+                chunkLength: content.length,
+                pageNumber: chunk.pageNumber || 1,
                 processingTime: 0, // No disponible en este contexto
               },
             }
@@ -625,10 +563,8 @@ export const Resources: CollectionConfig = {
             triggeredBy: 'manual',
             chunks: embeddingChunks,
             metadata: {
-              videoTitle: resource.title || `Resource ${resource.id}`,
-              totalDuration: resource.processingMetadata?.duration
-                ? resource.processingMetadata.duration * 1000
-                : undefined,
+              documentTitle: resource.title || `Resource ${resource.id}`,
+              totalPages: resource.processingMetadata?.pages || undefined,
               chunkCount: embeddingChunks.length,
             },
           }
@@ -863,9 +799,9 @@ export const Resources: CollectionConfig = {
         // Validaciones para creación
         if (operation === 'create') {
           // Inicializar arrays vacíos para nuevos campos
-          data.screenshots = data.screenshots || []
+          data.documentPages = data.documentPages || []
           data.chunks = data.chunks || []
-          data.transcription = data.transcription || ''
+          data.extractedText = data.extractedText || ''
 
           // Validar campos requeridos
           if (!data.namespace || data.namespace.trim().length === 0) {
@@ -877,9 +813,11 @@ export const Resources: CollectionConfig = {
           data.user_metadata = data.user_metadata || {}
         }
 
-        if (operation === 'create' && data.type === 'video') {
-          data.status = 'processing'
+        if (operation === 'create' && (data.type === 'document' || data.type === 'image')) {
+          // Para documentos, marcar como completado inmediatamente ya que no necesitan procesamiento complejo
+          data.status = 'completed'
           data.startedAt = new Date().toISOString()
+          data.completedAt = new Date().toISOString()
 
           // Obtener información del archivo
           const file = await req.payload.findByID({
@@ -890,12 +828,12 @@ export const Resources: CollectionConfig = {
 
           data.logs = [
             {
-              step: 'init',
-              status: 'started',
+              step: 'upload',
+              status: 'success',
               at: new Date().toISOString(),
-              details: 'Video processing job enqueued',
+              details: `Document uploaded successfully: ${(file as Media)?.filename || 'unknown'}`,
               data: {
-                jobType: 'video-processing',
+                jobType: 'document-upload',
                 fileName: (file as Media)?.filename || '',
                 fileSize: (file as Media)?.filesize || 0,
                 namespace: data.namespace,
@@ -904,57 +842,31 @@ export const Resources: CollectionConfig = {
               },
             },
           ]
+
+          console.log('📄 [RESOURCES] Document resource configured:', {
+            type: data.type,
+            fileName: (file as Media)?.filename,
+            status: data.status,
+          })
         }
         return data
       },
     ],
     afterChange: [
       async ({ doc, operation, previousDoc, req }) => {
-        // Hook para encolar job de procesamiento cuando se crea un nuevo recurso
-        if (operation === 'create' && doc.type === 'video') {
+        // Hook simplificado - solo log para documentos
+        if (operation === 'create' && (doc.type === 'document' || doc.type === 'image')) {
           try {
-            // Obtener información del archivo media relacionado
             const mediaFile = doc.file as Media
-
-            if (!mediaFile) {
-              throw new Error('No media file associated with resource')
-            }
-
-            // Crear job de procesamiento de video
-            const videoJob: VideoProcessingJob = {
+            console.log('✅ [RESOURCES] Document resource created successfully:', {
               resourceId: doc.id,
-              videoUrl: mediaFile.url || '',
-              fileName: mediaFile.filename || '',
-              fileSize: mediaFile.filesize || 0,
-              namespace: doc.namespace || '',
-              filters: doc.filters || {},
-              user_metadata: doc.user_metadata || {},
-            }
-
-            // Encolar job de procesamiento
-            await QueueManager.enqueueVideoProcessing(videoJob)
-
-            console.log('Video processing job enqueued for resource:', doc.id)
-          } catch (error) {
-            console.error('Failed to enqueue video processing job:', error)
-
-            // Actualizar estado a failed si no se pudo encolar
-            await req.payload.update({
-              collection: 'resources',
-              id: doc.id,
-              data: {
-                status: 'failed',
-                logs: [
-                  {
-                    step: 'init',
-                    status: 'error',
-                    at: new Date().toISOString(),
-                    details: `Failed to enqueue processing job: ${error}`,
-                    data: { error: String(error) },
-                  },
-                ],
-              },
+              fileName: mediaFile?.filename || 'unknown',
+              fileSize: mediaFile?.filesize || 0,
+              type: doc.type,
+              namespace: doc.namespace,
             })
+          } catch (error) {
+            console.error('❌ [RESOURCES] Error in afterChange hook:', error)
           }
         }
 
