@@ -62,7 +62,7 @@ export function DeleteApiKeyDialog({ apiKey, children, onSuccess }: DeleteApiKey
           </AlertDialogTitle>
           <AlertDialogDescription className='space-y-2'>
             <p>
-              Estás a punto de eliminar la API Key <strong>"{apiKey.name}"</strong>.
+              Estás a punto de eliminar la API Key <strong>&quot;{apiKey.name}&quot;</strong>.
             </p>
             <p>
               Esta acción no se puede deshacer. Todos los servicios que usen esta API Key perderán
