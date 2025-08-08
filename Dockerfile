@@ -81,6 +81,7 @@ WORKDIR /app
 ENV NODE_ENV production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_OPTIONS --no-deprecation
 
 # Runtime environment variables - estas deben estar disponibles cuando la app corre
 # Railway las inyectará automáticamente desde las variables configuradas en el proyecto
