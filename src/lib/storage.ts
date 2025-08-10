@@ -7,17 +7,19 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   ListObjectsV2Command,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3'
+import { getSignedUrl as awsGetSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const s3Client = new S3Client({
-  region: process.env.S3_REGION || 'us-east-1',
+  region: process.env.S3_REGION || process.env.AWS_REGION || 'us-east-1',
   credentials: {
-    accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+    accessKeyId: process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '',
   },
 })
 
-const BUCKET_NAME = process.env.S3_BUCKET || ''
+const BUCKET_NAME = process.env.S3_BUCKET || process.env.AWS_S3_BUCKET || ''
 
 export class StorageManager {
   /**
@@ -113,9 +115,13 @@ export class StorageManager {
     return Buffer.from('')
   }
 
-  static async getSignedUrl(key: string): Promise<string> {
-    // TODO: Implementar URL firmada en futuras sub-tareas
-    return 'https://s3.amazonaws.com/bucket/file'
+  static async getSignedUrl(key: string, expiresInSeconds: number = 3600): Promise<string> {
+    if (!BUCKET_NAME) {
+      throw new Error('S3_BUCKET environment variable is required')
+    }
+    const command = new GetObjectCommand({ Bucket: BUCKET_NAME, Key: key })
+    const signed = await awsGetSignedUrl(s3Client, command, { expiresIn: expiresInSeconds })
+    return signed
   }
 }
 

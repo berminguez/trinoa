@@ -274,6 +274,15 @@ export const Resources: CollectionConfig = {
         },
       ],
     },
+    // Resultado de análisis de Azure (almacenado como JSON)
+    {
+      name: 'analyzeResult',
+      type: 'json',
+      admin: {
+        description: 'Resultado de Azure Document Intelligence recibido via webhook',
+        readOnly: true,
+      },
+    },
     // Campos de metadatos del procesamiento
     {
       name: 'processingMetadata',
@@ -487,149 +496,61 @@ export const Resources: CollectionConfig = {
       },
     },
     {
-      path: '/:id/embeddings',
+      path: '/:id/webhook',
       method: 'post',
       handler: async (req) => {
         try {
-          // Verificar autenticación
-          if (!req.user) {
-            const authError = createAuthErrorResponse('Authentication required')
-            return Response.json(authError, { status: 401 })
-          }
-
           const resourceId = (req.routeParams as { id: string })?.id
           if (!resourceId) {
-            return Response.json({ error: 'Resource ID is required' }, { status: 400 })
-          }
-
-          // Buscar el recurso
-          const resource = await req.payload.findByID({
-            collection: 'resources',
-            id: resourceId,
-            depth: 2,
-          })
-
-          if (!resource) {
-            return Response.json({ error: 'Resource not found' }, { status: 404 })
-          }
-
-          // Validar que el recurso está completado y tiene chunks
-          if (resource.status !== 'completed') {
             return Response.json(
-              {
-                error: 'Resource must be completed before generating embeddings',
-                currentStatus: resource.status,
-                message: 'Please wait for document processing to complete first',
-              },
+              { success: false, error: 'Resource ID is required' },
               { status: 400 },
             )
           }
 
-          if (!resource.chunks || resource.chunks.length === 0) {
+          // Leer body JSON de n8n
+          let body: any = {}
+          try {
+            body = await (req as any).json()
+          } catch {
+            return Response.json({ success: false, error: 'Invalid JSON body' }, { status: 400 })
+          }
+
+          const analyzeResult = body?.analyzeResult
+          if (!analyzeResult) {
             return Response.json(
-              {
-                error: 'No chunks available for embedding generation',
-                message: 'The resource must have processed chunks to generate embeddings',
-              },
+              { success: false, error: 'Missing analyzeResult in body' },
               { status: 400 },
             )
           }
 
-          // Convertir chunks de PayloadCMS al formato esperado por EmbeddingJob
-          const embeddingChunks: any[] = resource.chunks.map((chunk: any, index: number) => {
-            // Procesar contenido del chunk de documento
-            const content = chunk.content || ''
-
-            return {
-              id: index + 1,
-              namespace: resource.namespace,
-              resourceId: resource.id,
-              chunkIndex: index,
-              pageNumber: chunk.pageNumber || 1,
-              content: content,
-              summary: chunk.summary || '',
-              metadata: {
-                chunkLength: content.length,
-                pageNumber: chunk.pageNumber || 1,
-                processingTime: 0, // No disponible en este contexto
-              },
-            }
-          })
-
-          // Crear job de embeddings
-          const embeddingJob: EmbeddingJob = {
-            resourceId: resource.id,
-            namespace: resource.namespace,
-            triggeredBy: 'manual',
-            chunks: embeddingChunks,
-            metadata: {
-              documentTitle: resource.title || `Resource ${resource.id}`,
-              totalPages: resource.processingMetadata?.pages || undefined,
-              chunkCount: embeddingChunks.length,
-            },
-          }
-
-          // Encolar job de embeddings
-          const embeddingJobId = await QueueManager.enqueueEmbeddingGeneration(embeddingJob)
-
-          // Agregar log de embedding job manual
-          const currentLogs = resource.logs || []
-          const newLog = {
-            step: 'embedding-manual',
-            status: 'started' as const,
-            at: new Date().toISOString(),
-            details: `Manual embedding generation job enqueued: ${embeddingJobId}`,
-            data: {
-              jobId: embeddingJobId,
-              chunkCount: embeddingChunks.length,
-              triggeredBy: 'manual',
-              triggeredByUser: req.user.id,
-              namespace: resource.namespace,
-            },
-          }
-
-          // Actualizar resource con el nuevo log
-          await req.payload.update({
+          // Actualizar el recurso: status -> processed, guardar analyzeResult en JSON
+          const updated = await req.payload.update({
             collection: 'resources',
             id: resourceId,
             data: {
-              logs: [...currentLogs, newLog],
-            },
+              status: 'processed',
+              analyzeResult: analyzeResult,
+              logs: [
+                {
+                  step: 'azure-analyze',
+                  status: 'success',
+                  at: new Date().toISOString(),
+                  details: 'Analyze result received from Azure via n8n',
+                  data: {
+                    modelId: body?.modelId,
+                    jobStatus: body?.status,
+                  },
+                },
+              ],
+            } as any,
+            overrideAccess: true,
           })
 
-          const response = {
-            resourceId: resource.id,
-            embeddingJobId: embeddingJobId,
-            chunkCount: embeddingChunks.length,
-            namespace: resource.namespace,
-            message: 'Embedding generation job enqueued successfully',
-            estimatedTime: `${embeddingChunks.length * 2} seconds`,
-            status: 'enqueued',
-            triggeredBy: 'manual',
-            triggeredAt: new Date().toISOString(),
-          }
-
-          return Response.json({
-            success: true,
-            data: response,
-            message: 'Embedding generation started successfully',
-          })
+          return Response.json({ success: true, data: { id: updated.id } })
         } catch (error) {
-          console.error('Error starting embedding generation:', error)
-
-          if (error instanceof Error && error.message.includes('Authentication')) {
-            const authError = createAuthErrorResponse(error.message)
-            return Response.json(authError, { status: 401 })
-          }
-
-          return Response.json(
-            {
-              success: false,
-              error: 'Internal server error while starting embedding generation',
-              details: error instanceof Error ? error.message : 'Unknown error',
-            },
-            { status: 500 },
-          )
+          console.error('Error in resources webhook:', error)
+          return Response.json({ success: false, error: 'Internal error' }, { status: 500 })
         }
       },
     },
@@ -874,6 +795,7 @@ export const Resources: CollectionConfig = {
         if (operation === 'create') {
           try {
             // Leer configuración global con overrideAccess para bypass de permisos
+            console.log('[AUTOMATION] Checking global configuracion for webhook...')
             const configuracion: any = await req.payload.findGlobal({
               slug: 'configuracion' as any,
               depth: 0,
@@ -882,14 +804,17 @@ export const Resources: CollectionConfig = {
 
             const automation = configuracion?.automationEndpoint
             if (!automation || !automation.enabled || !automation.url) {
+              console.log('[AUTOMATION] Webhook disabled or URL missing. Skipping webhook.')
               return
             }
 
             const method = String(automation.httpMethod || 'POST').toUpperCase()
             const url = String(automation.url)
+            console.log('[AUTOMATION] Preparing webhook call:', { method, url })
 
             const headers: Record<string, string> = {
               'User-Agent': 'Trinoa-Automation/1.0',
+              Accept: 'application/json',
             }
 
             if (automation?.bearerToken) {
@@ -907,8 +832,9 @@ export const Resources: CollectionConfig = {
             let fetchUrl = url
             const init: RequestInit = { method }
 
-            // Intentar obtener URL del media
+            // Intentar obtener URL del media. Preferir URL firmada S3 si filename existe
             let fileUrl: string | null = null
+            let fileMeta: any = undefined
             try {
               const media =
                 typeof (doc as any).file === 'string'
@@ -917,7 +843,44 @@ export const Resources: CollectionConfig = {
                       id: String((doc as any).file),
                     })
                   : ((doc as any).file as any)
-              fileUrl = (media as any)?.url ?? null
+              fileMeta = media
+                ? {
+                    id: String((media as any)?.id ?? ''),
+                    filename: (media as any)?.filename ?? undefined,
+                    filesize: (media as any)?.filesize ?? undefined,
+                    mimeType: (media as any)?.mimeType ?? (media as any)?.mime_type ?? undefined,
+                  }
+                : undefined
+              const rawUrl = (media as any)?.url ?? null
+              if (rawUrl) {
+                const isAbsolute = /^https?:\/\//i.test(String(rawUrl))
+                if (isAbsolute) {
+                  fileUrl = String(rawUrl)
+                } else {
+                  // Base URL desde configuración o cabeceras
+                  const configuredBase: string | undefined =
+                    configuracion?.seo?.baseUrl || configuracion?.brand?.baseUrl
+                  const headerHost = (req as any)?.headers?.host as string | undefined
+                  const headerProto =
+                    ((req as any)?.headers?.['x-forwarded-proto'] as string | undefined) || 'https'
+                  const derivedBase = headerHost ? `${headerProto}://${headerHost}` : undefined
+                  const base = configuredBase || derivedBase
+                  fileUrl = base ? `${base}${String(rawUrl)}` : String(rawUrl)
+                }
+              }
+              // Si disponemos de filename (clave en S3), generamos URL firmada prioritaria
+              const s3Key = (media as any)?.filename as string | undefined
+              if (s3Key) {
+                try {
+                  const signed = await StorageManager.getSignedUrl(s3Key, 3600)
+                  fileUrl = signed
+                } catch (e) {
+                  console.warn(
+                    '[AUTOMATION] Failed to create signed URL, falling back to raw url:',
+                    e,
+                  )
+                }
+              }
             } catch {}
 
             if (method === 'GET') {
@@ -928,29 +891,45 @@ export const Resources: CollectionConfig = {
               u.searchParams.set('type', String((doc as any).type || ''))
               if (fileUrl) u.searchParams.set('fileUrl', String(fileUrl))
               fetchUrl = u.toString()
-              if (automation.sendResourceBody) {
-                // Para GET, si se desea enviar el recurso, lo añadimos como query compacta
-                try {
-                  u.searchParams.set('resource', encodeURIComponent(JSON.stringify(doc)))
-                  fetchUrl = u.toString()
-                } catch {}
-              }
             } else {
-              if (automation.sendResourceBody) {
-                headers['Content-Type'] = 'application/json'
-                init.body = JSON.stringify({
-                  event: 'resource.created',
-                  fileUrl,
-                  resource: doc,
-                })
+              // POST: siempre enviamos cuerpo JSON mínimo
+              headers['Content-Type'] = 'application/json'
+
+              const minimalFile = fileMeta
+                ? {
+                    filename: fileMeta.filename,
+                    filesize: fileMeta.filesize,
+                    mimeType: fileMeta.mimeType,
+                  }
+                : undefined
+
+              const payloadBody = {
+                event: 'resource.created',
+                resourceId: String(doc.id),
+                namespace: String((doc as any).namespace || ''),
+                type: String((doc as any).type || ''),
+                fileUrl,
+                file: minimalFile,
               }
+              init.body = JSON.stringify(payloadBody)
             }
 
             init.headers = headers
 
+            // Timeout de 10s por seguridad
+            const controller = new AbortController()
+            const timer = setTimeout(() => controller.abort(), 10000)
+            ;(init as any).signal = controller.signal
+            console.log('[AUTOMATION] Calling webhook...', {
+              fetchUrl,
+              method,
+              headers: Object.keys(headers),
+            })
             const res = await fetch(fetchUrl, init)
+            clearTimeout(timer)
             const ok = res.ok
             const status = res.status
+            console.log('[AUTOMATION] Webhook response:', { ok, status })
             let responseText = ''
             try {
               responseText = await res.text()
@@ -984,9 +963,11 @@ export const Resources: CollectionConfig = {
               collection: 'resources',
               id: String(doc.id),
               data: updateData,
+              overrideAccess: true,
             })
           } catch (error) {
             // No interrumpir el flujo por errores del webhook; solo loggear
+            console.error('[AUTOMATION] Exception while sending webhook:', error)
             try {
               const current = await req.payload.findByID({
                 collection: 'resources',
@@ -1004,6 +985,7 @@ export const Resources: CollectionConfig = {
                 collection: 'resources',
                 id: String(doc.id),
                 data: { logs: [...currentLogs, errLog] },
+                overrideAccess: true,
               })
             } catch {}
           }
