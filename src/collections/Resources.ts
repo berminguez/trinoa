@@ -202,6 +202,7 @@ export const Resources: CollectionConfig = {
       options: [
         { label: 'Pendiente', value: 'pending' },
         { label: 'Procesando', value: 'processing' },
+        { label: 'Procesado', value: 'processed' },
         { label: 'Completado', value: 'completed' },
         { label: 'Fallido', value: 'failed' },
       ],
