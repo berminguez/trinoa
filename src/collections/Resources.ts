@@ -519,10 +519,11 @@ export const Resources: CollectionConfig = {
 
       options: [
         { label: 'Pendiente', value: 'pending' },
+        { label: 'Subiendo', value: 'uploading' },
         { label: 'Procesando', value: 'processing' },
-        { label: 'Procesado', value: 'processed' },
         { label: 'Completado', value: 'completed' },
         { label: 'Fallido', value: 'failed' },
+        { label: 'Requiere revisión', value: 'needs_review' },
       ],
       admin: {
         description: 'Estado actual del procesamiento',
@@ -844,12 +845,12 @@ export const Resources: CollectionConfig = {
             )
           }
 
-          // Actualizar el recurso: status -> processed, guardar analyzeResult en JSON
+          // Actualizar el recurso: status -> completed (de momento), guardar analyzeResult en JSON
           const updated = await req.payload.update({
             collection: 'resources',
             id: resourceId,
             data: {
-              status: 'processed',
+              status: 'completed',
               analyzeResult: analyzeResult,
               logs: [
                 {
@@ -1056,7 +1057,7 @@ export const Resources: CollectionConfig = {
 
         if (operation === 'create' && (data.type === 'document' || data.type === 'image')) {
           // Para documentos, marcar como completado inmediatamente ya que no necesitan procesamiento complejo
-          data.status = 'completed'
+          data.status = 'processing'
           data.startedAt = new Date().toISOString()
           data.completedAt = new Date().toISOString()
 
@@ -1289,6 +1290,8 @@ export const Resources: CollectionConfig = {
             if (ok) {
               updateData.status = 'processing'
               updateData.startedAt = (doc as any).startedAt || new Date().toISOString()
+            } else {
+              updateData.status = 'failed'
             }
 
             await req.payload.update({

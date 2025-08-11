@@ -454,7 +454,7 @@ export interface Resource {
   /**
    * Estado actual del procesamiento
    */
-  status: 'pending' | 'processing' | 'processed' | 'completed' | 'failed';
+  status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'needs_review';
   /**
    * Progreso del procesamiento (0-100%)
    */

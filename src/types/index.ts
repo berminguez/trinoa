@@ -139,7 +139,7 @@ export interface ApiResponse<T = unknown> {
 
 export interface ResourceStatusResponse {
   id: string
-  status: 'pending' | 'processing' | 'completed' | 'failed'
+  status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'needs_review'
   progress: number
   createdAt: string
   updatedAt: string

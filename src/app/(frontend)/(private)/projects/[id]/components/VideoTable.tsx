@@ -382,12 +382,25 @@ export function DocumentTable({
                     Completado
                   </Badge>
                 )
+              case 'uploading':
+                return (
+                  <Badge className='bg-purple-100 text-purple-800 hover:bg-purple-100'>
+                    Subiendo
+                  </Badge>
+                )
               case 'processing':
                 return (
                   <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100'>Procesando</Badge>
                 )
+              case 'failed':
               case 'error':
-                return <Badge className='bg-red-100 text-red-800 hover:bg-red-100'>Error</Badge>
+                return <Badge className='bg-red-100 text-red-800 hover:bg-red-100'>Fallido</Badge>
+              case 'needs_review':
+                return (
+                  <Badge className='bg-orange-100 text-orange-800 hover:bg-orange-100'>
+                    Requiere revisión
+                  </Badge>
+                )
               default:
                 return (
                   <Badge className='bg-yellow-100 text-yellow-800 hover:bg-yellow-100'>
@@ -527,7 +540,9 @@ export function DocumentTable({
           <div className='text-center py-12'>
             <IconFileText className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
             <h3 className='text-lg font-semibold mb-2'>Aún no hay documentos</h3>
-            <p className='text-muted-foreground'>Sube documentos para empezar a construir tu proyecto</p>
+            <p className='text-muted-foreground'>
+              Sube documentos para empezar a construir tu proyecto
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -545,7 +560,8 @@ export function DocumentTable({
             </span>
             {Object.keys(rowSelection).length > 0 && (
               <Badge variant='secondary' className='text-xs'>
-                {Object.keys(rowSelection).length} seleccionado{Object.keys(rowSelection).length !== 1 ? 's' : ''}
+                {Object.keys(rowSelection).length} seleccionado
+                {Object.keys(rowSelection).length !== 1 ? 's' : ''}
               </Badge>
             )}
           </div>
@@ -557,7 +573,9 @@ export function DocumentTable({
           <div className='flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg'>
             <div className='flex items-center gap-2'>
               <span className='text-sm font-medium text-blue-800'>
-                {Object.keys(rowSelection).length} documento{Object.keys(rowSelection).length !== 1 ? 's' : ''} seleccionado{Object.keys(rowSelection).length !== 1 ? 's' : ''}
+                {Object.keys(rowSelection).length} documento
+                {Object.keys(rowSelection).length !== 1 ? 's' : ''} seleccionado
+                {Object.keys(rowSelection).length !== 1 ? 's' : ''}
               </span>
             </div>
             <div className='flex items-center gap-2'>
@@ -634,7 +652,8 @@ export function DocumentTable({
         {/* Información de selección */}
         {Object.keys(rowSelection).length > 0 && (
           <div className='text-sm text-muted-foreground'>
-            {Object.keys(rowSelection).length} de {table.getFilteredRowModel().rows.length} fila{table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}
+            {Object.keys(rowSelection).length} de {table.getFilteredRowModel().rows.length} fila
+            {table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}
             seleccionada{Object.keys(rowSelection).length !== 1 ? 's' : ''}.
           </div>
         )}

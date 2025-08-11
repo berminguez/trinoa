@@ -15,7 +15,7 @@ export interface PlaygroundVideo {
   projectId: string
   projectTitle: string
   type: 'video' | 'audio' | 'pdf' | 'ppt' | 'document' | 'image'
-  status: 'pending' | 'processing' | 'completed' | 'failed'
+  status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'needs_review'
   available?: boolean // Indica si el video está disponible o fue eliminado
 }
 

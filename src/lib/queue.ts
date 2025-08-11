@@ -261,7 +261,7 @@ export class QueueManager {
    */
   private static async updateResourceStatus(
     resourceId: string,
-    status: 'pending' | 'processing' | 'completed' | 'failed',
+    status: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'needs_review',
     progress: number,
     logEntry?: {
       step: string
