@@ -76,7 +76,7 @@ export const Resources: CollectionConfig = {
       type: 'select',
       required: false,
       options: [
-        { label: 'Factura de suministros', value: 'factura_suministros' },
+        { label: 'Factura de suministros', value: 'factura_suministros' }, // electricidad, agua, gas, etc.
         { label: 'Compras de combustible / Taxi', value: 'desplazamientos' },
         { label: 'Compras de materias primas', value: 'materias_primas' },
         { label: 'Viajes realizados (tipo 2)', value: 'viajes_tipo_2' },
@@ -119,9 +119,10 @@ export const Resources: CollectionConfig = {
           name: 'tipo_suministro',
           label: 'Tipo de suministro/combustible',
           type: 'select',
-          options: ['electricidad', 'agua', 'gas_natural', 'diesel', 'gasolina', 'GLP'].map(
-            (v) => ({ label: v.toUpperCase ? v.toUpperCase() : v, value: v }),
-          ),
+          options: ['electricidad', 'agua', 'gas'].map((v) => ({
+            label: v.toUpperCase ? v.toUpperCase() : v,
+            value: v,
+          })),
         },
         { name: 'proveedor_servicio', label: 'Proveedor del servicio', type: 'text' },
         { name: 'codigo_factura', label: 'Código de la factura', type: 'text' },

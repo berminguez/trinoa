@@ -282,7 +282,7 @@ export interface Resource {
     fecha_compra?: string | null;
     volumen_consumido?: number | null;
     unidad_medida?: ('kWh' | 'L' | 'm3' | 'kg' | 'km') | null;
-    tipo_suministro?: ('electricidad' | 'agua' | 'gas_natural' | 'diesel' | 'gasolina' | 'GLP') | null;
+    tipo_suministro?: ('electricidad' | 'agua' | 'gas') | null;
     proveedor_servicio?: string | null;
     codigo_factura?: string | null;
   };
