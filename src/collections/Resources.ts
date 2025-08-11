@@ -90,6 +90,37 @@ export const Resources: CollectionConfig = {
       },
     },
 
+    // ---- Selector de tipo
+    {
+      name: 'tipo',
+      label: 'Tipo',
+      type: 'select',
+      required: false,
+      options: [
+        { label: 'Electricidad', value: 'electricidad' },
+        { label: 'Agua', value: 'agua' },
+        { label: 'Gas', value: 'gas' },
+        { label: 'Combustible para calefacción', value: 'combustible' },
+        { label: 'Gasolinera', value: 'gasolinera' },
+        { label: 'Taxi / VTC', value: 'taxi_vtc' },
+        { label: 'Factura (prebuilt)', value: 'prebuilt-invoice' },
+        { label: 'Recibo (prebuilt)', value: 'prebuilt-receipt' },
+      ],
+      validate: (value: unknown, ctx: { siblingData?: Record<string, unknown> }) => {
+        if (!value) return true
+        const caso = ctx?.siblingData?.caso as string | undefined
+        const allowedByCaso: Record<string, string[]> = {
+          factura_suministros: ['electricidad', 'agua', 'gas', 'combustible'],
+          desplazamientos: ['gasolinera', 'taxi_vtc'],
+        }
+        const defaultAllowed = ['prebuilt-invoice', 'prebuilt-receipt']
+        const allowed = caso && allowedByCaso[caso] ? allowedByCaso[caso] : defaultAllowed
+        return allowed.includes(String(value))
+          ? true
+          : `Tipo "${String(value)}" no es válido para el caso seleccionado`
+      },
+    },
+
     // ---- Caso 1: Factura de suministros
     {
       name: 'factura_suministros',
@@ -1227,6 +1258,7 @@ export const Resources: CollectionConfig = {
 
               // Valores de caso y tipo_suministro (solo aplica cuando caso === 'factura_suministros')
               const casoValue = (doc as any)?.caso as string | undefined
+              const tipo = (doc as any)?.tipo as string | undefined
               const tipoSuministroValue =
                 casoValue === 'factura_suministros'
                   ? (((doc as any)?.factura_suministros as any)?.tipo_suministro as
@@ -1243,6 +1275,7 @@ export const Resources: CollectionConfig = {
                 file: minimalFile,
                 // Si no existen, JSON.stringify omitirá estas propiedades (equivalente a undefined)
                 caso: casoValue,
+                tipo: tipo,
                 tipo_suministro: tipoSuministroValue,
               }
               init.body = JSON.stringify(payloadBody)

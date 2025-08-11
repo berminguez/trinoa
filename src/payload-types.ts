@@ -273,6 +273,18 @@ export interface Resource {
         | 'viajes_tipo_1'
       )
     | null;
+  tipo?:
+    | (
+        | 'electricidad'
+        | 'agua'
+        | 'gas'
+        | 'combustible'
+        | 'gasolinera'
+        | 'taxi_vtc'
+        | 'prebuilt-invoice'
+        | 'prebuilt-receipt'
+      )
+    | null;
   factura_suministros?: {
     codigo_suministro?: string | null;
     periodo_consumo?: {
@@ -1054,6 +1066,7 @@ export interface ResourcesSelect<T extends boolean = true> {
   nombre_cliente?: T;
   nombre_documento?: T;
   caso?: T;
+  tipo?: T;
   factura_suministros?:
     | T
     | {
