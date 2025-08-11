@@ -7,9 +7,6 @@ import { getPayload } from 'payload'
 
 import config from '@payload-config'
 
-import { EmbeddingWorker } from '../workers/embedding-worker'
-import { VideoProcessingWorker } from '../workers/video-processor'
-
 import type { VideoProcessingJob, EmbeddingJob } from '../types'
 
 let agenda: Agenda | null = null
@@ -112,9 +109,6 @@ export class QueueManager {
               },
             })
 
-            // Ejecutar el pipeline real del worker
-            await VideoProcessingWorker.processVideoJob(jobData)
-
             // El worker ya actualiza el resource con los datos finales
             // Aquí solo confirmamos el éxito
             await this.updateResourceStatus(resourceId, 'completed', 100, {
@@ -177,9 +171,6 @@ export class QueueManager {
                 namespace,
               },
             })
-
-            // Ejecutar el pipeline real del worker de embeddings
-            await EmbeddingWorker.processEmbeddingJob(jobData)
 
             // El worker ya actualiza el resource con los datos finales
             // Aquí solo confirmamos el éxito del job

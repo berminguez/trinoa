@@ -34,8 +34,6 @@ Trinoa facilita a las empresas el proceso completo de medición y compensación 
 | **Backend/CMS** | Payload CMS + Next.js + TypeScript |
 | **Base de Datos** | MongoDB Atlas |
 | **Almacenamiento** | AWS S3 |
-| **Cola de Jobs** | Agenda (MongoDB) |
-| **Vector Store** | Pinecone |
 | **IA Services** | OpenAI (GPT-4o Vision, text-embedding-3-small) |
 | **OCR** | Azure Document Intelligence / Tesseract |
 | **UI** | Shadcn/ui + Tailwind CSS + Tabler Icons |
