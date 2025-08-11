@@ -256,6 +256,117 @@ export interface Resource {
    * Namespace para organizar contenidos (ej: curso-matematicas, empresa-acme)
    */
   namespace: string;
+  nombre_cliente?: string | null;
+  nombre_documento?: string | null;
+  /**
+   * Selecciona el tipo de caso para mostrar los campos correspondientes
+   */
+  caso?:
+    | (
+        | 'factura_suministros'
+        | 'desplazamientos'
+        | 'materias_primas'
+        | 'viajes_tipo_2'
+        | 'variado_emails'
+        | 'consumos_combustible_tipo_1'
+        | 'residuos'
+        | 'viajes_tipo_1'
+      )
+    | null;
+  factura_suministros?: {
+    codigo_suministro?: string | null;
+    periodo_consumo?: {
+      fecha_inicio?: string | null;
+      fecha_fin?: string | null;
+    };
+    fecha_compra?: string | null;
+    volumen_consumido?: number | null;
+    unidad_medida?: ('kWh' | 'L' | 'm3' | 'kg' | 'km') | null;
+    tipo_suministro?: ('electricidad' | 'agua' | 'gas_natural' | 'diesel' | 'gasolina' | 'GLP') | null;
+    proveedor_servicio?: string | null;
+    codigo_factura?: string | null;
+  };
+  desplazamientos?: {
+    fecha_servicio?: string | null;
+    empresa_servicio?: ('uber' | 'cabify' | 'taxi' | 'bolt' | 'otra') | null;
+    importe?: number | null;
+    moneda?: ('EUR' | 'USD' | 'GBP') | null;
+    cantidad_consumida?: number | null;
+    unidad_medida?: ('km' | 'L') | null;
+    tipo_combustible?: ('gasolina' | 'diesel' | 'GLP' | 'NA') | null;
+    codigo_factura?: string | null;
+  };
+  materias_primas?: {
+    nombre_proveedor?: string | null;
+    fecha_factura?: string | null;
+    codigo_factura?: string | null;
+    tipo_producto?: string | null;
+    descripcion_producto?: string | null;
+    peso_kg?: number | null;
+    importe?: number | null;
+    moneda?: ('EUR' | 'USD' | 'GBP') | null;
+  };
+  viajes_tipo_2?: {
+    fecha_viaje?: string | null;
+    medio_transporte?: ('avion' | 'tren' | 'ferry' | 'coche') | null;
+    origen?: string | null;
+    destino?: string | null;
+    escalas?:
+      | {
+          escala?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    numero_personas?: number | null;
+    categoria_billete?: ('turista' | 'preferente' | 'business' | 'primera') | null;
+    tipo_trayecto?: ('ida' | 'ida_vuelta') | null;
+    distancia?: number | null;
+    fuente_distancia?: string | null;
+    codigo_factura?: string | null;
+  };
+  variado_emails?: {
+    remitente?: string | null;
+    fecha?: string | null;
+    descripcion_consumo?: string | null;
+    cantidad?: number | null;
+    unidad_medida?: ('kWh' | 'L' | 'm3' | 'kg' | 'km' | 'ud') | null;
+  };
+  consumos_combustible_tipo_1?: {
+    codigo_tarjeta_o_matricula?: string | null;
+    fecha_repostaje?: string | null;
+    cantidad_combustible?: number | null;
+    unidad_medida?: ('L' | 'kg' | 'kWh') | null;
+    tipo_combustible?: ('gasolina' | 'diesel' | 'GLP') | null;
+    importe?: number | null;
+    moneda?: ('EUR' | 'USD' | 'GBP') | null;
+    codigo_factura?: string | null;
+  };
+  residuos?: {
+    codigo_recogida?: string | null;
+    localizacion_recogida?: string | null;
+    fecha_recogida?: string | null;
+    tipo_residuo?: ('papel' | 'plastico' | 'organico' | 'vidrio' | 'mixto' | 'peligroso' | 'otro') | null;
+    cantidad_residuo?: number | null;
+    unidad_medida?: ('kg' | 't') | null;
+  };
+  viajes_tipo_1?: {
+    fecha_viaje?: string | null;
+    medio_transporte?: ('avion' | 'tren' | 'ferry' | 'coche') | null;
+    origen?: string | null;
+    destino?: string | null;
+    escalas?:
+      | {
+          escala?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    numero_personas?: number | null;
+    categoria_billete?: ('turista' | 'preferente' | 'business' | 'primera') | null;
+    tipo_trayecto?: ('ida' | 'ida_vuelta') | null;
+    distancia?: number | null;
+    fuente_distancia?: string | null;
+    codigo_factura?: string | null;
+  };
   /**
    * Filtros JSON para configuración de Pinecone (opcional)
    */
@@ -343,7 +454,7 @@ export interface Resource {
   /**
    * Estado actual del procesamiento
    */
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'processed' | 'completed' | 'failed';
   /**
    * Progreso del procesamiento (0-100%)
    */
@@ -377,6 +488,18 @@ export interface Resource {
           | null;
         id?: string | null;
       }[]
+    | null;
+  /**
+   * Resultado de Azure Document Intelligence recibido via webhook
+   */
+  analyzeResult?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
     | null;
   /**
    * Metadatos del procesamiento
@@ -928,6 +1051,121 @@ export interface ResourcesSelect<T extends boolean = true> {
   title?: T;
   project?: T;
   namespace?: T;
+  nombre_cliente?: T;
+  nombre_documento?: T;
+  caso?: T;
+  factura_suministros?:
+    | T
+    | {
+        codigo_suministro?: T;
+        periodo_consumo?:
+          | T
+          | {
+              fecha_inicio?: T;
+              fecha_fin?: T;
+            };
+        fecha_compra?: T;
+        volumen_consumido?: T;
+        unidad_medida?: T;
+        tipo_suministro?: T;
+        proveedor_servicio?: T;
+        codigo_factura?: T;
+      };
+  desplazamientos?:
+    | T
+    | {
+        fecha_servicio?: T;
+        empresa_servicio?: T;
+        importe?: T;
+        moneda?: T;
+        cantidad_consumida?: T;
+        unidad_medida?: T;
+        tipo_combustible?: T;
+        codigo_factura?: T;
+      };
+  materias_primas?:
+    | T
+    | {
+        nombre_proveedor?: T;
+        fecha_factura?: T;
+        codigo_factura?: T;
+        tipo_producto?: T;
+        descripcion_producto?: T;
+        peso_kg?: T;
+        importe?: T;
+        moneda?: T;
+      };
+  viajes_tipo_2?:
+    | T
+    | {
+        fecha_viaje?: T;
+        medio_transporte?: T;
+        origen?: T;
+        destino?: T;
+        escalas?:
+          | T
+          | {
+              escala?: T;
+              id?: T;
+            };
+        numero_personas?: T;
+        categoria_billete?: T;
+        tipo_trayecto?: T;
+        distancia?: T;
+        fuente_distancia?: T;
+        codigo_factura?: T;
+      };
+  variado_emails?:
+    | T
+    | {
+        remitente?: T;
+        fecha?: T;
+        descripcion_consumo?: T;
+        cantidad?: T;
+        unidad_medida?: T;
+      };
+  consumos_combustible_tipo_1?:
+    | T
+    | {
+        codigo_tarjeta_o_matricula?: T;
+        fecha_repostaje?: T;
+        cantidad_combustible?: T;
+        unidad_medida?: T;
+        tipo_combustible?: T;
+        importe?: T;
+        moneda?: T;
+        codigo_factura?: T;
+      };
+  residuos?:
+    | T
+    | {
+        codigo_recogida?: T;
+        localizacion_recogida?: T;
+        fecha_recogida?: T;
+        tipo_residuo?: T;
+        cantidad_residuo?: T;
+        unidad_medida?: T;
+      };
+  viajes_tipo_1?:
+    | T
+    | {
+        fecha_viaje?: T;
+        medio_transporte?: T;
+        origen?: T;
+        destino?: T;
+        escalas?:
+          | T
+          | {
+              escala?: T;
+              id?: T;
+            };
+        numero_personas?: T;
+        categoria_billete?: T;
+        tipo_trayecto?: T;
+        distancia?: T;
+        fuente_distancia?: T;
+        codigo_factura?: T;
+      };
   filters?: T;
   user_metadata?: T;
   extractedText?: T;
@@ -963,6 +1201,7 @@ export interface ResourcesSelect<T extends boolean = true> {
         data?: T;
         id?: T;
       };
+  analyzeResult?: T;
   processingMetadata?:
     | T
     | {
