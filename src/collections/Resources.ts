@@ -84,6 +84,7 @@ export const Resources: CollectionConfig = {
         { label: 'Consumos de combustible (tipo 1)', value: 'consumos_combustible_tipo_1' },
         { label: 'Residuos', value: 'residuos' },
         { label: 'Viajes realizados (tipo 1)', value: 'viajes_tipo_1' },
+        { label: 'Otros', value: 'otros' },
       ],
       admin: {
         description: 'Selecciona el tipo de caso para mostrar los campos correspondientes',
@@ -105,6 +106,7 @@ export const Resources: CollectionConfig = {
         { label: 'Taxi / VTC', value: 'taxi_vtc' },
         { label: 'Factura (prebuilt)', value: 'prebuilt-invoice' },
         { label: 'Recibo (prebuilt)', value: 'prebuilt-receipt' },
+        { label: 'Otros', value: 'otros' },
       ],
       validate: (value: unknown, ctx: { siblingData?: Record<string, unknown> }) => {
         if (!value) return true
@@ -112,6 +114,7 @@ export const Resources: CollectionConfig = {
         const allowedByCaso: Record<string, string[]> = {
           factura_suministros: ['electricidad', 'agua', 'gas', 'combustible'],
           desplazamientos: ['gasolinera', 'taxi_vtc'],
+          otros: ['otros'],
         }
         const defaultAllowed = ['prebuilt-invoice', 'prebuilt-receipt']
         const allowed = caso && allowedByCaso[caso] ? allowedByCaso[caso] : defaultAllowed

@@ -271,6 +271,7 @@ export interface Resource {
         | 'consumos_combustible_tipo_1'
         | 'residuos'
         | 'viajes_tipo_1'
+        | 'otros'
       )
     | null;
   tipo?:
@@ -283,6 +284,7 @@ export interface Resource {
         | 'taxi_vtc'
         | 'prebuilt-invoice'
         | 'prebuilt-receipt'
+        | 'otros'
       )
     | null;
   factura_suministros?: {
