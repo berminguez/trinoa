@@ -877,26 +877,39 @@ export const Resources: CollectionConfig = {
             )
           }
 
-          // Actualizar el recurso: status -> completed (de momento), guardar analyzeResult en JSON
+          // Construir data de actualización incluyendo caso/tipo si vienen en el body
+          const updateData: any = {
+            status: 'completed',
+            analyzeResult: analyzeResult,
+            logs: [
+              {
+                step: 'azure-analyze',
+                status: 'success',
+                at: new Date().toISOString(),
+                details: 'Analyze result received from Azure via n8n',
+                data: {
+                  modelId: body?.modelId,
+                  modelo: body?.modelo,
+                  jobStatus: body?.status,
+                  caso: body?.caso,
+                  tipo: body?.tipo,
+                },
+              },
+            ],
+          }
+
+          if (typeof body?.caso === 'string' && body.caso.length > 0) {
+            updateData.caso = body.caso
+          }
+          if (typeof body?.tipo === 'string' && body.tipo.length > 0) {
+            updateData.tipo = body.tipo
+          }
+
+          // Actualizar el recurso: status -> completed y guardar analyzeResult, caso y tipo si aplica
           const updated = await req.payload.update({
             collection: 'resources',
             id: resourceId,
-            data: {
-              status: 'completed',
-              analyzeResult: analyzeResult,
-              logs: [
-                {
-                  step: 'azure-analyze',
-                  status: 'success',
-                  at: new Date().toISOString(),
-                  details: 'Analyze result received from Azure via n8n',
-                  data: {
-                    modelId: body?.modelId,
-                    jobStatus: body?.status,
-                  },
-                },
-              ],
-            } as any,
+            data: updateData,
             overrideAccess: true,
           })
 
