@@ -327,6 +327,50 @@ export function DocumentTable({
         },
         enableGlobalFilter: false,
       },
+      // Columna de Caso
+      {
+        accessorKey: 'caso',
+        header: ({ column }) => (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className='h-auto p-0 hover:bg-transparent'
+          >
+            Caso
+            {column.getIsSorted() === 'asc' ? (
+              <IconArrowUp className='ml-2 h-4 w-4' />
+            ) : column.getIsSorted() === 'desc' ? (
+              <IconArrowDown className='ml-2 h-4 w-4' />
+            ) : null}
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const value = (row.getValue('caso') as string) || '-'
+          return <span className='text-sm'>{value}</span>
+        },
+      },
+      // Columna de Tipo (negocio)
+      {
+        accessorKey: 'tipo',
+        header: ({ column }) => (
+          <Button
+            variant='ghost'
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className='h-auto p-0 hover:bg-transparent'
+          >
+            Tipo (caso)
+            {column.getIsSorted() === 'asc' ? (
+              <IconArrowUp className='ml-2 h-4 w-4' />
+            ) : column.getIsSorted() === 'desc' ? (
+              <IconArrowDown className='ml-2 h-4 w-4' />
+            ) : null}
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const value = (row.getValue('tipo') as string) || '-'
+          return <span className='text-sm'>{value}</span>
+        },
+      },
       // Columna de fecha de subida
       {
         accessorKey: 'createdAt',
@@ -390,7 +434,10 @@ export function DocumentTable({
                 )
               case 'processing':
                 return (
-                  <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100'>Procesando</Badge>
+                  <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100 inline-flex items-center gap-1'>
+                    <IconLoader2 className='h-3 w-3 animate-spin' />
+                    Procesando
+                  </Badge>
                 )
               case 'failed':
               case 'error':
@@ -528,6 +575,92 @@ export function DocumentTable({
       },
     },
   })
+
+  // Polling: verificar cada 2s los resources en "processing" y actualizar estado (status, caso, tipo, progress)
+  const processingResources = useMemo(
+    () => resources.filter((r) => r.status === 'processing'),
+    [resources],
+  )
+
+  useEffect(() => {
+    if (processingResources.length === 0) return
+
+    let isCancelled = false
+
+    const poll = async () => {
+      try {
+        const results = await Promise.all(
+          processingResources.map(async (res) => {
+            try {
+              const response = await fetch(`/api/resources/${res.id}`, {
+                method: 'GET',
+                credentials: 'include',
+                cache: 'no-store',
+              })
+              if (!response.ok) return null
+              const json = await response.json()
+              return { id: res.id, json }
+            } catch {
+              return null
+            }
+          }),
+        )
+
+        if (isCancelled) return
+
+        results.forEach((entry) => {
+          if (!entry || !entry.json) return
+          const data = entry.json as Partial<Resource>
+          const resourceId = entry.id
+          const current = resources.find((r) => r.id === resourceId)
+          if (!current) return
+
+          const updates: Partial<Resource> = {}
+          if (data.status && data.status !== current.status) {
+            updates.status = data.status
+          }
+          if (typeof data.progress === 'number' && data.progress !== current.progress) {
+            updates.progress = data.progress
+          }
+          if ((data as any).startedAt && (data as any).startedAt !== (current as any).startedAt) {
+            ;(updates as any).startedAt = (data as any).startedAt
+          }
+          if (
+            (data as any).completedAt &&
+            (data as any).completedAt !== (current as any).completedAt
+          ) {
+            ;(updates as any).completedAt = (data as any).completedAt
+          }
+          if (
+            typeof (data as any).caso === 'string' &&
+            (data as any).caso !== (current as any).caso
+          ) {
+            ;(updates as any).caso = (data as any).caso
+          }
+          if (
+            typeof (data as any).tipo === 'string' &&
+            (data as any).tipo !== (current as any).tipo
+          ) {
+            ;(updates as any).tipo = (data as any).tipo
+          }
+
+          if (Object.keys(updates).length > 0) {
+            _onUpdateResource?.(resourceId, updates)
+          }
+        })
+      } catch {
+        // silencioso
+      }
+    }
+
+    // primera ejecución inmediata y luego cada 2s
+    poll()
+    const interval = setInterval(poll, 2000)
+    return () => {
+      isCancelled = true
+      clearInterval(interval)
+    }
+  }, [processingResources, resources, _onUpdateResource])
 
   // Si no hay recursos, mostrar estado vacío
   if (resources.length === 0) {
