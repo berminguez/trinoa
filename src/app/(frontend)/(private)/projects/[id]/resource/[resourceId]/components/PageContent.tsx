@@ -135,8 +135,7 @@ export default async function PageContent({ params }: PageContentProps) {
                   tipo: viewerProps.globals.tipo,
                   caseData:
                     (viewerProps.globals.caso
-                      ? // @ts-expect-error: acceso dinámico según el caso activo
-                        (resourceRes as any)[viewerProps.globals.caso]
+                      ? (resourceRes as any)[viewerProps.globals.caso]
                       : undefined) || undefined,
                 }}
               />
