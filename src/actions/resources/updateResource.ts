@@ -2,9 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser } from '@/actions/auth/getUser'
-import getPayload from 'payload'
+import { getPayload } from 'payload'
 import config from '@/payload.config'
-import type { Project, Resource, User } from '@/src/payload-types'
+import type { Project, Resource, User } from '@/payload-types'
 
 export interface UpdateResourceResult {
   success: boolean

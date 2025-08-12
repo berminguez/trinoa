@@ -300,7 +300,6 @@ export interface Resource {
     fecha_compra?: string | null;
     volumen_consumido?: number | null;
     unidad_medida?: ('kWh' | 'L' | 'm3' | 'kg' | 'km') | null;
-    tipo_suministro?: ('electricidad' | 'agua' | 'gas') | null;
     proveedor_servicio?: string | null;
     codigo_factura?: string | null;
   };
@@ -1087,7 +1086,6 @@ export interface ResourcesSelect<T extends boolean = true> {
         fecha_compra?: T;
         volumen_consumido?: T;
         unidad_medida?: T;
-        tipo_suministro?: T;
         proveedor_servicio?: T;
         codigo_factura?: T;
       };

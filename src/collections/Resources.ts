@@ -162,15 +162,6 @@ export const Resources: CollectionConfig = {
           type: 'select',
           options: ['kWh', 'L', 'm3', 'kg', 'km'].map((v) => ({ label: v, value: v })),
         },
-        {
-          name: 'tipo_suministro',
-          label: 'Tipo de suministro/combustible',
-          type: 'select',
-          options: ['electricidad', 'agua', 'gas'].map((v) => ({
-            label: v.toUpperCase ? v.toUpperCase() : v,
-            value: v,
-          })),
-        },
         { name: 'proveedor_servicio', label: 'Proveedor del servicio', type: 'text' },
         { name: 'codigo_factura', label: 'Código de la factura', type: 'text' },
       ],

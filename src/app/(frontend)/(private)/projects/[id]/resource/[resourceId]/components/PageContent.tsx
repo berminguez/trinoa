@@ -102,7 +102,7 @@ export default async function PageContent({ params }: PageContentProps) {
             <div className='p-4'>
               {viewerProps.file.url ? (
                 viewerProps.file.kind === 'pdf' ? (
-                  <PDFViewer url={viewerProps.file.url} />
+                  <PDFViewer url={viewerProps.file.url} filename={viewerProps.file.filename} />
                 ) : viewerProps.file.kind === 'image' ? (
                   <ImageViewer url={viewerProps.file.url} alt={viewerProps.title} />
                 ) : (
@@ -115,6 +115,16 @@ export default async function PageContent({ params }: PageContentProps) {
           }
           right={
             <div className='p-4'>
+              <div className='mb-4'>
+                <h2 className='text-base font-semibold leading-none tracking-tight'>
+                  {viewerProps.title}
+                </h2>
+                {viewerProps.file.filename ? (
+                  <p className='text-xs text-muted-foreground break-all'>
+                    {viewerProps.file.filename}
+                  </p>
+                ) : null}
+              </div>
               <ResourceForm
                 projectId={String(projectRes.id)}
                 resourceId={String(resourceRes.id)}
@@ -123,7 +133,11 @@ export default async function PageContent({ params }: PageContentProps) {
                   nombre_documento: viewerProps.globals.nombre_documento,
                   caso: viewerProps.globals.caso,
                   tipo: viewerProps.globals.tipo,
-                  caseData: undefined,
+                  caseData:
+                    (viewerProps.globals.caso
+                      ? // @ts-expect-error: acceso dinámico según el caso activo
+                        (resourceRes as any)[viewerProps.globals.caso]
+                      : undefined) || undefined,
                 }}
               />
             </div>

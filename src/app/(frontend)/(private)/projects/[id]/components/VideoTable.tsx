@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import {
   createColumnHelper,
   flexRender,
@@ -30,6 +31,7 @@ import {
   IconSearch,
   IconEye,
   IconLoader2,
+  IconPlayerPlay,
 } from '@tabler/icons-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -473,6 +475,13 @@ export function DocumentTable({
 
           return (
             <div className='flex items-center gap-1'>
+              {/* Botón para ver el recurso en el visualizador */}
+              <Button variant='ghost' size='sm' asChild className='h-8 w-8 p-0' title='Ver recurso'>
+                <Link href={`/projects/${projectId}/resource/${resource.id}`}>
+                  <IconPlayerPlay className='h-4 w-4' />
+                </Link>
+              </Button>
+
               {documentUrl ? (
                 <>
                   <Button

@@ -4,12 +4,21 @@ import { useEffect, useRef, useState } from 'react'
 import { Document, Page } from 'react-pdf'
 import ensurePdfWorker from '@/lib/pdf'
 import { Button } from '@/components/ui/button'
+import {
+  IconZoomIn,
+  IconZoomOut,
+  IconDownload,
+  IconChevronLeft,
+  IconChevronRight,
+  IconMaximize,
+} from '@tabler/icons-react'
 
 interface PDFViewerProps {
   url: string
+  filename?: string | null
 }
 
-export default function PDFViewer({ url }: PDFViewerProps) {
+export default function PDFViewer({ url, filename }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number>(0)
   const [page, setPage] = useState<number>(1)
   const [scale, setScale] = useState<number>(1.0)
@@ -72,14 +81,71 @@ export default function PDFViewer({ url }: PDFViewerProps) {
     return () => ro.disconnect()
   }, [])
 
-  // Ajustar el ancho máximo basado en el contenedor y escala
-  const maxWidth = Math.max(280, containerWidth - 32) // padding considerado
-  const pageWidth = Math.min(maxWidth, Math.max(280, Math.round(containerWidth * scale)))
+  // Ancho dinámico basado en el contenedor y el zoom. Permitimos que exceda el contenedor para scroll.
+  const pageWidth = Math.max(280, Math.round(containerWidth * scale))
+
+  const handleZoomIn = () => setScale((s) => Math.min(3, Math.round((s + 0.1) * 10) / 10))
+  const handleZoomOut = () => setScale((s) => Math.max(0.5, Math.round((s - 0.1) * 10) / 10))
+  const handleFitWidth = () => setScale(1)
+  const handlePrev = () => setPage((p) => Math.max(1, p - 1))
+  const handleNext = () => setPage((p) => Math.min(numPages || 1, p + 1))
+  const handleDownload = () => {
+    try {
+      const href = blobUrl || url
+      const a = document.createElement('a')
+      a.href = href
+      const defaultName = filename || 'documento.pdf'
+      a.download = defaultName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch (e) {
+      console.error('Error al descargar PDF:', e)
+    }
+  }
 
   return (
     <div className='flex'>
       <div ref={containerRef} className='flex-1 overflow-auto min-w-0 max-w-full'>
-        <div className='flex justify-center p-4 min-w-0 max-w-full min-h-full'>
+        <div className='sticky top-0 z-10 w-full bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b'>
+          <div className='flex items-center gap-2 px-3 py-2'>
+            <Button variant='outline' size='sm' onClick={handlePrev} disabled={page <= 1}>
+              <IconChevronLeft className='h-4 w-4' />
+            </Button>
+            <span className='text-xs text-muted-foreground'>
+              {page} / {numPages || '—'}
+            </span>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleNext}
+              disabled={numPages === 0 || page >= numPages}
+            >
+              <IconChevronRight className='h-4 w-4' />
+            </Button>
+            <div className='mx-2 h-4 w-px bg-border' />
+            <Button variant='outline' size='sm' onClick={handleZoomOut}>
+              <IconZoomOut className='h-4 w-4' />
+            </Button>
+            <span className='text-xs w-12 text-center'>{Math.round(scale * 100)}%</span>
+            <Button variant='outline' size='sm' onClick={handleZoomIn}>
+              <IconZoomIn className='h-4 w-4' />
+            </Button>
+            <Button variant='outline' size='sm' onClick={handleFitWidth}>
+              <IconMaximize className='h-4 w-4' />
+            </Button>
+            <div className='mx-2 h-4 w-px bg-border' />
+            <Button
+              variant='default'
+              size='sm'
+              onClick={handleDownload}
+              disabled={!blobUrl && !url}
+            >
+              <IconDownload className='h-4 w-4' />
+            </Button>
+          </div>
+        </div>
+        <div className='flex justify-center p-4 min-w-0 max-w-full min-h-full overflow-auto'>
           {loadError ? (
             <div className='flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-muted-foreground max-w-full'>
               <span>Fallo al cargar PDF. Intentando visor alternativo…</span>
@@ -107,7 +173,7 @@ export default function PDFViewer({ url }: PDFViewerProps) {
                 width={pageWidth}
                 renderAnnotationLayer={false}
                 renderTextLayer={false}
-                className='max-w-full block'
+                className='block'
               />
             </Document>
           )}
