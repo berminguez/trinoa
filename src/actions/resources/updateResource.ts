@@ -113,7 +113,6 @@ export async function updateResourceAction(
       data: {
         ...updateData,
         // Auditoría de actualización
-        // @ts-expect-error El campo se ha añadido en la colección
         lastUpdatedBy: user.id,
       },
       user,
