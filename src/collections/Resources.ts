@@ -4,6 +4,7 @@ import { QueueManager } from '../lib/queue'
 import { StorageManager } from '../lib/storage'
 
 import type { EmbeddingJob, Media } from '../types'
+import { mapAnalyzeResultToResource } from '../lib/analyze-mappers'
 import type { CollectionConfig } from 'payload'
 
 export const Resources: CollectionConfig = {
@@ -642,6 +643,18 @@ export const Resources: CollectionConfig = {
         readOnly: true,
       },
     },
+    // Botón de prueba de mapeo en el admin
+    {
+      name: 'testMapping',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/payload-admin/TestMappingButton#TestMappingButton',
+        },
+        position: 'sidebar',
+        condition: (data) => Boolean((data as any).analyzeResult),
+      },
+    },
     // Campos de metadatos del procesamiento
     {
       name: 'processingMetadata',
@@ -856,6 +869,91 @@ export const Resources: CollectionConfig = {
       },
     },
     {
+      path: '/:id/test-mapping',
+      method: 'post',
+      handler: async (req) => {
+        try {
+          const resourceId = (req.routeParams as { id: string })?.id
+          if (!resourceId)
+            return Response.json(
+              { success: false, error: 'Resource ID is required' },
+              { status: 400 },
+            )
+
+          const resource = await req.payload.findByID({
+            collection: 'resources',
+            id: resourceId,
+            depth: 0,
+            overrideAccess: true,
+          })
+          if (!resource)
+            return Response.json({ success: false, error: 'Resource not found' }, { status: 404 })
+
+          // Leer body para saber si hay que aplicar cambios
+          let body: any = {}
+          try {
+            body = await (req as any).json()
+          } catch {}
+
+          const analyzeResult = (resource as any).analyzeResult
+          if (!analyzeResult)
+            return Response.json(
+              { success: false, error: 'No analyzeResult stored on resource' },
+              { status: 400 },
+            )
+
+          const mapped = mapAnalyzeResultToResource(analyzeResult, {
+            caso: (resource as any).caso,
+            tipo: (resource as any).tipo,
+          })
+
+          console.log(
+            '[RESOURCES_TEST_MAPPING] Resource:',
+            resourceId,
+            'Caso/Tipo:',
+            (resource as any).caso,
+            (resource as any).tipo,
+          )
+          console.log('[RESOURCES_TEST_MAPPING] Mapped keys:', Object.keys(mapped || {}))
+
+          // Si apply=true, persistir en el recurso
+          if (body?.apply === true) {
+            const updateData: any = {
+              ...mapped,
+              logs: [
+                ...(((resource as any).logs as any[]) || []),
+                {
+                  step: 'analyze-mapping-test-apply',
+                  status: 'success' as const,
+                  at: new Date().toISOString(),
+                  details: 'Mapped fields applied from test-mapping endpoint',
+                  data: { applied: Object.keys(mapped || {}) },
+                },
+              ],
+            }
+
+            const updated = await req.payload.update({
+              collection: 'resources',
+              id: resourceId,
+              data: updateData,
+              overrideAccess: true,
+            })
+
+            return Response.json({
+              success: true,
+              data: { id: (updated as any).id, applied: Object.keys(mapped || {}) },
+              message: 'Mapped fields persisted on resource',
+            })
+          }
+
+          return Response.json({ success: true, data: { mapped } })
+        } catch (error) {
+          console.error('[RESOURCES_TEST_MAPPING] Error:', error)
+          return Response.json({ success: false, error: 'Internal error' }, { status: 500 })
+        }
+      },
+    },
+    {
       path: '/:id/webhook',
       method: 'post',
       handler: async (req) => {
@@ -883,6 +981,17 @@ export const Resources: CollectionConfig = {
               { status: 400 },
             )
           }
+          console.log(
+            '[RESOURCES_WEBHOOK] Received analyzeResult keys:',
+            Object.keys(analyzeResult || {}),
+          )
+          console.log('[RESOURCES_WEBHOOK] Body meta:', {
+            modelId: body?.modelId,
+            modelo: body?.modelo,
+            status: body?.status,
+            caso: body?.caso,
+            tipo: body?.tipo,
+          })
 
           // Construir data de actualización incluyendo caso/tipo si vienen en el body
           const updateData: any = {
@@ -910,6 +1019,55 @@ export const Resources: CollectionConfig = {
           }
           if (typeof body?.tipo === 'string' && body.tipo.length > 0) {
             updateData.tipo = body.tipo
+          }
+
+          // Aplicar mapeo específico según caso/tipo/modelId
+          try {
+            // Cargar el recurso actual para conocer caso/tipo si no vienen en el body
+            let currentResource: any = null
+            try {
+              currentResource = await req.payload.findByID({
+                collection: 'resources',
+                id: resourceId,
+                depth: 0,
+                overrideAccess: true,
+              })
+            } catch {}
+
+            const effectiveCaso = body?.caso ?? currentResource?.caso
+            const effectiveTipo = body?.tipo ?? currentResource?.tipo
+            console.log('[RESOURCES_WEBHOOK] Effective caso/tipo for mapping:', {
+              effectiveCaso,
+              effectiveTipo,
+            })
+
+            const mapped = mapAnalyzeResultToResource(analyzeResult, {
+              caso: effectiveCaso,
+              tipo: effectiveTipo,
+              modelId: body?.modelId || body?.modelo,
+            })
+            if (mapped && typeof mapped === 'object') {
+              console.log('[RESOURCES_WEBHOOK] Mapping result keys:', Object.keys(mapped))
+              Object.assign(updateData, mapped)
+              updateData.logs.push({
+                step: 'analyze-mapping',
+                status: 'success',
+                at: new Date().toISOString(),
+                details: 'Analyze result mapped to resource fields',
+                data: {
+                  applied: Object.keys(mapped),
+                },
+              })
+            }
+          } catch (mapError) {
+            console.error('[RESOURCES_WEBHOOK] Mapping error:', mapError)
+            updateData.logs.push({
+              step: 'analyze-mapping',
+              status: 'error',
+              at: new Date().toISOString(),
+              details: 'Error mapping analyze result',
+              data: { error: String(mapError) },
+            })
           }
 
           // Actualizar el recurso: status -> completed y guardar analyzeResult, caso y tipo si aplica
