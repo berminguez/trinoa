@@ -112,9 +112,9 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <div className='flex flex-1 flex-col'>
+        <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
           <SiteHeader />
-          {children}
+          <div className='min-w-0 flex-1 overflow-hidden'>{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>

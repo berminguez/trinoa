@@ -65,6 +65,19 @@ export const Resources: CollectionConfig = {
       },
     },
 
+    // Auditoría básica: último usuario que actualizó el recurso
+    {
+      name: 'lastUpdatedBy',
+      label: 'Última actualización por',
+      type: 'relationship',
+      relationTo: 'users' as any,
+      required: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Campo gestionado automáticamente por el sistema al guardar',
+      },
+    },
+
     // ---- Campos globales (siempre visibles)
     { name: 'nombre_cliente', label: 'Nombre del cliente', type: 'text', required: false },
     { name: 'nombre_documento', label: 'Nombre del documento', type: 'text', required: false },

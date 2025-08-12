@@ -422,9 +422,9 @@
 
 
 
-body {
-  @apply overscroll-none bg-transparent;
-}
+  body {
+    @apply overscroll-none overflow-x-hidden bg-transparent;
+  }
 
 :root {
   --font-sans: var(--font-inter);

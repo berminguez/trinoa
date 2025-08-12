@@ -256,6 +256,10 @@ export interface Resource {
    * Namespace para organizar contenidos (ej: curso-matematicas, empresa-acme)
    */
   namespace: string;
+  /**
+   * Campo gestionado automáticamente por el sistema al guardar
+   */
+  lastUpdatedBy?: (string | null) | User;
   nombre_cliente?: string | null;
   nombre_documento?: string | null;
   /**
@@ -1065,6 +1069,7 @@ export interface ResourcesSelect<T extends boolean = true> {
   title?: T;
   project?: T;
   namespace?: T;
+  lastUpdatedBy?: T;
   nombre_cliente?: T;
   nombre_documento?: T;
   caso?: T;
