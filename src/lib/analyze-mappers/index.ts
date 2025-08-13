@@ -1,6 +1,9 @@
 import type { Resource } from '@/payload-types'
 
-import { mapFacturaSuministrosAguaFromFields } from './map-factura-suministros'
+import {
+  mapFacturaSuministrosAguaFromFields,
+  mapFacturaSuministrosElectricidadFromFields,
+} from './map-factura-suministros'
 
 type AzureField = {
   type?: string
@@ -66,6 +69,15 @@ export function mapAnalyzeResultToResource(
   ) {
     console.log('[ANALYZE_MAPPER] Applying mapping: factura_suministros -> agua')
     return mapFacturaSuministrosAguaFromFields(fields)
+  }
+
+  // Caso: Factura de suministros - Electricidad
+  if (
+    (resolvedCaso === 'factura_suministros' || !resolvedCaso) &&
+    (resolvedTipo === 'electricidad' || resolvedModel === 'electricidad')
+  ) {
+    console.log('[ANALYZE_MAPPER] Applying mapping: factura_suministros -> electricidad')
+    return mapFacturaSuministrosElectricidadFromFields(fields)
   }
 
   // Si no hay mapeo definido, devolver objeto vacío (ningún cambio adicional)

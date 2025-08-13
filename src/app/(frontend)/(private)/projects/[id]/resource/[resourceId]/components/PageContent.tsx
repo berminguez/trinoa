@@ -77,6 +77,7 @@ export default async function PageContent({ params }: PageContentProps) {
       caso: resourceRes.caso ?? null,
       tipo: resourceRes.tipo ?? null,
     },
+    status: resourceRes.status,
   }
 
   // Calcular anterior/siguiente dentro del proyecto por createdAt desc
@@ -136,6 +137,7 @@ export default async function PageContent({ params }: PageContentProps) {
                       ? (resourceRes as any)[viewerProps.globals.caso]
                       : undefined) || undefined,
                 }}
+                initialStatus={viewerProps.status as any}
               />
             </div>
           }

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Document, Page } from 'react-pdf'
 import ensurePdfWorker from '@/lib/pdf'
 import { Button } from '@/components/ui/button'
+import useVisualizadorStore from '@/stores/visualizador-store'
 import {
   IconZoomIn,
   IconZoomOut,
@@ -19,6 +20,7 @@ interface PDFViewerProps {
 }
 
 export default function PDFViewer({ url, filename }: PDFViewerProps) {
+  const isProcessing = useVisualizadorStore((s) => s.isProcessing)
   const [numPages, setNumPages] = useState<number>(0)
   const [page, setPage] = useState<number>(1)
   const [scale, setScale] = useState<number>(1.0)
@@ -106,7 +108,7 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
 
   return (
     <div className='flex'>
-      <div ref={containerRef} className='flex-1 overflow-auto min-w-0 max-w-full'>
+      <div ref={containerRef} className='flex-1 overflow-auto min-w-0 max-w-full relative'>
         <div className='sticky top-0 z-10 w-full bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b'>
           <div className='flex items-center gap-2 px-3 py-2'>
             <Button variant='outline' size='sm' onClick={handlePrev} disabled={page <= 1}>
@@ -177,6 +179,23 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
               />
             </Document>
           )}
+          {isProcessing ? (
+            <div className='pointer-events-none absolute inset-0 z-20 flex items-start justify-center'>
+              <div className='mt-16 h-1 w-full max-w-[1200px] overflow-hidden bg-black/5'>
+                <div className='h-full w-40 animate-[scan_1.2s_linear_infinite] bg-primary/60' />
+              </div>
+              <style jsx>{`
+                @keyframes scan {
+                  0% {
+                    transform: translateX(-25%);
+                  }
+                  100% {
+                    transform: translateX(125%);
+                  }
+                }
+              `}</style>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

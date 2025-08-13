@@ -24,6 +24,28 @@ interface AguaFieldsShape {
   [key: string]: AzureField | undefined
 }
 
+// Valores esperados para electricidad (según ejemplo facilitado)
+interface ElectricidadFieldsShape {
+  VendorName?: AzureField
+  VendorTaxId?: AzureField
+  CustomerName?: AzureField
+  CustomerAddressRecipient?: AzureField
+  InvoiceId?: AzureField
+  InvoiceDate?: AzureField
+  ServiceStartDate?: AzureField
+  ServiceEndDate?: AzureField
+  InvoiceTotal?: AzureField
+  CUPS?: AzureField
+  UnidadMedida?: AzureField
+  EnergiaP1?: AzureField
+  EnergiaP2?: AzureField
+  EnergiaP3?: AzureField
+  EnergiaP4?: AzureField
+  EnergiaP5?: AzureField
+  EnergiaP6?: AzureField
+  [key: string]: AzureField | undefined
+}
+
 function getString(f?: AzureField): string | undefined {
   if (!f) return undefined
   if (typeof f.valueString === 'string' && f.valueString.trim()) return f.valueString.trim()
@@ -89,6 +111,59 @@ export function mapFacturaSuministrosAguaFromFields(
     ...(typeof consumo === 'number' ? { volumen_consumido: consumo } : {}),
     ...(unidad ? { unidad_medida: unidad as any } : {}),
     ...(proveedor ? { proveedor_servicio: proveedor } : {}),
+    ...(codigoFactura ? { codigo_factura: codigoFactura } : {}),
+  } as any
+
+  return updates
+}
+
+/**
+ * Mapea los campos de Azure (electricidad) a la estructura del grupo `factura_suministros` en Resource.
+ */
+export function mapFacturaSuministrosElectricidadFromFields(
+  fields: Record<string, AzureField>,
+): Partial<Resource> {
+  const f = fields as ElectricidadFieldsShape
+
+  const proveedorServicio = getString(f.VendorName)
+  const cliente = getString(f.CustomerName)
+  const codigoSuministro = getString(f.CUPS)
+  const fechaInicio = getDateISO(f.ServiceStartDate)
+  const fechaFin = getDateISO(f.ServiceEndDate)
+  const codigoFactura = getString(f.InvoiceId)
+  const unidad = getString(f.UnidadMedida)
+
+  // Sumar energías por periodo si están disponibles (kWh)
+  const energiaValores: Array<number | undefined> = [
+    getNumberFromString(f.EnergiaP1),
+    getNumberFromString(f.EnergiaP2),
+    getNumberFromString(f.EnergiaP3),
+    getNumberFromString(f.EnergiaP4),
+    getNumberFromString(f.EnergiaP5),
+    getNumberFromString(f.EnergiaP6),
+  ]
+  const energiaFiltrada = energiaValores.filter(
+    (v): v is number => typeof v === 'number' && Number.isFinite(v),
+  )
+  const volumenTotal =
+    energiaFiltrada.length > 0 ? energiaFiltrada.reduce((acc, n) => acc + n, 0) : undefined
+
+  const updates: Partial<Resource> = {}
+
+  if (cliente) updates.nombre_cliente = cliente
+
+  updates.caso = 'factura_suministros'
+  updates.tipo = 'electricidad'
+
+  updates.factura_suministros = {
+    ...(codigoSuministro ? { codigo_suministro: codigoSuministro } : {}),
+    periodo_consumo: {
+      ...(fechaInicio ? { fecha_inicio: fechaInicio } : {}),
+      ...(fechaFin ? { fecha_fin: fechaFin } : {}),
+    },
+    ...(typeof volumenTotal === 'number' ? { volumen_consumido: volumenTotal } : {}),
+    ...(unidad ? { unidad_medida: unidad as any } : {}),
+    ...(proveedorServicio ? { proveedor_servicio: proveedorServicio } : {}),
     ...(codigoFactura ? { codigo_factura: codigoFactura } : {}),
   } as any
 

@@ -4,7 +4,7 @@ import { Formik, Form, Field } from 'formik'
 import * as Yup from 'yup'
 import { Button } from '@/components/ui/button'
 import useVisualizadorStore from '@/stores/visualizador-store'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
@@ -16,6 +16,18 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { updateResourceAction } from '@/actions/resources/updateResource'
+import { rescanResourceAction } from '@/actions/resources/rescanResource'
+import { getResourceStatusAction } from '@/actions/resources/getResourceStatus'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 export interface ResourceFormInitialValues {
   nombre_cliente: string
@@ -29,9 +41,24 @@ interface ResourceFormProps {
   projectId: string
   resourceId: string
   initialValues: ResourceFormInitialValues
+  initialStatus?: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'needs_review'
 }
 
-export default function ResourceForm({ projectId, resourceId, initialValues }: ResourceFormProps) {
+export default function ResourceForm({
+  projectId,
+  resourceId,
+  initialValues,
+  initialStatus,
+}: ResourceFormProps) {
+  const isProcessing = useVisualizadorStore((s) => s.isProcessing)
+  const setIsProcessing = useVisualizadorStore((s) => s.setIsProcessing)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  // Establecer estado inicial
+  useEffect(() => {
+    if (initialStatus === 'processing') setIsProcessing(true)
+  }, [initialStatus, setIsProcessing])
+
   return (
     <Formik<ResourceFormInitialValues>
       initialValues={initialValues}
@@ -60,78 +87,143 @@ export default function ResourceForm({ projectId, resourceId, initialValues }: R
         }
       }}
     >
-      {({ isSubmitting, values, setFieldValue, dirty }) => (
+      {({ isSubmitting, values, setFieldValue, dirty, setValues }) => (
         <Form className='flex h-full w-full flex-col gap-4'>
+          <div className='flex items-center justify-between'>
+            <div className='text-xs text-muted-foreground'>Edición de metadatos</div>
+            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <AlertDialogTrigger asChild>
+                <Button type='button' size='sm' variant='outline' disabled={isProcessing}>
+                  Escanear
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    ¿Seguro deseas volver a escanear el documento?
+                  </AlertDialogTitle>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={async () => {
+                      try {
+                        setIsProcessing(true)
+                        setConfirmOpen(false)
+                        const res = await rescanResourceAction(projectId, resourceId, {
+                          caso: values.caso ?? undefined,
+                          tipo: values.tipo ?? undefined,
+                        })
+                        if (!res.success) {
+                          setIsProcessing(false)
+                          toast.error(res.error || 'No se pudo lanzar el re-escaneo')
+                        } else {
+                          toast.success('Re-escaneo iniciado')
+                        }
+                      } catch (e) {
+                        setIsProcessing(false)
+                        toast.error('Error al iniciar re-escaneo')
+                      }
+                    }}
+                  >
+                    Confirmar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
           <FormChangeWatcher dirty={dirty} />
           {/* Campos globales */}
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div className='space-y-1'>
-              <label className='text-xs text-muted-foreground'>Nombre del cliente</label>
-              <Field name='nombre_cliente'>
-                {({ field }: any) => <Input {...field} placeholder='Nombre del cliente' />}
-              </Field>
-            </div>
-            <div className='space-y-1'>
-              <label className='text-xs text-muted-foreground'>Caso</label>
-              <Select
-                value={values.caso ?? ''}
-                onValueChange={(v) => {
-                  setFieldValue('caso', v || null)
-                  // Reset de datos del caso al cambiar
-                  setFieldValue('caseData', {})
-                  // Reset de tipo si no corresponde
-                  const allowed = getAllowedTiposForCaso(v)
-                  if (values.tipo && !allowed.includes(values.tipo)) {
-                    setFieldValue('tipo', null)
-                  }
-                }}
-              >
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Selecciona un caso' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='factura_suministros'>Factura de suministros</SelectItem>
-                  <SelectItem value='desplazamientos'>Desplazamientos</SelectItem>
-                  <SelectItem value='materias_primas'>Materias primas</SelectItem>
-                  <SelectItem value='viajes_tipo_2'>Viajes tipo 2</SelectItem>
-                  <SelectItem value='variado_emails'>Variado emails</SelectItem>
-                  <SelectItem value='consumos_combustible_tipo_1'>
-                    Consumos combustible tipo 1
-                  </SelectItem>
-                  <SelectItem value='residuos'>Residuos</SelectItem>
-                  <SelectItem value='viajes_tipo_1'>Viajes tipo 1</SelectItem>
-                  <SelectItem value='otros'>Otros</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='space-y-1'>
-              <label className='text-xs text-muted-foreground'>Tipo</label>
-              <Select
-                value={values.tipo ?? ''}
-                onValueChange={(v) => setFieldValue('tipo', v || null)}
-              >
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Selecciona un tipo' />
-                </SelectTrigger>
-                <SelectContent>
-                  {getTipoOptions(values.caso).map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+          <fieldset disabled={isProcessing} className='contents'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div className='space-y-1'>
+                <label className='text-xs text-muted-foreground'>Nombre del cliente</label>
+                <Field name='nombre_cliente'>
+                  {({ field }: any) => <Input {...field} placeholder='Nombre del cliente' />}
+                </Field>
+              </div>
+              <div className='space-y-1'>
+                <label className='text-xs text-muted-foreground'>Caso</label>
+                <Select
+                  value={values.caso ?? ''}
+                  onValueChange={(v) => {
+                    setFieldValue('caso', v || null)
+                    // Reset de datos del caso al cambiar
+                    setFieldValue('caseData', {})
+                    // Reset de tipo si no corresponde
+                    const allowed = getAllowedTiposForCaso(v)
+                    if (values.tipo && !allowed.includes(values.tipo)) {
+                      setFieldValue('tipo', null)
+                    }
+                  }}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Selecciona un caso' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='factura_suministros'>Factura de suministros</SelectItem>
+                    <SelectItem value='desplazamientos'>Desplazamientos</SelectItem>
+                    <SelectItem value='materias_primas'>Materias primas</SelectItem>
+                    <SelectItem value='viajes_tipo_2'>Viajes tipo 2</SelectItem>
+                    <SelectItem value='variado_emails'>Variado emails</SelectItem>
+                    <SelectItem value='consumos_combustible_tipo_1'>
+                      Consumos combustible tipo 1
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    <SelectItem value='residuos'>Residuos</SelectItem>
+                    <SelectItem value='viajes_tipo_1'>Viajes tipo 1</SelectItem>
+                    <SelectItem value='otros'>Otros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-1'>
+                <label className='text-xs text-muted-foreground'>Tipo</label>
+                <Select
+                  value={values.tipo ?? ''}
+                  onValueChange={(v) => setFieldValue('tipo', v || null)}
+                >
+                  <SelectTrigger className='w-full'>
+                    <SelectValue placeholder='Selecciona un tipo' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getTipoOptions(values.caso).map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
-          {/* Render dinámico de campos por caso (5.3) */}
-          <CaseFields caso={values.caso} values={values} setFieldValue={setFieldValue} />
+            {/* Render dinámico de campos por caso (5.3) */}
+            <CaseFields caso={values.caso} values={values} setFieldValue={setFieldValue} />
 
-          <div className='mt-auto flex items-center justify-end gap-2'>
-            <Button type='submit' disabled={isSubmitting} size='sm'>
-              Guardar
-            </Button>
-          </div>
+            <div className='mt-auto flex items-center justify-end gap-2'>
+              <Button type='submit' disabled={isSubmitting} size='sm'>
+                Guardar
+              </Button>
+            </div>
+          </fieldset>
+
+          {/* Polling cuando está en processing */}
+          <PollingWatcher
+            active={isProcessing}
+            resourceId={resourceId}
+            onDone={(updated: Record<string, unknown>) => {
+              const next: ResourceFormInitialValues = {
+                nombre_cliente: (updated as any).nombre_cliente ?? '',
+                caso: (updated as any).caso ?? null,
+                tipo: (updated as any).tipo ?? null,
+                caseData:
+                  (updated as any).caso && (updated as any)[(updated as any).caso]
+                    ? (updated as any)[(updated as any).caso]
+                    : {},
+              }
+              setValues(next)
+              setIsProcessing(false)
+              toast.success('Datos actualizados tras el escaneo')
+            }}
+          />
         </Form>
       )}
     </Formik>
@@ -511,6 +603,40 @@ function CaseFields({
       No hay campos específicos para este caso.
     </div>
   )
+}
+
+// Pequeño watcher para polling
+function PollingWatcher({
+  active,
+  resourceId,
+  onDone,
+}: {
+  active: boolean
+  resourceId: string
+  onDone: (updated: Record<string, unknown>) => void
+}) {
+  const setIsProcessing = useVisualizadorStore((s) => s.setIsProcessing)
+  useEffect(() => {
+    if (!active) return
+    let cancelled = false
+    const interval = setInterval(async () => {
+      try {
+        const res = await getResourceStatusAction(resourceId)
+        if (cancelled) return
+        if (res.success && res.status && res.status !== 'processing' && res.resource) {
+          onDone(res.resource as unknown as Record<string, unknown>)
+        }
+      } catch (e) {
+        console.error('[POLLING] Error consultando estado:', e)
+        setIsProcessing(false)
+      }
+    }, 2000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [active, resourceId, onDone, setIsProcessing])
+  return null
 }
 
 function FormChangeWatcher({ dirty }: { dirty: boolean }) {
