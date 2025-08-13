@@ -78,6 +78,11 @@ export async function updateResourceAction(
     // 5) Preparar y aplicar actualización
     const updateData: Partial<Resource> = {}
 
+    // Título editable inline
+    if (typeof updates?.title === 'string' && updates.title.trim().length > 0) {
+      updateData.title = updates.title.trim()
+    }
+
     // Campos globales permitidos
     if (typeof updates?.nombre_cliente === 'string') {
       updateData.nombre_cliente = updates.nombre_cliente

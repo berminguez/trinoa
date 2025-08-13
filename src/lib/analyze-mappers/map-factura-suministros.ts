@@ -46,6 +46,23 @@ interface ElectricidadFieldsShape {
   [key: string]: AzureField | undefined
 }
 
+// Valores esperados para gas (muy similar a electricidad, pero con ConsumoTotal en lugar de P1..P6)
+interface GasFieldsShape {
+  VendorName?: AzureField
+  VendorTaxId?: AzureField
+  CustomerName?: AzureField
+  CustomerAddressRecipient?: AzureField
+  InvoiceId?: AzureField
+  InvoiceDate?: AzureField
+  ServiceStartDate?: AzureField
+  ServiceEndDate?: AzureField
+  InvoiceTotal?: AzureField
+  CUPS?: AzureField
+  UnidadMedida?: AzureField
+  ConsumoTotal?: AzureField
+  [key: string]: AzureField | undefined
+}
+
 function getString(f?: AzureField): string | undefined {
   if (!f) return undefined
   if (typeof f.valueString === 'string' && f.valueString.trim()) return f.valueString.trim()
@@ -162,6 +179,45 @@ export function mapFacturaSuministrosElectricidadFromFields(
       ...(fechaFin ? { fecha_fin: fechaFin } : {}),
     },
     ...(typeof volumenTotal === 'number' ? { volumen_consumido: volumenTotal } : {}),
+    ...(unidad ? { unidad_medida: unidad as any } : {}),
+    ...(proveedorServicio ? { proveedor_servicio: proveedorServicio } : {}),
+    ...(codigoFactura ? { codigo_factura: codigoFactura } : {}),
+  } as any
+
+  return updates
+}
+
+/**
+ * Mapea los campos de Azure (gas) a la estructura del grupo `factura_suministros` en Resource.
+ */
+export function mapFacturaSuministrosGasFromFields(
+  fields: Record<string, AzureField>,
+): Partial<Resource> {
+  const f = fields as GasFieldsShape
+
+  const proveedorServicio = getString(f.VendorName)
+  const cliente = getString(f.CustomerName)
+  const codigoSuministro = getString(f.CUPS)
+  const fechaInicio = getDateISO(f.ServiceStartDate)
+  const fechaFin = getDateISO(f.ServiceEndDate)
+  const codigoFactura = getString(f.InvoiceId)
+  const unidad = getString(f.UnidadMedida)
+  const consumoTotal = getNumberFromString(f.ConsumoTotal)
+
+  const updates: Partial<Resource> = {}
+
+  if (cliente) updates.nombre_cliente = cliente
+
+  updates.caso = 'factura_suministros'
+  updates.tipo = 'gas'
+
+  updates.factura_suministros = {
+    ...(codigoSuministro ? { codigo_suministro: codigoSuministro } : {}),
+    periodo_consumo: {
+      ...(fechaInicio ? { fecha_inicio: fechaInicio } : {}),
+      ...(fechaFin ? { fecha_fin: fechaFin } : {}),
+    },
+    ...(typeof consumoTotal === 'number' ? { volumen_consumido: consumoTotal } : {}),
     ...(unidad ? { unidad_medida: unidad as any } : {}),
     ...(proveedorServicio ? { proveedor_servicio: proveedorServicio } : {}),
     ...(codigoFactura ? { codigo_factura: codigoFactura } : {}),

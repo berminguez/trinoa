@@ -10,6 +10,7 @@ import ResizableSplit from './ResizableSplit'
 import PDFViewer from './PDFViewer'
 import ImageViewer from './ImageViewer'
 import ResourceForm from './ResourceForm'
+import InlineTitleEditor from './InlineTitleEditor'
 
 interface PageContentProps {
   params: Promise<{ id: string; resourceId: string }>
@@ -116,9 +117,11 @@ export default async function PageContent({ params }: PageContentProps) {
           right={
             <div className='p-4'>
               <div className='mb-4'>
-                <h2 className='text-base font-semibold leading-none tracking-tight mb-2'>
-                  {viewerProps.title}
-                </h2>
+                <InlineTitleEditor
+                  projectId={String(projectRes.id)}
+                  resourceId={String(resourceRes.id)}
+                  initialTitle={viewerProps.title}
+                />
                 {viewerProps.file.filename ? (
                   <p className='text-xs text-muted-foreground break-all'>
                     {viewerProps.file.filename}
