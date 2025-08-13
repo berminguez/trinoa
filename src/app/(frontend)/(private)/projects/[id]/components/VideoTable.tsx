@@ -278,11 +278,19 @@ export function DocumentTable({
             </Button>
           )
         },
-        cell: ({ row }) => (
-          <div className='min-w-0 max-w-xs lg:max-w-sm xl:max-w-md'>
-            <p className='font-medium truncate text-sm lg:text-base'>{row.getValue('title')}</p>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const resource = row.original
+          return (
+            <div className='min-w-0 max-w-xs lg:max-w-sm xl:max-w-md'>
+              <Link
+                href={`/projects/${projectId}/resource/${resource.id}`}
+                className='font-medium truncate text-sm lg:text-base block hover:underline'
+              >
+                {row.getValue('title') as string}
+              </Link>
+            </div>
+          )
+        },
       },
       // Columna de tipo de documento
       {
@@ -553,7 +561,7 @@ export function DocumentTable({
         enableGlobalFilter: false,
       },
     ],
-    [handleDeleteDocument, deletingResourceId], // Include handleDeleteDocument and deletingResourceId in dependencies
+    [handleDeleteDocument, deletingResourceId, projectId], // Include projectId so links stay in sync
   )
 
   // Crear instancia de tabla

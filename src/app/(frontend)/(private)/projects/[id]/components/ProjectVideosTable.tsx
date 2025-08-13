@@ -2,6 +2,7 @@ import { IconVideo, IconClock, IconCalendar } from '@tabler/icons-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { Resource } from '@/payload-types'
+import Link from 'next/link'
 
 interface ProjectVideosTableProps {
   resources: Resource[]
@@ -25,7 +26,9 @@ export function ProjectVideosTable({ resources, projectId }: ProjectVideosTableP
           <div className='text-center py-12'>
             <IconVideo className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
             <h3 className='text-lg font-semibold mb-2'>No videos yet</h3>
-            <p className='text-muted-foreground'>Sube documentos para empezar a construir tu proyecto</p>
+            <p className='text-muted-foreground'>
+              Sube documentos para empezar a construir tu proyecto
+            </p>
           </div>
         ) : (
           // Tabla de videos
@@ -63,7 +66,12 @@ export function ProjectVideosTable({ resources, projectId }: ProjectVideosTableP
 
                   {/* Filename */}
                   <div className='min-w-0'>
-                    <p className='font-medium truncate'>{resource.title}</p>
+                    <Link
+                      href={`/projects/${projectId}/resource/${resource.id}`}
+                      className='font-medium truncate block hover:underline'
+                    >
+                      {resource.title}
+                    </Link>
                     <p className='text-sm text-muted-foreground truncate'>
                       {resource.namespace || 'No namespace'}
                     </p>

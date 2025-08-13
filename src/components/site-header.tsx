@@ -1,6 +1,7 @@
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { DynamicBreadcrumb } from '@/components/dynamic-breadcrumb'
+import { ResourceNavigator } from './resource-navigator'
 
 export function SiteHeader() {
   return (
@@ -9,7 +10,9 @@ export function SiteHeader() {
         <SidebarTrigger className='-ml-1' />
         <Separator orientation='vertical' className='mx-2 data-[orientation=vertical]:h-4' />
         <DynamicBreadcrumb />
-        <div className='ml-auto flex items-center gap-2'></div>
+        <div className='ml-auto flex items-center gap-2'>
+          <ResourceNavigator />
+        </div>
       </div>
     </header>
   )
