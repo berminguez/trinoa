@@ -29,6 +29,7 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
   const [containerWidth, setContainerWidth] = useState<number>(800)
   const [fileData, setFileData] = useState<Uint8Array | null>(null)
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     ensurePdfWorker()
@@ -107,9 +108,12 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
   }
 
   return (
-    <div className='flex'>
-      <div ref={containerRef} className='flex-1 overflow-auto min-w-0 max-w-full relative'>
-        <div className='sticky top-0 z-10 w-full bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b'>
+    <div className='flex h-full w-full'>
+      <div
+        ref={containerRef}
+        className='flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden'
+      >
+        <div className='sticky top-0 z-10 w-full bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b shrink-0'>
           <div className='flex items-center gap-2 px-3 py-2'>
             <Button variant='outline' size='sm' onClick={handlePrev} disabled={page <= 1}>
               <IconChevronLeft className='h-4 w-4' />
@@ -147,7 +151,10 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
             </Button>
           </div>
         </div>
-        <div className='flex justify-center p-4 min-w-0 max-w-full min-h-full overflow-auto'>
+        <div
+          ref={scrollRef}
+          className='flex-1 min-h-0 flex justify-center p-4 min-w-0 max-w-full overflow-auto select-text'
+        >
           {loadError ? (
             <div className='flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-muted-foreground max-w-full'>
               <span>Fallo al cargar PDF. Intentando visor alternativo…</span>
@@ -173,8 +180,8 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
               <Page
                 pageNumber={page}
                 width={pageWidth}
-                renderAnnotationLayer={false}
-                renderTextLayer={false}
+                renderAnnotationLayer
+                renderTextLayer
                 className='block'
               />
             </Document>

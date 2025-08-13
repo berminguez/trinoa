@@ -99,7 +99,7 @@ export default async function PageContent({ params }: PageContentProps) {
       <div className='flex min-w-0 max-w-full flex-1 overflow-hidden'>
         <ResizableSplit
           left={
-            <div className='p-4'>
+            <div className='h-full p-4'>
               {viewerProps.file.url ? (
                 viewerProps.file.kind === 'pdf' ? (
                   <PDFViewer url={viewerProps.file.url} filename={viewerProps.file.filename} />
@@ -116,7 +116,7 @@ export default async function PageContent({ params }: PageContentProps) {
           right={
             <div className='p-4'>
               <div className='mb-4'>
-                <h2 className='text-base font-semibold leading-none tracking-tight'>
+                <h2 className='text-base font-semibold leading-none tracking-tight mb-2'>
                   {viewerProps.title}
                 </h2>
                 {viewerProps.file.filename ? (

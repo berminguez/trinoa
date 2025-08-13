@@ -21,9 +21,7 @@ export default function ResizableSplit({ left, right, className }: ResizableSpli
         maxSize={70}
         className='h-full min-w-0 max-w-full overflow-x-hidden'
       >
-        <div className='h-full w-full min-w-0 max-w-full overflow-x-hidden overflow-y-auto'>
-          {left}
-        </div>
+        <div className='h-full w-full min-w-0 max-w-full overflow-hidden'>{left}</div>
       </Panel>
       <PanelResizeHandle className='mx-1 w-1 shrink-0 cursor-col-resize bg-border' />
       <Panel
