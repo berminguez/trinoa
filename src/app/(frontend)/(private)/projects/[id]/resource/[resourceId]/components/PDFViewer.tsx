@@ -109,6 +109,8 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
     }
   }
 
+  // La barra de escaneo se ancla al contenedor visible (scrollRef), no al contenido.
+
   return (
     <div className='flex h-full w-full'>
       <div
@@ -155,7 +157,7 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
         </div>
         <div
           ref={scrollRef}
-          className='flex-1 min-h-0 flex justify-center p-4 min-w-0 max-w-full overflow-auto select-text'
+          className='relative flex-1 min-h-0 flex justify-center p-4 min-w-0 max-w-full overflow-auto select-text'
         >
           {loadError ? (
             <div className='flex h-full w-full flex-col items-center justify-center gap-2 text-xs text-muted-foreground max-w-full'>
@@ -189,22 +191,25 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
             </Document>
           )}
           {isProcessing ? (
-            <div className='pointer-events-none absolute inset-0 z-20 flex items-start justify-center'>
-              <div className='mt-16 h-1 w-full max-w-[1200px] overflow-hidden bg-black/5'>
-                <div className='h-full w-40 animate-[scan_1.2s_linear_infinite] bg-primary/60' />
+            <div className='pointer-events-none absolute inset-0 z-20 overflow-hidden'>
+              <div
+                className='absolute left-0 right-0 h-12'
+                style={{ top: '-3rem', animation: 'vertical-scan 1.1s linear infinite' }}
+              >
+                <div className='h-full w-full bg-gradient-to-b from-transparent via-primary/50 to-transparent' />
               </div>
-              <style jsx>{`
-                @keyframes scan {
-                  0% {
-                    transform: translateX(-25%);
-                  }
-                  100% {
-                    transform: translateX(125%);
-                  }
-                }
-              `}</style>
             </div>
           ) : null}
+          <style jsx>{`
+            @keyframes vertical-scan {
+              0% {
+                top: -3rem;
+              }
+              100% {
+                top: calc(100% + 3rem);
+              }
+            }
+          `}</style>
         </div>
       </div>
     </div>
