@@ -82,9 +82,6 @@ export async function updateResourceAction(
     if (typeof updates?.nombre_cliente === 'string') {
       updateData.nombre_cliente = updates.nombre_cliente
     }
-    if (typeof updates?.nombre_documento === 'string') {
-      updateData.nombre_documento = updates.nombre_documento
-    }
     if (typeof updates?.caso === 'string' || updates?.caso === null) {
       // Payload validará el valor permitido
       updateData.caso = updates.caso

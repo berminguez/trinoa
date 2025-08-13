@@ -81,7 +81,6 @@ export const Resources: CollectionConfig = {
 
     // ---- Campos globales (siempre visibles)
     { name: 'nombre_cliente', label: 'Nombre del cliente', type: 'text', required: false },
-    { name: 'nombre_documento', label: 'Nombre del documento', type: 'text', required: false },
 
     // Selector de caso (el value coincide con el name del group)
     {

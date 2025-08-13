@@ -19,7 +19,6 @@ import { updateResourceAction } from '@/actions/resources/updateResource'
 
 export interface ResourceFormInitialValues {
   nombre_cliente: string
-  nombre_documento: string
   caso: string | null
   tipo: string | null
   // Contenedor para campos del caso activo; se detallará en 5.3
@@ -38,7 +37,6 @@ export default function ResourceForm({ projectId, resourceId, initialValues }: R
       initialValues={initialValues}
       validationSchema={Yup.object({
         nombre_cliente: Yup.string().max(200, 'Máximo 200 caracteres'),
-        nombre_documento: Yup.string().max(200, 'Máximo 200 caracteres'),
         caso: Yup.string().nullable(),
         tipo: Yup.string().nullable(),
       })}
@@ -47,7 +45,6 @@ export default function ResourceForm({ projectId, resourceId, initialValues }: R
         try {
           const updates: Record<string, unknown> = {
             nombre_cliente: values.nombre_cliente,
-            nombre_documento: values.nombre_documento,
             caso: values.caso,
             tipo: values.tipo,
           }
@@ -72,12 +69,6 @@ export default function ResourceForm({ projectId, resourceId, initialValues }: R
               <label className='text-xs text-muted-foreground'>Nombre del cliente</label>
               <Field name='nombre_cliente'>
                 {({ field }: any) => <Input {...field} placeholder='Nombre del cliente' />}
-              </Field>
-            </div>
-            <div className='space-y-1'>
-              <label className='text-xs text-muted-foreground'>Nombre del documento</label>
-              <Field name='nombre_documento'>
-                {({ field }: any) => <Input {...field} placeholder='Nombre del documento' />}
               </Field>
             </div>
             <div className='space-y-1'>
@@ -190,7 +181,7 @@ function CaseFields({
             <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
               <Input
                 type='date'
-                value={((data.periodo_consumo as any)?.fecha_inicio as string) || ''}
+                value={toDateInputString((data.periodo_consumo as any)?.fecha_inicio)}
                 onChange={(e) =>
                   setCase('periodo_consumo', {
                     ...(data.periodo_consumo as Record<string, unknown>),
@@ -200,7 +191,7 @@ function CaseFields({
               />
               <Input
                 type='date'
-                value={((data.periodo_consumo as any)?.fecha_fin as string) || ''}
+                value={toDateInputString((data.periodo_consumo as any)?.fecha_fin)}
                 onChange={(e) =>
                   setCase('periodo_consumo', {
                     ...(data.periodo_consumo as Record<string, unknown>),
@@ -210,12 +201,14 @@ function CaseFields({
               />
             </div>
           </div>
-          <InputRow
-            label='Fecha de compra (solo combustibles)'
-            type='date'
-            value={(data.fecha_compra as string) || ''}
-            onChange={(v) => setCase('fecha_compra', v)}
-          />
+          {values.tipo === 'combustible' ? (
+            <InputRow
+              label='Fecha de compra (solo combustibles)'
+              type='date'
+              value={toDateInputString(data.fecha_compra)}
+              onChange={(v) => setCase('fecha_compra', v)}
+            />
+          ) : null}
           <InputRow
             label='Volumen total consumido'
             type='number'
@@ -250,7 +243,7 @@ function CaseFields({
           <InputRow
             label='Fecha del servicio'
             type='date'
-            value={(data.fecha_servicio as string) || ''}
+            value={toDateInputString(data.fecha_servicio)}
             onChange={(v) => setCase('fecha_servicio', v)}
           />
           <SelectRow
@@ -317,7 +310,7 @@ function CaseFields({
           <InputRow
             label='Fecha de facturación'
             type='date'
-            value={(data.fecha_factura as string) || ''}
+            value={toDateInputString(data.fecha_factura)}
             onChange={(v) => setCase('fecha_factura', v)}
           />
           <InputRow
@@ -381,7 +374,7 @@ function CaseFields({
           <InputRow
             label='Fecha'
             type='date'
-            value={(data.fecha as string) || ''}
+            value={toDateInputString(data.fecha)}
             onChange={(v) => setCase('fecha', v)}
           />
           <div className='space-y-1 md:col-span-2'>
@@ -421,7 +414,7 @@ function CaseFields({
           <InputRow
             label='Fecha de repostaje'
             type='date'
-            value={(data.fecha_repostaje as string) || ''}
+            value={toDateInputString(data.fecha_repostaje)}
             onChange={(v) => setCase('fecha_repostaje', v)}
           />
           <InputRow
@@ -484,7 +477,7 @@ function CaseFields({
           <InputRow
             label='Fecha de recogida'
             type='date'
-            value={(data.fecha_recogida as string) || ''}
+            value={toDateInputString(data.fecha_recogida)}
             onChange={(v) => setCase('fecha_recogida', v)}
           />
           <SelectRow
@@ -618,7 +611,7 @@ function ViajesFields({
         <InputRow
           label='Fecha del viaje'
           type='date'
-          value={(data.fecha_viaje as string) || ''}
+          value={toDateInputString(data.fecha_viaje)}
           onChange={(v) => setCase('fecha_viaje', v)}
         />
         <SelectRow
@@ -738,6 +731,41 @@ function toNumberOrNull(v: string): number | null {
   if (v === '') return null
   const n = Number(v)
   return Number.isNaN(n) ? null : n
+}
+
+// Convierte varios formatos comunes a 'YYYY-MM-DD' compatible con inputs type="date"
+function toDateInputString(value: unknown): string {
+  if (!value) return ''
+  if (value instanceof Date) {
+    const y = value.getFullYear()
+    const m = String(value.getMonth() + 1).padStart(2, '0')
+    const d = String(value.getDate()).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  }
+  if (typeof value !== 'string') return ''
+  const s = value.trim()
+  if (!s) return ''
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s
+  // ISO timestamp
+  const iso = s.match(/^(\d{4}-\d{2}-\d{2})T/)
+  if (iso) return iso[1]
+  // DD/MM/YYYY or DD-MM-YYYY
+  let m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/)
+  if (m) {
+    const [, dd, mm, yyyy] = m
+    return `${yyyy}-${mm}-${dd}`
+  }
+  // MM/DD/YYYY or MM-DD-YYYY
+  m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/)
+  if (m) {
+    const [, mm2, dd2, yyyy2] = m
+    return `${yyyy2}-${mm2}-${dd2}`
+  }
+  // Fallback: Date.parse
+  const parsed = new Date(s)
+  if (!isNaN(parsed.getTime())) return toDateInputString(parsed)
+  return ''
 }
 
 const allowedByCaso: Record<string, string[]> = {

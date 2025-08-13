@@ -74,7 +74,6 @@ export default async function PageContent({ params }: PageContentProps) {
     file: { url: safeUrl, mimeType: mime, filename, kind: viewerKind },
     globals: {
       nombre_cliente: resourceRes.nombre_cliente ?? '',
-      nombre_documento: resourceRes.nombre_documento ?? '',
       caso: resourceRes.caso ?? null,
       tipo: resourceRes.tipo ?? null,
     },
@@ -130,7 +129,6 @@ export default async function PageContent({ params }: PageContentProps) {
                 resourceId={String(resourceRes.id)}
                 initialValues={{
                   nombre_cliente: viewerProps.globals.nombre_cliente,
-                  nombre_documento: viewerProps.globals.nombre_documento,
                   caso: viewerProps.globals.caso,
                   tipo: viewerProps.globals.tipo,
                   caseData:
@@ -167,7 +165,6 @@ export default async function PageContent({ params }: PageContentProps) {
                 resourceId={String(resourceRes.id)}
                 initialValues={{
                   nombre_cliente: viewerProps.globals.nombre_cliente,
-                  nombre_documento: viewerProps.globals.nombre_documento,
                   caso: viewerProps.globals.caso,
                   tipo: viewerProps.globals.tipo,
                   caseData: undefined,

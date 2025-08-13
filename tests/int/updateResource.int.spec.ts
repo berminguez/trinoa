@@ -63,14 +63,12 @@ describe('updateResourceAction (integration)', () => {
 
     const result = await updateResourceAction(String(project.id), String((resource as any).id), {
       nombre_cliente: 'Cliente Test',
-      nombre_documento: 'Documento Test',
       caso: null,
       tipo: null,
     })
 
     expect(result.success).toBe(true)
     expect(result.data?.nombre_cliente).toBe('Cliente Test')
-    expect(result.data?.nombre_documento).toBe('Documento Test')
   })
 })
 

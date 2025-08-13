@@ -261,7 +261,6 @@ export interface Resource {
    */
   lastUpdatedBy?: (string | null) | User;
   nombre_cliente?: string | null;
-  nombre_documento?: string | null;
   /**
    * Selecciona el tipo de caso para mostrar los campos correspondientes
    */
@@ -1070,7 +1069,6 @@ export interface ResourcesSelect<T extends boolean = true> {
   namespace?: T;
   lastUpdatedBy?: T;
   nombre_cliente?: T;
-  nombre_documento?: T;
   caso?: T;
   tipo?: T;
   factura_suministros?:
