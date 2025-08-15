@@ -197,6 +197,33 @@ export const Configuracion: GlobalConfig = {
                 },
               ],
             },
+            {
+              name: 'splitter',
+              type: 'group',
+              label: 'Splitter Endpoint',
+              admin: {
+                description: 'Configuración del endpoint para dividir PDFs multi‑factura',
+              },
+              fields: [
+                { name: 'url', type: 'text', label: 'URL del Splitter' },
+                {
+                  name: 'httpMethod',
+                  type: 'select',
+                  label: 'Método HTTP',
+                  defaultValue: 'POST',
+                  options: [{ label: 'POST', value: 'POST' }],
+                },
+                {
+                  name: 'bearerToken',
+                  type: 'text',
+                  label: 'Bearer Token (opcional)',
+                  admin: {
+                    description:
+                      'Si se deja vacío, reutilizar el Bearer del webhook de automatización si existe',
+                  },
+                },
+              ],
+            },
           ],
         },
       ],

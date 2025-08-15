@@ -123,6 +123,21 @@ export class StorageManager {
     const signed = await awsGetSignedUrl(s3Client, command, { expiresIn: expiresInSeconds })
     return signed
   }
+
+  /**
+   * Alias semántico para lectura temporal
+   */
+  static async getReadUrl(key: string, expiresInSeconds: number = 3600): Promise<string> {
+    return this.getSignedUrl(key, expiresInSeconds)
+  }
+
+  /**
+   * URL firmada pensada para el flujo Splitter de PDFs multi‑factura
+   * Por defecto expira a los 30 minutos para cubrir procesamientos más lentos
+   */
+  static async getSplitterReadUrl(key: string, expiresInSeconds: number = 1800): Promise<string> {
+    return this.getSignedUrl(key, expiresInSeconds)
+  }
 }
 
 export { StorageManager as default }

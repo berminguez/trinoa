@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     resources: Resource;
     projects: Project;
+    'pre-resources': PreResource;
     'api-keys': ApiKey;
     conversations: Conversation;
     messages: Message;
@@ -89,6 +90,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     resources: ResourcesSelect<false> | ResourcesSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
+    'pre-resources': PreResourcesSelect<false> | PreResourcesSelect<true>;
     'api-keys': ApiKeysSelect<false> | ApiKeysSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     messages: MessagesSelect<false> | MessagesSelect<true>;
@@ -624,6 +626,85 @@ export interface Project {
   updatedAt: string;
 }
 /**
+ * Registros temporales de documentos multi‑factura para división (solo admin).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pre-resources".
+ */
+export interface PreResource {
+  id: string;
+  /**
+   * Proyecto destino para los resources derivados
+   */
+  project: string | Project;
+  /**
+   * Logs del proceso Splitter para diagnóstico
+   */
+  logs?:
+    | {
+        step: string;
+        status: 'started' | 'progress' | 'success' | 'error';
+        at: string;
+        details?: string | null;
+        data?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Usuario que inició el proceso
+   */
+  user: string | User;
+  /**
+   * Archivo PDF original subido
+   */
+  file: string | Media;
+  /**
+   * Estado de procesamiento del pre‑resource
+   */
+  status: 'pending' | 'processing' | 'error' | 'done';
+  /**
+   * Respuesta del Splitter utilizada para dividir el PDF
+   */
+  splitterResponse?: {
+    /**
+     * Índices 1‑based de primeras páginas de cada factura
+     */
+    pages?:
+      | {
+          page: number;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * Mensaje de error (si falla endpoint o validación de pages)
+   */
+  error?: string | null;
+  /**
+   * IDs de resources creados a partir de este pre‑resource
+   */
+  derivedResourceIds?:
+    | {
+        resourceId: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Gestionado automáticamente por el sistema
+   */
+  lastUpdatedBy?: (string | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Gestiona API Keys para acceso externo a proyectos de usuario
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -911,6 +992,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'projects';
         value: string | Project;
+      } | null)
+    | ({
+        relationTo: 'pre-resources';
+        value: string | PreResource;
       } | null)
     | ({
         relationTo: 'api-keys';
@@ -1256,6 +1341,46 @@ export interface ProjectsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pre-resources_select".
+ */
+export interface PreResourcesSelect<T extends boolean = true> {
+  project?: T;
+  logs?:
+    | T
+    | {
+        step?: T;
+        status?: T;
+        at?: T;
+        details?: T;
+        data?: T;
+        id?: T;
+      };
+  user?: T;
+  file?: T;
+  status?: T;
+  splitterResponse?:
+    | T
+    | {
+        pages?:
+          | T
+          | {
+              page?: T;
+              id?: T;
+            };
+      };
+  error?: T;
+  derivedResourceIds?:
+    | T
+    | {
+        resourceId?: T;
+        id?: T;
+      };
+  lastUpdatedBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "api-keys_select".
  */
 export interface ApiKeysSelect<T extends boolean = true> {
@@ -1461,6 +1586,17 @@ export interface Configuracion {
         }[]
       | null;
   };
+  /**
+   * Configuración del endpoint para dividir PDFs multi‑factura
+   */
+  splitter?: {
+    url?: string | null;
+    httpMethod?: 'POST' | null;
+    /**
+     * Si se deja vacío, reutilizar el Bearer del webhook de automatización si existe
+     */
+    bearerToken?: string | null;
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1542,6 +1678,13 @@ export interface ConfiguracionSelect<T extends boolean = true> {
               value?: T;
               id?: T;
             };
+      };
+  splitter?:
+    | T
+    | {
+        url?: T;
+        httpMethod?: T;
+        bearerToken?: T;
       };
   updatedAt?: T;
   createdAt?: T;

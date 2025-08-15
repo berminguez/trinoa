@@ -29,6 +29,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useProjectUpload, type UploadFile } from '@/hooks/useProjectUpload'
 import { uploadFromUrls } from '@/actions/documents/uploadFromUrls'
 import type { Project } from '@/payload-types'
+import { DocumentUploader } from '@/components'
 
 interface DocumentUploadModalProps {
   project: Project
@@ -65,24 +66,25 @@ export function DocumentUploadModal({
   })
 
   // Usar el hook personalizado para manejar toda la lógica de upload
-  const { files, isUploading, addFiles, removeFile, clearFiles, uploadFiles } = useProjectUpload({
-    projectId: project.id,
-    onUploadComplete: () => {
-      if (onUploadComplete) {
-        onUploadComplete()
-      }
-      // Auto-cerrar modal tras éxito total si no hay errores
-      setTimeout(() => {
-        const hasErrors = files.some((f) => f.status === 'error')
-        if (!hasErrors) {
-          clearFiles()
-          setIsOpen(false)
+  const { files, isUploading, addFiles, removeFile, clearFiles, uploadFiles, toggleMultiInvoice } =
+    useProjectUpload({
+      projectId: project.id,
+      onUploadComplete: () => {
+        if (onUploadComplete) {
+          onUploadComplete()
         }
-      }, 1500)
-    },
-    onResourceUploaded,
-    onResourceUploadFailed,
-  })
+        // Auto-cerrar modal tras éxito total si no hay errores
+        setTimeout(() => {
+          const hasErrors = files.some((f) => f.status === 'error')
+          if (!hasErrors) {
+            clearFiles()
+            setIsOpen(false)
+          }
+        }, 1500)
+      },
+      onResourceUploaded,
+      onResourceUploadFailed,
+    })
 
   // Configuración de react-dropzone
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
@@ -354,80 +356,13 @@ export function DocumentUploadModal({
                 })()}
 
                 <div className='max-h-48 overflow-y-auto space-y-2'>
-                  {files.map((file) => (
-                    <div
-                      key={file.id}
-                      className={`flex items-center justify-between p-3 rounded-lg ${
-                        file.status === 'error' ? 'bg-red-50 border border-red-200' : 'bg-muted/50'
-                      }`}
-                    >
-                      <div className='flex items-center gap-3 flex-1 min-w-0'>
-                        {/* Icono con estado */}
-                        {file.status === 'validating' ? (
-                          <IconLoader2 className='h-5 w-5 text-blue-500 flex-shrink-0 animate-spin' />
-                        ) : file.status === 'uploading' ? (
-                          <IconLoader2 className='h-5 w-5 text-orange-500 flex-shrink-0 animate-spin' />
-                        ) : file.status === 'error' ? (
-                          <IconAlertCircle className='h-5 w-5 text-red-500 flex-shrink-0' />
-                        ) : file.status === 'completed' ? (
-                          <IconCheck className='h-5 w-5 text-green-500 flex-shrink-0' />
-                        ) : file.validationComplete ? (
-                          <IconCheck className='h-5 w-5 text-green-500 flex-shrink-0' />
-                        ) : file.type?.includes('pdf') ? (
-                          <IconFileText className='h-5 w-5 text-primary flex-shrink-0' />
-                        ) : (
-                          <IconPhoto className='h-5 w-5 text-primary flex-shrink-0' />
-                        )}
-
-                        <div className='flex-1 min-w-0'>
-                          <p className='text-sm font-medium truncate'>{file.name}</p>
-                          <div className='text-xs text-muted-foreground space-y-1'>
-                            <p>{(file.size / (1024 * 1024)).toFixed(1)} MB</p>
-
-                            {/* Mostrar tipo de archivo */}
-                            {file.type && (
-                              <p>Type: {file.type.includes('pdf') ? 'PDF Document' : 'Image'}</p>
-                            )}
-
-                            {/* Mostrar estado de validación */}
-                            {file.status === 'validating' && (
-                              <p className='text-blue-600'>Validating...</p>
-                            )}
-
-                            {/* Mostrar estado de subida */}
-                            {file.status === 'uploading' && (
-                              <div className='space-y-1'>
-                                <p className='text-orange-600'>Uploading... {file.progress}%</p>
-                                <Progress value={file.progress} className='h-1' />
-                              </div>
-                            )}
-
-                            {/* Mostrar estado completado */}
-                            {file.status === 'completed' && (
-                              <p className='text-green-600'>Upload completed successfully</p>
-                            )}
-
-                            {/* Mostrar errores de validación o subida */}
-                            {file.status === 'error' && file.error && (
-                              <p className='text-red-600'>{file.error}</p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {!isUploading && (
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => removeFile(file.id)}
-                          className='h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
-                          disabled={file.status === 'uploading'}
-                        >
-                          <IconTrash className='h-4 w-4' />
-                        </Button>
-                      )}
-                    </div>
-                  ))}
+                  <DocumentUploader
+                    files={files as UploadFile[]}
+                    isUploading={isUploading}
+                    onRemove={removeFile}
+                    onToggleMultiInvoice={(id, val) => toggleMultiInvoice(id, val)}
+                    showHeader={false}
+                  />
                 </div>
               </div>
             )}

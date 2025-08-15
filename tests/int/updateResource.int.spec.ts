@@ -39,14 +39,23 @@ describe('updateResourceAction (integration)', () => {
     })
     // PNG 1x1 válido en base64
     const pngBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/axlJXkAAAAASUVORK5CYII='
+    const buffer = Buffer.from(pngBase64, 'base64')
+    const u8 = new Uint8Array(buffer)
     const media = await payload.create({
       collection: 'media' as any,
-      data: { alt: 'test' },
+      data: {
+        alt: 'test',
+        title: 'file',
+        filename: 'file.png',
+        mimeType: 'image/png',
+        filesize: buffer.length,
+        mediaType: 'image',
+      },
       file: {
-        data: Buffer.from(pngBase64, 'base64'),
+        data: u8,
         mimetype: 'image/png',
-        name: 'file.png',
-        size: Buffer.from(pngBase64, 'base64').length,
+        filename: 'file.png',
+        size: u8.length,
       },
     } as any)
     const resource = await payload.create({

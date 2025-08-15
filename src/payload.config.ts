@@ -12,6 +12,7 @@ import { ApiKeys } from './collections/ApiKeys'
 import { Media } from './collections/Media'
 import { Messages } from './collections/Messages'
 import { Projects } from './collections/Projects'
+import { PreResources } from './collections/PreResources'
 import { Resources } from './collections/Resources'
 import { Subscriptions } from './collections/Subscriptions'
 import { Users } from './collections/Users'
@@ -27,7 +28,17 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Resources, Projects, ApiKeys, Conversations, Messages, Subscriptions],
+  collections: [
+    Users,
+    Media,
+    Resources,
+    Projects,
+    PreResources,
+    ApiKeys,
+    Conversations,
+    Messages,
+    Subscriptions,
+  ],
   globals: [Configuracion],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

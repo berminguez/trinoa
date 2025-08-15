@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import axios, { type AxiosProgressEvent } from 'axios'
+import { runSplitterPipeline } from '@/actions/splitter/runPipeline'
 import { toast } from 'sonner'
 import { addFileId } from '@/lib/utils/fileUtils'
 
@@ -10,8 +11,9 @@ export interface UploadFile extends File {
   progress: number
   status: 'pending' | 'uploading' | 'completed' | 'error' | 'validating'
   error?: string
-        duration?: number
+  duration?: number
   pages?: number
+  isMultiInvoice?: boolean
   validationComplete?: boolean
   tempResourceId?: string // ID temporal para optimistic updates
   _originalFile?: File // Referencia al File original para APIs que lo requieren
@@ -32,6 +34,7 @@ interface UseProjectUploadReturn {
   clearFiles: () => void
   uploadFiles: () => Promise<{ successful: number; failed: number; total: number } | undefined>
   validateFile: (file: UploadFile) => Promise<UploadFile>
+  toggleMultiInvoice: (fileId: string, value: boolean) => void
 }
 
 export function useProjectUpload({
@@ -70,14 +73,14 @@ export function useProjectUpload({
           return
         }
 
-                // Validación simple para documentos
+        // Validación simple para documentos
         console.log(`📜 [VALIDATION] Starting validation for file:`, {
           name: file.name,
           size: file.size,
           type: file.type,
           isFile: file instanceof File,
         })
-        
+
         // Validar extensión de archivo
         const isValidDocument = /\.(pdf|jpe?g|png|webp)$/i.test(file.name)
         if (!isValidDocument) {
@@ -91,12 +94,12 @@ export function useProjectUpload({
         // Validar tipo MIME adicional para mayor seguridad
         const validMimeTypes = [
           'application/pdf',
-          'image/jpeg', 
+          'image/jpeg',
           'image/jpg',
-          'image/png', 
-          'image/webp'
+          'image/png',
+          'image/webp',
         ]
-        
+
         if (file.type && !validMimeTypes.includes(file.type)) {
           console.warn(`File ${file.name} has unexpected MIME type: ${file.type}`)
           // No falla la validación, solo advierte, ya que algunos browsers pueden reportar MIME types incorrectos
@@ -112,9 +115,9 @@ export function useProjectUpload({
           return
         }
 
-                // Para PDFs podríamos agregar validación de páginas aquí en el futuro
+        // Para PDFs podríamos agregar validación de páginas aquí en el futuro
         // Por ahora, simplemente validamos que sea un archivo válido
-        
+
         const isPDF = file.name.toLowerCase().endsWith('.pdf')
         console.log(`✅ [VALIDATION] Document validated successfully:`, {
           name: file.name,
@@ -153,8 +156,8 @@ export function useProjectUpload({
       }
 
       console.log('🔍 [VALIDATE] Validating file:', {
-        name: file.name, 
-        size: file.size, 
+        name: file.name,
+        size: file.size,
         type: file.type,
         hasOriginalFile: !!(file as any)._originalFile,
       })
@@ -231,15 +234,15 @@ export function useProjectUpload({
 
       // ⭐ GENERAR NOMBRE ÚNICO para evitar colisiones
       const uniqueFileName = addFileId(file.name)
-      
+
       const formData = new FormData()
-      
+
       // Crear un nuevo objeto File con el nombre único
       const uniqueFile = new File([file._originalFile || file], uniqueFileName, {
         type: file.type,
         lastModified: file.lastModified || Date.now(),
       })
-      
+
       formData.append('file', uniqueFile)
       formData.append('projectId', projectId)
 
@@ -311,20 +314,39 @@ export function useProjectUpload({
           description: formData.get('description'),
         })
 
-        const response = await axios.post('/api/resources/upload', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-          onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-            if (progressEvent.total) {
-              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              console.log('[UPLOAD] Progress:', progress + '%')
+        let response: any
+        if (file.isMultiInvoice && file.type?.includes('pdf')) {
+          // Usar endpoint multipart (igual patrón que /api/resources/upload) para evitar límites de server actions
+          const splitterForm = new FormData()
+          splitterForm.append('file', uniqueFile)
+          splitterForm.append('projectId', projectId)
 
-              // Actualizar progreso del archivo específico
-              setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, progress } : f)))
-            }
-          },
-        })
+          // Enviar a API propia
+          const res = await axios.post('/api/pre-resources/upload', splitterForm, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, progress } : f)))
+              }
+            },
+          })
+          if (!res.data?.success) throw new Error(res.data?.error || 'pre-resource upload failed')
+          response = { data: { success: true }, status: 200, statusText: 'OK' }
+        } else {
+          response = await axios.post('/api/resources/upload', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+            onUploadProgress: (progressEvent: AxiosProgressEvent) => {
+              if (progressEvent.total) {
+                const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                console.log('[UPLOAD] Progress:', progress + '%')
+                setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, progress } : f)))
+              }
+            },
+          })
+        }
 
         console.log('[UPLOAD] Response received:', {
           status: response.status,
@@ -548,6 +570,11 @@ export function useProjectUpload({
     setFiles((prev) => prev.filter((file) => file.id !== fileId))
   }, [])
 
+  // Marcar/unmarcar un archivo como multi-factura
+  const toggleMultiInvoice = useCallback((fileId: string, value: boolean) => {
+    setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, isMultiInvoice: value } : f)))
+  }, [])
+
   // Función para limpiar todos los archivos
   const clearFiles = useCallback(() => {
     setFiles([])
@@ -647,5 +674,6 @@ export function useProjectUpload({
     clearFiles,
     uploadFiles,
     validateFile,
+    toggleMultiInvoice,
   }
 }
