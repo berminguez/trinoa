@@ -2,6 +2,162 @@ import type { CollectionConfig } from 'payload'
 import { StorageManager } from '@/lib/storage'
 import { analyzeInvoicePagesWithOpenAI } from '@/lib/pdf/openai-splitter'
 
+/**
+ * Procesa el pipeline del splitter en background (fire and forget)
+ * Contiene toda la lógica de análisis con OpenAI sin bloquear la respuesta inicial
+ */
+async function processSplitterPipeline(doc: any, req: any): Promise<void> {
+  try {
+    const pre: any = doc
+    console.log('[PRE-RESOURCES] Starting splitter pipeline for:', String(pre.id))
+
+    // 1) Obtener media y URL firmada
+    const mediaId = typeof pre.file === 'string' ? pre.file : pre.file?.id
+    if (!mediaId) {
+      throw new Error('Media ID no encontrado en pre-resource')
+    }
+
+    const media = await req.payload.findByID({ collection: 'media', id: String(mediaId) })
+    const s3Key = (media as any)?.filename as string | undefined
+    if (!s3Key) {
+      throw new Error('Media sin filename para generar URL firmada')
+    }
+    const fileUrl = await StorageManager.getSignedUrl(s3Key, 1800) // 30 min
+
+    // 2) Analizar PDF con OpenAI GPT-4V (nuevo sistema)
+    console.log('[PRE-RESOURCES] Starting OpenAI analysis...')
+    const openaiResult = await analyzeInvoicePagesWithOpenAI(fileUrl)
+
+    if (!openaiResult.success) {
+      throw new Error(`OpenAI analysis failed: ${openaiResult.error}`)
+    }
+
+    const pages = openaiResult.pages!
+    if (!pages || pages.length === 0) {
+      throw new Error('OpenAI no detectó páginas de facturas válidas')
+    }
+
+    /* 
+    // BACKUP: Sistema anterior con webhook externo (mantener para rollback)
+    
+    // 2) Leer configuración del Splitter
+    const cfg: any = await req.payload.findGlobal({
+      slug: 'configuracion' as any,
+      depth: 0,
+      overrideAccess: true,
+    } as any)
+    const splitter = cfg?.splitter || {}
+    const endpointUrl: string | undefined = splitter?.url
+    const bearer: string | undefined =
+      splitter?.bearerToken || cfg?.automationEndpoint?.bearerToken
+
+    if (!endpointUrl) {
+      throw new Error('Splitter URL no configurada en Globals')
+    }
+
+    // 3) Llamar al Splitter con { url }
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (bearer) headers['Authorization'] = bearer
+
+    console.log('[PRE-RESOURCES] Calling Splitter...', {
+      endpointUrl,
+      headers: Object.keys(headers),
+      preResourceId: String(pre.id),
+      fileUrlPreview: String(fileUrl).slice(0, 80),
+    })
+
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 30000) // 30s timeout
+    const res = await fetch(endpointUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ url: fileUrl }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+
+    const text = await res.text().catch(() => '')
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${text?.slice(0, 200)}`)
+    }
+
+    const json = JSON.parse(text) as { pages?: unknown } | null
+    const pages = Array.isArray(json?.pages)
+      ? (json!.pages as unknown[])
+          .map((n) => Number(n))
+          .filter((n) => Number.isFinite(n) && n > 0)
+      : null
+
+    if (!pages || pages.length === 0) {
+      throw new Error('Respuesta del Splitter inválida o vacía')
+    }
+    */
+
+    console.log('[PRE-RESOURCES] OpenAI analysis success:', {
+      pages,
+      usage: openaiResult.usage,
+    })
+
+    // 4) Actualizar pre-resource con logs y pages
+    const currentLogs = Array.isArray(pre.logs) ? pre.logs : []
+    const newLog = {
+      step: 'openai-analysis',
+      status: 'success' as const,
+      at: new Date().toISOString(),
+      details: `Análisis con OpenAI completado - ${pages.length} páginas detectadas`,
+      data: {
+        model: 'gpt-4o',
+        pages,
+        usage: openaiResult.usage,
+        method: 'vision-analysis',
+      },
+    }
+
+    const updateData: any = {
+      status: 'processing',
+      splitterResponse: { pages: pages.map((p) => ({ page: p })) },
+      lastUpdatedBy: req.user?.id,
+      logs: [...currentLogs, newLog],
+    }
+
+    await req.payload.update({
+      collection: 'pre-resources',
+      id: String(pre.id),
+      data: updateData,
+      overrideAccess: true,
+    })
+  } catch (error) {
+    // No interrumpir el flujo por errores del análisis; solo loggear (igual que Resources.ts)
+    console.error('[PRE-RESOURCES] Exception while analyzing with OpenAI:', error)
+    try {
+      const current = await req.payload.findByID({
+        collection: 'pre-resources',
+        id: String(doc.id),
+      })
+      const currentLogs = Array.isArray((current as any).logs) ? (current as any).logs : []
+      const errLog = {
+        step: 'openai-analysis',
+        status: 'error' as const,
+        at: new Date().toISOString(),
+        details: 'Excepción al analizar con OpenAI',
+        data: { error: String(error) },
+      }
+      await req.payload.update({
+        collection: 'pre-resources',
+        id: String(doc.id),
+        data: {
+          status: 'error',
+          error: String(error),
+          logs: [...currentLogs, errLog],
+        },
+        overrideAccess: true,
+      })
+    } catch (updateError) {
+      console.error('[PRE-RESOURCES] Error updating after OpenAI exception:', updateError)
+    }
+  }
+}
+
 export const PreResources: CollectionConfig = {
   slug: 'pre-resources',
   access: {
@@ -146,158 +302,13 @@ export const PreResources: CollectionConfig = {
   ],
   hooks: {
     afterChange: [
-      async ({ doc, operation, req }) => {
-        // Hook de splitter: llamar endpoint externo al crear pre-resource
+      ({ doc, operation, req }) => {
+        // Hook de splitter: ejecutar pipeline en background (fire and forget)
         if (operation === 'create') {
-          try {
-            const pre: any = doc
-            console.log('[PRE-RESOURCES] Starting splitter pipeline for:', String(pre.id))
-
-            // 1) Obtener media y URL firmada
-            const mediaId = typeof pre.file === 'string' ? pre.file : pre.file?.id
-            if (!mediaId) {
-              throw new Error('Media ID no encontrado en pre-resource')
-            }
-
-            const media = await req.payload.findByID({ collection: 'media', id: String(mediaId) })
-            const s3Key = (media as any)?.filename as string | undefined
-            if (!s3Key) {
-              throw new Error('Media sin filename para generar URL firmada')
-            }
-            const fileUrl = await StorageManager.getSignedUrl(s3Key, 1800) // 30 min
-
-            // 2) Analizar PDF con OpenAI GPT-4V (nuevo sistema)
-            console.log('[PRE-RESOURCES] Starting OpenAI analysis...')
-            const openaiResult = await analyzeInvoicePagesWithOpenAI(fileUrl)
-
-            if (!openaiResult.success) {
-              throw new Error(`OpenAI analysis failed: ${openaiResult.error}`)
-            }
-
-            const pages = openaiResult.pages!
-            if (!pages || pages.length === 0) {
-              throw new Error('OpenAI no detectó páginas de facturas válidas')
-            }
-
-            /* 
-            // BACKUP: Sistema anterior con webhook externo (mantener para rollback)
-            
-            // 2) Leer configuración del Splitter
-            const cfg: any = await req.payload.findGlobal({
-              slug: 'configuracion' as any,
-              depth: 0,
-              overrideAccess: true,
-            } as any)
-            const splitter = cfg?.splitter || {}
-            const endpointUrl: string | undefined = splitter?.url
-            const bearer: string | undefined =
-              splitter?.bearerToken || cfg?.automationEndpoint?.bearerToken
-
-            if (!endpointUrl) {
-              throw new Error('Splitter URL no configurada en Globals')
-            }
-
-            // 3) Llamar al Splitter con { url }
-            const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-            if (bearer) headers['Authorization'] = bearer
-
-            console.log('[PRE-RESOURCES] Calling Splitter...', {
-              endpointUrl,
-              headers: Object.keys(headers),
-              preResourceId: String(pre.id),
-              fileUrlPreview: String(fileUrl).slice(0, 80),
-            })
-
-            const controller = new AbortController()
-            const timer = setTimeout(() => controller.abort(), 30000) // 30s timeout
-            const res = await fetch(endpointUrl, {
-              method: 'POST',
-              headers,
-              body: JSON.stringify({ url: fileUrl }),
-              signal: controller.signal,
-            })
-            clearTimeout(timer)
-
-            const text = await res.text().catch(() => '')
-            if (!res.ok) {
-              throw new Error(`HTTP ${res.status}: ${text?.slice(0, 200)}`)
-            }
-
-            const json = JSON.parse(text) as { pages?: unknown } | null
-            const pages = Array.isArray(json?.pages)
-              ? (json!.pages as unknown[])
-                  .map((n) => Number(n))
-                  .filter((n) => Number.isFinite(n) && n > 0)
-              : null
-
-            if (!pages || pages.length === 0) {
-              throw new Error('Respuesta del Splitter inválida o vacía')
-            }
-            */
-
-            console.log('[PRE-RESOURCES] OpenAI analysis success:', {
-              pages,
-              usage: openaiResult.usage,
-            })
-
-            // 4) Actualizar pre-resource con logs y pages
-            const currentLogs = Array.isArray(pre.logs) ? pre.logs : []
-            const newLog = {
-              step: 'openai-analysis',
-              status: 'success' as const,
-              at: new Date().toISOString(),
-              details: `Análisis con OpenAI completado - ${pages.length} páginas detectadas`,
-              data: {
-                model: 'gpt-4o',
-                pages,
-                usage: openaiResult.usage,
-                method: 'vision-analysis',
-              },
-            }
-
-            const updateData: any = {
-              status: 'processing',
-              splitterResponse: { pages: pages.map((p) => ({ page: p })) },
-              lastUpdatedBy: req.user?.id,
-              logs: [...currentLogs, newLog],
-            }
-
-            await req.payload.update({
-              collection: 'pre-resources',
-              id: String(pre.id),
-              data: updateData,
-              overrideAccess: true,
-            })
-          } catch (error) {
-            // No interrumpir el flujo por errores del análisis; solo loggear (igual que Resources.ts)
-            console.error('[PRE-RESOURCES] Exception while analyzing with OpenAI:', error)
-            try {
-              const current = await req.payload.findByID({
-                collection: 'pre-resources',
-                id: String(doc.id),
-              })
-              const currentLogs = Array.isArray((current as any).logs) ? (current as any).logs : []
-              const errLog = {
-                step: 'openai-analysis',
-                status: 'error' as const,
-                at: new Date().toISOString(),
-                details: 'Excepción al analizar con OpenAI',
-                data: { error: String(error) },
-              }
-              await req.payload.update({
-                collection: 'pre-resources',
-                id: String(doc.id),
-                data: {
-                  status: 'error',
-                  error: String(error),
-                  logs: [...currentLogs, errLog],
-                },
-                overrideAccess: true,
-              })
-            } catch (updateError) {
-              console.error('[PRE-RESOURCES] Error updating after OpenAI exception:', updateError)
-            }
-          }
+          // Ejecutar el pipeline en background sin bloquear la respuesta
+          Promise.resolve().then(async () => {
+            await processSplitterPipeline(doc, req)
+          })
         }
       },
     ],
