@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { StorageManager } from '@/lib/storage'
 import { analyzeInvoicePagesWithOpenAI } from '@/lib/pdf/openai-splitter'
+import { splitPdfAndUpload } from '@/lib/pdf/pdf-splitter'
 
 /**
  * Procesa el pipeline del splitter en background (fire and forget)
@@ -126,6 +127,120 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
       data: updateData,
       overrideAccess: true,
     })
+
+    // 5) Dividir PDF en segmentos basándose en las páginas detectadas
+    console.log('[PRE-RESOURCES] Iniciando división de PDF en segmentos...')
+
+    try {
+      // Obtener el filename original del media para generar nombres de segmentos
+      const originalFilename = (media as any)?.filename || 'documento.pdf'
+
+      // Dividir PDF y subir segmentos a S3
+      const segmentMediaRecords = await splitPdfAndUpload(fileUrl, pages, originalFilename)
+
+      console.log(
+        '[PRE-RESOURCES] PDF dividido exitosamente en',
+        segmentMediaRecords.length,
+        'segmentos',
+      )
+
+      // 6) Crear resources derivados para cada segmento
+      const derivedResourceIds: string[] = []
+
+      for (let i = 0; i < segmentMediaRecords.length; i++) {
+        const segmentMedia = segmentMediaRecords[i]
+        const segmentTitle = `${(pre as any)?.title || 'Documento'} - Segmento ${i + 1}`
+
+        // Crear el resource que apunta al media ya creado
+        const projectId = typeof pre.project === 'object' ? pre.project.id : pre.project
+        const namespace = `project-${projectId}-documents`
+
+        const derivedResource = await req.payload.create({
+          collection: 'resources',
+          data: {
+            title: segmentTitle,
+            project: pre.project,
+            user: pre.user,
+            file: segmentMedia.id,
+            status: 'pending',
+            namespace: namespace,
+            lastUpdatedBy: req.user?.id,
+          },
+          overrideAccess: true,
+        })
+
+        derivedResourceIds.push(String(derivedResource.id))
+
+        console.log('[PRE-RESOURCES] Resource derivado creado:', {
+          resourceId: derivedResource.id,
+          mediaId: segmentMedia.id,
+          filename: segmentMedia.filename,
+          title: segmentTitle,
+          namespace: namespace,
+          projectId: projectId,
+        })
+      }
+
+      // 7) Actualizar pre-resource con IDs de resources derivados y status final
+      const finalLogs = [
+        ...(updateData.logs || []),
+        {
+          step: 'pdf-splitting',
+          status: 'success' as const,
+          at: new Date().toISOString(),
+          details: `PDF dividido en ${segmentMediaRecords.length} segmentos y resources creados`,
+          data: {
+            segmentsCreated: segmentMediaRecords.length,
+            segmentMediaIds: segmentMediaRecords.map((m) => m.id),
+            derivedResourceIds,
+          },
+        },
+      ]
+
+      await req.payload.update({
+        collection: 'pre-resources',
+        id: String(pre.id),
+        data: {
+          status: 'done',
+          derivedResourceIds: derivedResourceIds.map((id) => ({ resourceId: id })),
+          lastUpdatedBy: req.user?.id,
+          logs: finalLogs,
+        },
+        overrideAccess: true,
+      })
+
+      console.log('[PRE-RESOURCES] Pipeline completado exitosamente:', {
+        preResourceId: String(pre.id),
+        derivedResourcesCount: derivedResourceIds.length,
+        derivedResourceIds,
+      })
+    } catch (splittingError) {
+      console.error('[PRE-RESOURCES] Error durante la división de PDF:', splittingError)
+
+      // Actualizar con error de splitting pero mantener el análisis exitoso
+      const errorLogs = [
+        ...(updateData.logs || []),
+        {
+          step: 'pdf-splitting',
+          status: 'error' as const,
+          at: new Date().toISOString(),
+          details: 'Error al dividir PDF o crear resources derivados',
+          data: { error: String(splittingError) },
+        },
+      ]
+
+      await req.payload.update({
+        collection: 'pre-resources',
+        id: String(pre.id),
+        data: {
+          status: 'error',
+          error: `Error en división de PDF: ${String(splittingError)}`,
+          logs: errorLogs,
+          lastUpdatedBy: req.user?.id,
+        },
+        overrideAccess: true,
+      })
+    }
   } catch (error) {
     // No interrumpir el flujo por errores del análisis; solo loggear (igual que Resources.ts)
     console.error('[PRE-RESOURCES] Exception while analyzing with OpenAI:', error)
