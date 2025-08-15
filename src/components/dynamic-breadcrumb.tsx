@@ -75,6 +75,11 @@ export function DynamicBreadcrumb() {
           label: 'Project Detail', // Por ahora genérico, se puede mejorar con el nombre real
           icon: IconFolder,
         })
+      } else if (
+        // Deshabilitar enlace "Resource" en rutas de recurso
+        currentPath.match(/^\/projects\/[\w-]+\/resource$/)
+      ) {
+        breadcrumbs.push({ path: currentPath, label: 'Resource', icon: IconFolder })
       } else {
         // Para rutas no mapeadas, usar el segment con formato capitalizado
         breadcrumbs.push({
@@ -113,7 +118,7 @@ export function DynamicBreadcrumb() {
           return (
             <div key={breadcrumb.path} className='flex items-center'>
               <BreadcrumbItem>
-                {isLast ? (
+                {isLast || breadcrumb.label === 'Resource' ? (
                   <BreadcrumbPage className='flex items-center gap-2'>
                     <Icon className='h-4 w-4' />
                     {breadcrumb.label}

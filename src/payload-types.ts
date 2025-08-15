@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     resources: Resource;
+    'field-translations': FieldTranslation;
     projects: Project;
     'pre-resources': PreResource;
     'api-keys': ApiKey;
@@ -89,6 +90,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     resources: ResourcesSelect<false> | ResourcesSelect<true>;
+    'field-translations': FieldTranslationsSelect<false> | FieldTranslationsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     'pre-resources': PreResourcesSelect<false> | PreResourcesSelect<true>;
     'api-keys': ApiKeysSelect<false> | ApiKeysSelect<true>;
@@ -626,6 +628,21 @@ export interface Project {
   updatedAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "field-translations".
+ */
+export interface FieldTranslation {
+  id: string;
+  key: string;
+  /**
+   * Orden ascendente para mostrar campos
+   */
+  order?: number | null;
+  label: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Registros temporales de documentos multi‑factura para división (solo admin).
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -990,6 +1007,10 @@ export interface PayloadLockedDocument {
         value: string | Resource;
       } | null)
     | ({
+        relationTo: 'field-translations';
+        value: string | FieldTranslation;
+      } | null)
+    | ({
         relationTo: 'projects';
         value: string | Project;
       } | null)
@@ -1323,6 +1344,17 @@ export interface ResourcesSelect<T extends boolean = true> {
   source?: T;
   startedAt?: T;
   completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "field-translations_select".
+ */
+export interface FieldTranslationsSelect<T extends boolean = true> {
+  key?: T;
+  order?: T;
+  label?: T;
   updatedAt?: T;
   createdAt?: T;
 }

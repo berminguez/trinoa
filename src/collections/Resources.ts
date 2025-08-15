@@ -1,9 +1,8 @@
 import { createAuthErrorResponse } from '../lib/auth'
 import { PineconeManager } from '../lib/pinecone'
-import { QueueManager } from '../lib/queue'
 import { StorageManager } from '../lib/storage'
 
-import type { EmbeddingJob, Media } from '../types'
+import type { Media } from '../types'
 import { mapAnalyzeResultToResource } from '../lib/analyze-mappers'
 import type { CollectionConfig } from 'payload'
 
@@ -642,18 +641,19 @@ export const Resources: CollectionConfig = {
         readOnly: true,
       },
     },
-    // Botón de prueba de mapeo en el admin
+    // Editor visual de fields de analyzeResult
     {
-      name: 'testMapping',
+      name: 'analyzeFieldsEditor',
       type: 'ui',
       admin: {
         components: {
-          Field: '@/payload-admin/TestMappingButton#TestMappingButton',
+          Field: '@/payload-admin/AnalyzeFieldsEditor#AnalyzeFieldsEditor',
         },
         position: 'sidebar',
-        condition: (data) => Boolean((data as any).analyzeResult),
+        condition: (data) => Boolean((data as any).analyzeResult?.fields),
       },
     },
+    // Eliminado: botón de mapeo manual (se edita directamente desde analyzeResult)
     // Campos de metadatos del procesamiento
     {
       name: 'processingMetadata',
@@ -992,10 +992,54 @@ export const Resources: CollectionConfig = {
             tipo: body?.tipo,
           })
 
+          // Fusionar analyzeResult recibido con el actual para preservar ediciones manuales
+          let mergedAnalyzeResult: any = analyzeResult
+          try {
+            let currentResource: any = null
+            try {
+              currentResource = await req.payload.findByID({
+                collection: 'resources',
+                id: resourceId,
+                depth: 0,
+                overrideAccess: true,
+              })
+            } catch {}
+
+            const currentAR = (currentResource as any)?.analyzeResult || {}
+            const currentFields =
+              currentAR?.fields && typeof currentAR.fields === 'object'
+                ? currentAR.fields
+                : undefined
+            const incomingFields =
+              analyzeResult?.fields && typeof analyzeResult.fields === 'object'
+                ? analyzeResult.fields
+                : undefined
+
+            if (incomingFields || currentFields) {
+              const mergedFields: Record<string, unknown> = {
+                ...(incomingFields || {}),
+              }
+              if (currentFields) {
+                for (const [k, v] of Object.entries(currentFields)) {
+                  // Si el campo fue marcado como manual por el usuario, preservar su valor
+                  if (v && typeof v === 'object' && (v as any).manual) {
+                    mergedFields[k] = v
+                  }
+                }
+              }
+              mergedAnalyzeResult = {
+                ...(analyzeResult || {}),
+                fields: mergedFields,
+              }
+            }
+          } catch (e) {
+            console.warn('[RESOURCES_WEBHOOK] Failed to merge analyzeResult with current edits:', e)
+          }
+
           // Construir data de actualización incluyendo caso/tipo si vienen en el body
           const updateData: any = {
             status: 'completed',
-            analyzeResult: analyzeResult,
+            analyzeResult: mergedAnalyzeResult,
             logs: [
               {
                 step: 'azure-analyze',
@@ -1020,54 +1064,23 @@ export const Resources: CollectionConfig = {
             updateData.tipo = body.tipo
           }
 
-          // Aplicar mapeo específico según caso/tipo/modelId
+          // Sin mapeo automático: ahora el JSON ya llega filtrado desde n8n y se edita desde Admin
+
+          // Auto-registro de nuevas keys en field-translations
           try {
-            // Cargar el recurso actual para conocer caso/tipo si no vienen en el body
-            let currentResource: any = null
-            try {
-              currentResource = await req.payload.findByID({
-                collection: 'resources',
-                id: resourceId,
-                depth: 0,
-                overrideAccess: true,
-              })
-            } catch {}
-
-            const effectiveCaso = body?.caso ?? currentResource?.caso
-            const effectiveTipo = body?.tipo ?? currentResource?.tipo
-            console.log('[RESOURCES_WEBHOOK] Effective caso/tipo for mapping:', {
-              effectiveCaso,
-              effectiveTipo,
-            })
-
-            const mapped = mapAnalyzeResultToResource(analyzeResult, {
-              caso: effectiveCaso,
-              tipo: effectiveTipo,
-              modelId: body?.modelId || body?.modelo,
-            })
-            if (mapped && typeof mapped === 'object') {
-              console.log('[RESOURCES_WEBHOOK] Mapping result keys:', Object.keys(mapped))
-              Object.assign(updateData, mapped)
-              updateData.logs.push({
-                step: 'analyze-mapping',
-                status: 'success',
-                at: new Date().toISOString(),
-                details: 'Analyze result mapped to resource fields',
-                data: {
-                  applied: Object.keys(mapped),
-                },
-              })
+            const fieldsObj = (mergedAnalyzeResult as any)?.fields
+            if (fieldsObj && typeof fieldsObj === 'object') {
+              const keys = Object.keys(fieldsObj)
+              for (const k of keys) {
+                try {
+                  await req.payload.create({
+                    collection: 'field-translations' as any,
+                    data: { key: k, label: k },
+                  })
+                } catch {}
+              }
             }
-          } catch (mapError) {
-            console.error('[RESOURCES_WEBHOOK] Mapping error:', mapError)
-            updateData.logs.push({
-              step: 'analyze-mapping',
-              status: 'error',
-              at: new Date().toISOString(),
-              details: 'Error mapping analyze result',
-              data: { error: String(mapError) },
-            })
-          }
+          } catch {}
 
           // Actualizar el recurso: status -> completed y guardar analyzeResult, caso y tipo si aplica
           const updated = await req.payload.update({
