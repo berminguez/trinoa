@@ -8,3 +8,4 @@ export { ResourceList } from './ResourceList'
 
 // Componentes administrativos
 export { AdminAccessGuard } from './admin-access-guard'
+export { AdminBreadcrumb, AdminBreadcrumbs } from './admin-breadcrumb'

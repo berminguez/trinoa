@@ -58,17 +58,17 @@ export function DocumentUploadModal({
 
   // Log del project recibido para debugging
   console.log('🏗️ [MODAL] Project data received:', {
-    projectId: project.id,
-    projectTitle: project.title,
-    projectIdType: typeof project.id,
-    projectCreatedBy: project.createdBy,
+    projectId: project?.id,
+    projectTitle: project?.title,
+    projectIdType: typeof project?.id,
+    projectCreatedBy: project?.createdBy,
     projectObject: project,
   })
 
   // Usar el hook personalizado para manejar toda la lógica de upload
   const { files, isUploading, addFiles, removeFile, clearFiles, uploadFiles, toggleMultiInvoice } =
     useProjectUpload({
-      projectId: project.id,
+      projectId: project?.id,
       onUploadComplete: () => {
         if (onUploadComplete) {
           onUploadComplete()

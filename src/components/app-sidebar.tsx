@@ -19,14 +19,17 @@ import {
   IconHome,
   IconCircles,
   IconKey,
+  IconUserCog,
 } from '@tabler/icons-react'
 import * as React from 'react'
+import { useEffect, useState } from 'react'
 
 import { Logo } from '@/components/logo'
 import { NavDocuments } from '@/components/nav-documents'
 import { NavMain } from '@/components/nav-main'
 import { NavSecondary } from '@/components/nav-secondary'
 import { NavUser } from '@/components/nav-user'
+import { useUserRole } from '@/hooks/useUserRole'
 import {
   Sidebar,
   SidebarContent,
@@ -37,50 +40,60 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
+// Navegación base disponible para todos los usuarios
+const baseNavigation = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: IconHome,
+  },
+  {
+    title: 'Projects',
+    url: '/projects',
+    icon: IconFolder,
+  },
+  {
+    title: 'Playground',
+    url: '/playground',
+    icon: IconRobot,
+  },
+  {
+    title: 'API Keys',
+    url: '/api-keys',
+    icon: IconKey,
+  },
+  {
+    title: 'Lifecycle',
+    url: '#',
+    icon: IconListDetails,
+  },
+  {
+    title: 'Analytics',
+    url: '#',
+    icon: IconChartBar,
+  },
+  {
+    title: 'Team',
+    url: '#',
+    icon: IconUsers,
+  },
+]
+
+// Navegación exclusiva para administradores
+const adminNavigation = [
+  {
+    title: 'Clients',
+    url: '/clients',
+    icon: IconUserCog,
+  },
+]
+
 const data = {
   user: {
     name: 'shadcn',
     email: 'm@example.com',
     avatar: '/avatars/shadcn.jpg',
   },
-  navMain: [
-    {
-      title: 'Dashboard',
-      url: '/dashboard',
-      icon: IconHome,
-    },
-    {
-      title: 'Projects',
-      url: '/projects',
-      icon: IconFolder,
-    },
-    {
-      title: 'Playground',
-      url: '/playground',
-      icon: IconRobot,
-    },
-    {
-      title: 'API Keys',
-      url: '/api-keys',
-      icon: IconKey,
-    },
-    {
-      title: 'Lifecycle',
-      url: '#',
-      icon: IconListDetails,
-    },
-    {
-      title: 'Analytics',
-      url: '#',
-      icon: IconChartBar,
-    },
-
-    {
-      title: 'Team',
-      url: '#',
-      icon: IconUsers,
-    },
-  ],
   navClouds: [
     {
       title: 'Capture',
@@ -166,6 +179,21 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { isAdmin, isLoading } = useUserRole()
+
+  // Construir navegación dinámicamente basado en el rol del usuario
+  const navigationItems = React.useMemo(() => {
+    const items = [...baseNavigation]
+
+    // Añadir navegación de admin si el usuario es administrador
+    if (isAdmin) {
+      // Insertar "Clients" después de "Projects" (posición 2)
+      items.splice(2, 0, ...adminNavigation)
+    }
+
+    return items
+  }, [isAdmin])
+
   return (
     <Sidebar collapsible='offcanvas' {...props}>
       <SidebarHeader>
@@ -182,7 +210,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        {/* Solo renderizar navegación cuando no esté cargando */}
+        {!isLoading && <NavMain items={navigationItems} />}
         {/*   <NavDocuments items={data.documents} /> */}
         <NavSecondary items={data.navSecondary} className='mt-auto' />
       </SidebarContent>

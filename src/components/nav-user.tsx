@@ -9,6 +9,8 @@ import {
   IconUserCircle,
   IconLoader,
   IconAlertCircle,
+  IconShield,
+  IconCrown,
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
 
@@ -29,8 +31,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Badge } from '@/components/ui/badge'
 import { getUserDisplayData } from '@/actions/auth/getUser'
 import { logoutWithRedirect } from '@/actions/auth/logout'
+import { useUserRole } from '@/hooks/useUserRole'
 
 interface UserData {
   id: string
@@ -45,6 +49,7 @@ export function NavUser() {
   const [error, setError] = useState<string>('')
 
   const { isMobile } = useSidebar()
+  const { isAdmin } = useUserRole() // Hook para verificar si es admin
 
   // Obtener datos del usuario al cargar el componente
   useEffect(() => {
@@ -169,7 +174,15 @@ export function NavUser() {
                   </AvatarFallback>
                 </Avatar>
                 <div className='grid flex-1 text-left text-sm leading-tight'>
-                  <span className='truncate font-medium'>{user.name}</span>
+                  <div className='flex items-center gap-2'>
+                    <span className='truncate font-medium'>{user.name}</span>
+                    {isAdmin && (
+                      <IconShield
+                        className='h-3 w-3 text-orange-600 flex-shrink-0'
+                        title='Administrador'
+                      />
+                    )}
+                  </div>
                   <span className='text-muted-foreground truncate text-xs'>{user.email}</span>
                 </div>
                 {isLoggingOut ? (
@@ -193,7 +206,18 @@ export function NavUser() {
                     </AvatarFallback>
                   </Avatar>
                   <div className='grid flex-1 text-left text-sm leading-tight'>
-                    <span className='truncate font-medium'>{user.name}</span>
+                    <div className='flex items-center gap-2'>
+                      <span className='truncate font-medium'>{user.name}</span>
+                      {isAdmin && (
+                        <Badge
+                          variant='outline'
+                          className='h-5 px-1.5 text-xs border-orange-200 text-orange-700 bg-orange-50'
+                        >
+                          <IconCrown className='h-3 w-3 mr-1' />
+                          Admin
+                        </Badge>
+                      )}
+                    </div>
                     <span className='text-muted-foreground truncate text-xs'>{user.email}</span>
                   </div>
                 </div>
@@ -213,6 +237,19 @@ export function NavUser() {
                   Notificaciones
                 </DropdownMenuItem>
               </DropdownMenuGroup>
+
+              {/* Sección especial para administradores */}
+              {isAdmin && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className='text-orange-700 focus:text-orange-700 focus:bg-orange-50'>
+                      <IconShield />
+                      Panel de Administración
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}
