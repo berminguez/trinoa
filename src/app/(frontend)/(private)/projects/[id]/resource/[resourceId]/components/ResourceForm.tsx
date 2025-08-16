@@ -1,6 +1,6 @@
 'use client'
 
-import { Formik, Form, Field } from 'formik'
+import { Formik, Form } from 'formik'
 import * as Yup from 'yup'
 import { Button } from '@/components/ui/button'
 import useVisualizadorStore from '@/stores/visualizador-store'
@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import { updateResourceAction } from '@/actions/resources/updateResource'
 import { rescanResourceAction } from '@/actions/resources/rescanResource'
 import { getResourceStatusAction } from '@/actions/resources/getResourceStatus'
+import AnalyzeFieldsPanel from './AnalyzeFieldsPanel'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,6 +36,7 @@ export interface ResourceFormInitialValues {
   tipo: string | null
   // Contenedor para campos del caso activo; se detallará en 5.3
   caseData?: Record<string, unknown>
+  analyzeFields?: Record<string, any>
 }
 
 interface ResourceFormProps {
@@ -71,7 +73,6 @@ export default function ResourceForm({
       onSubmit={async (values, helpers) => {
         try {
           const updates: Record<string, unknown> = {
-            nombre_cliente: values.nombre_cliente,
             caso: values.caso,
             tipo: values.tipo,
           }
@@ -120,7 +121,7 @@ export default function ResourceForm({
                         } else {
                           toast.success('Re-escaneo iniciado')
                         }
-                      } catch (e) {
+                      } catch (_e) {
                         setIsProcessing(false)
                         toast.error('Error al iniciar re-escaneo')
                       }
@@ -137,24 +138,21 @@ export default function ResourceForm({
           <fieldset disabled={isProcessing} className='contents'>
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div className='space-y-1'>
-                <label className='text-xs text-muted-foreground'>Nombre del cliente</label>
-                <Field name='nombre_cliente'>
-                  {({ field }: any) => <Input {...field} placeholder='Nombre del cliente' />}
-                </Field>
-              </div>
-              <div className='space-y-1'>
                 <label className='text-xs text-muted-foreground'>Caso</label>
                 <Select
                   value={values.caso ?? ''}
-                  onValueChange={(v) => {
+                  onValueChange={async (v) => {
                     setFieldValue('caso', v || null)
-                    // Reset de datos del caso al cambiar
                     setFieldValue('caseData', {})
-                    // Reset de tipo si no corresponde
                     const allowed = getAllowedTiposForCaso(v)
                     if (values.tipo && !allowed.includes(values.tipo)) {
                       setFieldValue('tipo', null)
                     }
+                    // guardar cambio inmediato
+                    await updateResourceAction(projectId, resourceId, {
+                      caso: v || null,
+                      tipo: values.tipo ?? null,
+                    })
                   }}
                 >
                   <SelectTrigger className='w-full'>
@@ -179,7 +177,13 @@ export default function ResourceForm({
                 <label className='text-xs text-muted-foreground'>Tipo</label>
                 <Select
                   value={values.tipo ?? ''}
-                  onValueChange={(v) => setFieldValue('tipo', v || null)}
+                  onValueChange={async (v) => {
+                    setFieldValue('tipo', v || null)
+                    await updateResourceAction(projectId, resourceId, {
+                      caso: values.caso ?? null,
+                      tipo: v || null,
+                    })
+                  }}
                 >
                   <SelectTrigger className='w-full'>
                     <SelectValue placeholder='Selecciona un tipo' />
@@ -195,14 +199,16 @@ export default function ResourceForm({
               </div>
             </div>
 
-            {/* Render dinámico de campos por caso (5.3) */}
-            <CaseFields caso={values.caso} values={values} setFieldValue={setFieldValue} />
+            {/* Sin campos antiguos; solo caso y tipo */}
 
-            <div className='mt-auto flex items-center justify-end gap-2'>
-              <Button type='submit' disabled={isSubmitting} size='sm'>
-                Guardar
-              </Button>
-            </div>
+            {/* Editor simple de analyzeResult.fields */}
+            <AnalyzeFieldsPanel
+              key={String(isProcessing)}
+              projectId={projectId}
+              resourceId={resourceId}
+            />
+
+            {/* Sin botón de guardar, el guardado es automático */}
           </fieldset>
 
           {/* Polling cuando está en processing */}
@@ -210,13 +216,14 @@ export default function ResourceForm({
             active={isProcessing}
             resourceId={resourceId}
             onDone={(updated: Record<string, unknown>) => {
+              const u = updated as Record<string, unknown>
               const next: ResourceFormInitialValues = {
-                nombre_cliente: (updated as any).nombre_cliente ?? '',
-                caso: (updated as any).caso ?? null,
-                tipo: (updated as any).tipo ?? null,
+                nombre_cliente: typeof u.nombre_cliente === 'string' ? u.nombre_cliente : '',
+                caso: typeof u.caso === 'string' ? u.caso : null,
+                tipo: typeof u.tipo === 'string' ? u.tipo : null,
                 caseData:
-                  (updated as any).caso && (updated as any)[(updated as any).caso]
-                    ? (updated as any)[(updated as any).caso]
+                  typeof u.caso === 'string' && u[u.caso]
+                    ? (u[u.caso] as Record<string, unknown>)
                     : {},
               }
               setValues(next)
@@ -236,7 +243,7 @@ export default function ResourceForm({
 
 type SetField = (field: string, value: unknown) => void
 
-function CaseFields({
+function _CaseFields({
   caso,
   values,
   setFieldValue,

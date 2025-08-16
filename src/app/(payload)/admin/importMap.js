@@ -1,4 +1,4 @@
-import { TestMappingButton as TestMappingButton_516bafe481327ca95aff9f18112819d6 } from '@/payload-admin/TestMappingButton'
+import { AnalyzeFieldsEditor as AnalyzeFieldsEditor_4f854247c7da9f8833ba7975045a41eb } from '@/payload-admin/AnalyzeFieldsEditor'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -26,7 +26,7 @@ import { RetryPreResourceButton as RetryPreResourceButton_d8a44b9e3fc5437fe14132
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 
 export const importMap = {
-  "@/payload-admin/TestMappingButton#TestMappingButton": TestMappingButton_516bafe481327ca95aff9f18112819d6,
+  "@/payload-admin/AnalyzeFieldsEditor#AnalyzeFieldsEditor": AnalyzeFieldsEditor_4f854247c7da9f8833ba7975045a41eb,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,

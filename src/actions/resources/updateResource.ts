@@ -95,6 +95,11 @@ export async function updateResourceAction(
       updateData.tipo = updates.tipo
     }
 
+    // analyzeResult (permitir edición directa de JSON)
+    if (typeof updates?.analyzeResult !== 'undefined') {
+      ;(updateData as any).analyzeResult = updates.analyzeResult
+    }
+
     // Campos dinámicos del caso activo
     const activeCase = (updateData.caso ?? resource.caso) as Resource['caso']
     if (activeCase && typeof activeCase === 'string') {

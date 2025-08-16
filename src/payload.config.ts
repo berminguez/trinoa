@@ -14,6 +14,7 @@ import { Messages } from './collections/Messages'
 import { Projects } from './collections/Projects'
 import { PreResources } from './collections/PreResources'
 import { Resources } from './collections/Resources'
+import { FieldTranslations } from './collections/FieldTranslations'
 import { Subscriptions } from './collections/Subscriptions'
 import { Users } from './collections/Users'
 import { Configuracion } from './globals/Configuracion'
@@ -32,6 +33,7 @@ export default buildConfig({
     Users,
     Media,
     Resources,
+    FieldTranslations,
     Projects,
     PreResources,
     ApiKeys,
