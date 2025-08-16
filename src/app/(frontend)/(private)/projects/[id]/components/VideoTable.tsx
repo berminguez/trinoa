@@ -67,6 +67,8 @@ import type { Resource } from '@/payload-types'
 import { deleteDocument } from '@/actions/documents/deleteDocument'
 import { deleteBulkDocuments } from '@/actions/documents/deleteBulkDocuments'
 import { toast } from 'sonner'
+import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
+import type { PreResource } from '@/payload-types'
 
 interface DocumentTableProps {
   resources: Resource[]
@@ -87,7 +89,7 @@ export function DocumentTable({
   onAddResource: _onAddResource,
   onUpdateResource: _onUpdateResource,
   onRemoveResource,
-  onResetResources: _onResetResources,
+  onResetResources,
   onResourceUploadFailed: _onResourceUploadFailed,
 }: DocumentTableProps) {
   // Estados de la tabla
@@ -105,6 +107,11 @@ export function DocumentTable({
     ids: string[]
     titles: string[]
   }>({ ids: [], titles: [] })
+
+  // Estados para monitoreo de pre-resources
+  const [preResources, setPreResources] = useState<PreResource[]>([])
+  const [pendingPreResources, setPendingPreResources] = useState<PreResource[]>([])
+  const [loadingPreResources, setLoadingPreResources] = useState(false)
 
   // Función para manejar el borrado de documentos
   const handleDeleteDocument = useCallback(
@@ -232,6 +239,90 @@ export function DocumentTable({
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Cargar pre-resources inicialmente
+  useEffect(() => {
+    const loadPreResources = async () => {
+      if (!projectId) return
+
+      setLoadingPreResources(true)
+      try {
+        const result = await getProjectPreResources(projectId)
+        if (result.success && result.data) {
+          setPreResources(result.data)
+          setPendingPreResources(
+            result.data.filter(
+              (pr) =>
+                pr.status === 'pending' || pr.status === 'processing' || pr.status === 'splitting',
+            ),
+          )
+        } else {
+          console.error('Error loading pre-resources:', result.error)
+        }
+      } catch (error) {
+        console.error('Error loading pre-resources:', error)
+      } finally {
+        setLoadingPreResources(false)
+      }
+    }
+
+    loadPreResources()
+  }, [projectId])
+
+  // Monitorear pre-resources en estado pending
+  useEffect(() => {
+    if (pendingPreResources.length === 0) return
+
+    let isCancelled = false
+
+    const checkPreResourcesStatus = async () => {
+      try {
+        const result = await getProjectPreResources(projectId)
+        if (result.success && result.data && !isCancelled) {
+          const updatedPreResources = result.data
+          const newPendingPreResources = updatedPreResources.filter(
+            (pr) =>
+              pr.status === 'pending' || pr.status === 'processing' || pr.status === 'splitting',
+          )
+
+          // Verificar si algún pre-resource cambió de pending a done
+          const previousPendingIds = pendingPreResources.map((pr) => pr.id)
+          const currentPendingIds = newPendingPreResources.map((pr) => pr.id)
+          const completedPreResourceIds = previousPendingIds.filter(
+            (id) => !currentPendingIds.includes(id),
+          )
+
+          if (completedPreResourceIds.length > 0) {
+            console.log('🎉 Pre-resources completed:', completedPreResourceIds)
+
+            // Mostrar notificación de éxito
+            toast.success('¡Documentos procesados!', {
+              description: `${completedPreResourceIds.length} documento${completedPreResourceIds.length !== 1 ? 's' : ''} ${completedPreResourceIds.length !== 1 ? 'han sido procesados' : 'ha sido procesado'} y dividido en segmentos`,
+            })
+
+            // Disparar actualización de la tabla de resources
+            if (onResetResources) {
+              onResetResources()
+            }
+          }
+
+          setPreResources(updatedPreResources)
+          setPendingPreResources(newPendingPreResources)
+        }
+      } catch (error) {
+        console.error('Error checking pre-resources status:', error)
+      }
+    }
+
+    // Primera verificación inmediata y luego cada 3 segundos
+    checkPreResourcesStatus()
+    const interval = setInterval(checkPreResourcesStatus, 3000)
+
+    return () => {
+      isCancelled = true
+      clearInterval(interval)
+    }
+  }, [pendingPreResources, projectId, onResetResources])
 
   // Definición de columnas
   const columns = useMemo<ColumnDef<Resource>[]>(
@@ -716,6 +807,44 @@ export function DocumentTable({
             )}
           </div>
         </div>
+
+        {/* Badge de notificación para pre-resources en procesamiento */}
+        {pendingPreResources.length > 0 && (
+          <div className='mt-3 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+            <IconLoader2 className='h-4 w-4 text-blue-600 animate-spin' />
+            <div className='flex-1'>
+              <p className='text-sm font-medium text-blue-800'>
+                Procesando {pendingPreResources.length} documento
+                {pendingPreResources.length !== 1 ? 's' : ''} multifactura
+              </p>
+              <p className='text-xs text-blue-600'>
+                {(() => {
+                  const splittingCount = pendingPreResources.filter(
+                    (pr) => pr.status === 'splitting',
+                  ).length
+                  const processingCount = pendingPreResources.filter(
+                    (pr) => pr.status === 'processing',
+                  ).length
+                  const pendingCount = pendingPreResources.filter(
+                    (pr) => pr.status === 'pending',
+                  ).length
+
+                  const parts = []
+                  if (pendingCount > 0) parts.push(`${pendingCount} analizando con IA`)
+                  if (processingCount > 0) parts.push(`${processingCount} en análisis`)
+                  if (splittingCount > 0) parts.push(`${splittingCount} dividiendo PDF`)
+
+                  return parts.length > 0
+                    ? `Estado: ${parts.join(', ')}. Los nuevos documentos aparecerán cuando esté listo.`
+                    : 'Los documentos se están procesando. Los nuevos documentos aparecerán cuando estén listos.'
+                })()}
+              </p>
+            </div>
+            <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100'>
+              {pendingPreResources.length} en proceso
+            </Badge>
+          </div>
+        )}
       </CardHeader>
       <CardContent className='space-y-4'>
         {/* Barra de acciones para elementos seleccionados */}

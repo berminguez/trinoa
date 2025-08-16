@@ -441,6 +441,7 @@ export const SECURITY_MESSAGES = {
   INVALID_CREDENTIALS: 'Credenciales inválidas',
   SESSION_EXPIRED: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente',
   ACCESS_DENIED: 'No tienes permisos para acceder a este recurso',
+  ADMIN_REQUIRED: 'Se requieren permisos de administrador para acceder a esta sección',
   GENERIC_ERROR: 'Ha ocurrido un error. Por favor, intenta nuevamente',
 } as const
 
@@ -452,6 +453,67 @@ export const AUTH_ROUTES = {
   DASHBOARD: '/dashboard',
   HOME: '/',
 } as const
+
+/**
+ * Crea URL de redirección para acceso denegado por falta de permisos admin
+ */
+export function createAdminAccessDeniedUrl(requestedPath?: string): string {
+  const dashboardUrl = new URL(
+    AUTH_ROUTES.DASHBOARD,
+    process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  )
+
+  dashboardUrl.searchParams.set('error', 'access_denied')
+  dashboardUrl.searchParams.set('message', 'admin_required')
+  dashboardUrl.searchParams.set(
+    'reason',
+    'Necesitas permisos de administrador para acceder a esta sección',
+  )
+
+  if (requestedPath) {
+    dashboardUrl.searchParams.set('requested', requestedPath)
+  }
+
+  return dashboardUrl.pathname + dashboardUrl.search
+}
+
+/**
+ * Crea URL de redirección para login con contexto administrativo
+ */
+export function createAdminLoginUrl(requestedPath?: string): string {
+  const loginUrl = new URL(
+    AUTH_ROUTES.LOGIN,
+    process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  )
+
+  loginUrl.searchParams.set('reason', 'admin_auth_required')
+  loginUrl.searchParams.set('message', 'Inicia sesión para acceder al panel de administración')
+
+  if (requestedPath) {
+    loginUrl.searchParams.set('redirect', requestedPath)
+  }
+
+  return loginUrl.pathname + loginUrl.search
+}
+
+/**
+ * Obtiene mensaje de error amigable basado en parámetros de URL
+ */
+export function getAdminErrorMessage(searchParams: URLSearchParams): string | null {
+  const error = searchParams.get('error')
+  const message = searchParams.get('message')
+  const reason = searchParams.get('reason')
+
+  if (error === 'access_denied' && message === 'admin_required') {
+    return reason || SECURITY_MESSAGES.ADMIN_REQUIRED
+  }
+
+  if (searchParams.get('reason') === 'admin_auth_required') {
+    return 'Inicia sesión para acceder al panel de administración'
+  }
+
+  return null
+}
 
 /**
  * Configuración de cookies de PayloadCMS

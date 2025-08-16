@@ -686,7 +686,7 @@ export interface PreResource {
   /**
    * Estado de procesamiento del pre‑resource
    */
-  status: 'pending' | 'processing' | 'error' | 'done';
+  status: 'pending' | 'processing' | 'splitting' | 'error' | 'done';
   /**
    * Respuesta del Splitter utilizada para dividir el PDF
    */

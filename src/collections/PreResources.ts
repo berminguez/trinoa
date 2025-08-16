@@ -128,7 +128,28 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
       overrideAccess: true,
     })
 
-    // 5) Dividir PDF en segmentos basándose en las páginas detectadas
+    // 5) Actualizar status a "splitting" antes de dividir PDF
+    await req.payload.update({
+      collection: 'pre-resources',
+      id: String(pre.id),
+      data: {
+        status: 'splitting',
+        lastUpdatedBy: req.user?.id,
+        logs: [
+          ...updateData.logs,
+          {
+            step: 'pdf-splitting-start',
+            status: 'started' as const,
+            at: new Date().toISOString(),
+            details: 'Iniciando división del PDF en segmentos',
+            data: { pagesDetected: pages.length },
+          },
+        ],
+      },
+      overrideAccess: true,
+    })
+
+    // 6) Dividir PDF en segmentos basándose en las páginas detectadas
     console.log('[PRE-RESOURCES] Iniciando división de PDF en segmentos...')
 
     try {
@@ -144,7 +165,7 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
         'segmentos',
       )
 
-      // 6) Crear resources derivados para cada segmento
+      // 7) Crear resources derivados para cada segmento
       const derivedResourceIds: string[] = []
 
       for (let i = 0; i < segmentMediaRecords.length; i++) {
@@ -181,9 +202,18 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
         })
       }
 
-      // 7) Actualizar pre-resource con IDs de resources derivados y status final
+      // 8) Obtener logs actuales (incluyendo el log de splitting-start) y agregar log final
+      const currentPreResource = await req.payload.findByID({
+        collection: 'pre-resources',
+        id: String(pre.id),
+        overrideAccess: true,
+      })
+      const currentLogs = Array.isArray((currentPreResource as any).logs)
+        ? (currentPreResource as any).logs
+        : []
+
       const finalLogs = [
-        ...(updateData.logs || []),
+        ...currentLogs,
         {
           step: 'pdf-splitting',
           status: 'success' as const,
@@ -218,8 +248,18 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
       console.error('[PRE-RESOURCES] Error durante la división de PDF:', splittingError)
 
       // Actualizar con error de splitting pero mantener el análisis exitoso
+      // Obtener logs actuales para incluir todos los pasos previos
+      const currentPreResourceForError = await req.payload.findByID({
+        collection: 'pre-resources',
+        id: String(pre.id),
+        overrideAccess: true,
+      })
+      const currentLogsForError = Array.isArray((currentPreResourceForError as any).logs)
+        ? (currentPreResourceForError as any).logs
+        : []
+
       const errorLogs = [
-        ...(updateData.logs || []),
+        ...currentLogsForError,
         {
           step: 'pdf-splitting',
           status: 'error' as const,
@@ -369,6 +409,7 @@ export const PreResources: CollectionConfig = {
       options: [
         { label: 'Pendiente', value: 'pending' },
         { label: 'Procesando', value: 'processing' },
+        { label: 'Dividiendo PDF', value: 'splitting' },
         { label: 'Error', value: 'error' },
         { label: 'Listo', value: 'done' },
       ],

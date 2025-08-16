@@ -136,6 +136,71 @@ export async function hasUserRole(roleSlug: UserRole): Promise<boolean> {
   }
 }
 
+// Función helper específica para verificar si el usuario actual es administrador
+export async function isAdminUser(): Promise<boolean> {
+  try {
+    const user = await getCurrentUser()
+
+    if (!user) {
+      return false
+    }
+
+    // Verificar si el usuario tiene rol de administrador
+    return user.role === 'admin'
+  } catch (error) {
+    console.error('Error en isAdminUser:', error)
+    return false
+  }
+}
+
+/**
+ * Función para requerir acceso de administrador en server components
+ *
+ * Esta función verifica que el usuario esté autenticado Y tenga rol de administrador.
+ * Si no cumple alguna condición, redirige automáticamente a la página apropiada.
+ *
+ * @returns Promise<User> - El usuario autenticado con rol admin
+ * @throws Redirige automáticamente si no tiene permisos (no lanza excepciones)
+ *
+ * @example
+ * // En un server component de página administrativa:
+ * export default async function ClientsPage() {
+ *   const adminUser = await requireAdminAccess()
+ *
+ *   // Si llegamos aquí, el usuario es admin autenticado
+ *   // Continuar con la lógica de la página...
+ * }
+ */
+export async function requireAdminAccess(): Promise<User> {
+  const { redirect } = await import('next/navigation')
+  const { createAdminLoginUrl, createAdminAccessDeniedUrl } = await import('@/lib/auth')
+
+  try {
+    // Verificar autenticación del usuario
+    const user = await getCurrentUser()
+
+    if (!user) {
+      console.log('requireAdminAccess: Usuario no autenticado, redirigiendo a login')
+      redirect(createAdminLoginUrl())
+    }
+
+    // Verificar si el usuario tiene rol de administrador
+    if (user.role !== 'admin') {
+      console.log(
+        `requireAdminAccess: Usuario ${user.email} no es admin (rol: ${user.role}), redirigiendo a dashboard`,
+      )
+      redirect(createAdminAccessDeniedUrl())
+    }
+
+    console.log(`requireAdminAccess: Acceso admin concedido para usuario ${user.email}`)
+    return user
+  } catch (error) {
+    console.error('Error en requireAdminAccess:', error)
+    // En caso de error, redirigir a login por seguridad
+    redirect(createAdminLoginUrl())
+  }
+}
+
 // Función para verificar si el usuario está autenticado (similar a isUserLoggedIn pero optimizada)
 export async function isAuthenticated(): Promise<boolean> {
   try {

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { AUTH_ROUTES, SECURITY_MESSAGES } from '@/lib/auth'
+import {
+  AUTH_ROUTES,
+  SECURITY_MESSAGES,
+  createAdminAccessDeniedUrl,
+  createAdminLoginUrl,
+} from '@/lib/auth'
 
 /**
  * Rutas que requieren autenticación
@@ -12,6 +17,11 @@ const PROTECTED_ROUTES = [
   '/settings',
   '/user',
 ] as const
+
+/**
+ * Rutas que requieren rol de administrador
+ */
+const ADMIN_ROUTES = ['/clients'] as const
 
 /**
  * Rutas que deben ser accesibles solo sin autenticación
@@ -28,6 +38,13 @@ const PUBLIC_ROUTES = ['/', '/api', '/_next', '/favicon.ico', '/manifest.json'] 
  */
 function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))
+}
+
+/**
+ * Verifica si una ruta requiere permisos de administrador
+ */
+function isAdminRoute(pathname: string): boolean {
+  return ADMIN_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`))
 }
 
 /**
@@ -98,6 +115,48 @@ async function isUserAuthenticated(request: NextRequest): Promise<boolean> {
 }
 
 /**
+ * Verifica si el usuario tiene rol de administrador
+ */
+async function isUserAdmin(request: NextRequest): Promise<boolean> {
+  try {
+    const payloadToken = request.cookies.get('payload-token')
+
+    if (!payloadToken) {
+      return false
+    }
+
+    // Solo hacer la verificación completa en desarrollo
+    // En producción, las rutas admin se validarán en server components
+    if (process.env.NODE_ENV === 'development') {
+      const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || 'http://localhost:3000'
+      const response = await fetch(`${serverUrl}/api/users/me`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `payload-token=${payloadToken.value}`,
+        },
+        credentials: 'include',
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        return false
+      }
+
+      const data = await response.json()
+      return data.user?.role === 'admin'
+    }
+
+    // En producción, permitir paso y validar en server components
+    // para evitar problemas de bootstrap
+    return true
+  } catch (error) {
+    console.error('Middleware admin check error:', error)
+    return false
+  }
+}
+
+/**
  * Valida URLs de redirección para prevenir ataques de open redirect
  */
 function isValidRedirectUrl(url: string): boolean {
@@ -164,7 +223,26 @@ export async function middleware(request: NextRequest) {
   // Verificar autenticación del usuario
   const isAuthenticated = await isUserAuthenticated(request)
 
-  // Manejar rutas protegidas
+  // Manejar rutas que requieren rol de administrador
+  if (isAdminRoute(pathname)) {
+    if (!isAuthenticated) {
+      const adminLoginUrl = createAdminLoginUrl(pathname)
+      return NextResponse.redirect(new URL(adminLoginUrl, request.url))
+    }
+
+    // Verificar si el usuario tiene rol de administrador
+    const isAdmin = await isUserAdmin(request)
+    if (!isAdmin) {
+      // Redirigir a dashboard con mensaje de acceso denegado
+      const accessDeniedUrl = createAdminAccessDeniedUrl(pathname)
+      return NextResponse.redirect(new URL(accessDeniedUrl, request.url))
+    }
+
+    // Usuario admin autenticado, permitir acceso
+    return NextResponse.next()
+  }
+
+  // Manejar rutas protegidas (no admin)
   if (isProtectedRoute(pathname)) {
     if (!isAuthenticated) {
       const loginRedirect = createLoginRedirect(pathname, 'auth_required')
