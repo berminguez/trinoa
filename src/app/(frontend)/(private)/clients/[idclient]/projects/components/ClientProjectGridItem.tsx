@@ -52,101 +52,100 @@ export function ClientProjectGridItem({ project, client }: ClientProjectGridItem
   return (
     <div className='group cursor-pointer'>
       <Card className='h-full hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 group-hover:bg-gradient-to-br group-hover:from-background group-hover:to-muted/30'>
-        <CardHeader className='pb-4'>
-          {/* Header con información del proyecto */}
-          <div className='flex items-start justify-between mb-2'>
-            <div className='flex items-center space-x-3 flex-1 min-w-0'>
-              <div className='h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm'>
-                {projectType === 'video' ? (
-                  <IconVideo className='h-6 w-6' />
-                ) : (
-                  <IconFileText className='h-6 w-6' />
-                )}
-              </div>
-              <div className='flex-1 min-w-0'>
-                <h3 className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
-                  {projectTitle}
-                </h3>
-                <div className='flex items-center space-x-1 text-sm text-muted-foreground'>
-                  <IconUser className='h-3 w-3 flex-shrink-0' />
-                  <span className='truncate'>{client.name || client.email}</span>
+        <Link href={`/clients/${client.id}/projects/${project.id}`} className='w-full'>
+          <CardHeader className='pb-4'>
+            {/* Header con información del proyecto */}
+            <div className='flex items-start justify-between mb-2'>
+              <div className='flex items-center space-x-3 flex-1 min-w-0'>
+                <div className='h-12 w-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm'>
+                  {projectType === 'video' ? (
+                    <IconVideo className='h-6 w-6' />
+                  ) : (
+                    <IconFileText className='h-6 w-6' />
+                  )}
+                </div>
+                <div className='flex-1 min-w-0'>
+                  <h3 className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
+                    {projectTitle}
+                  </h3>
+                  <div className='flex items-center space-x-1 text-sm text-muted-foreground'>
+                    <IconUser className='h-3 w-3 flex-shrink-0' />
+                    <span className='truncate'>{client.name || client.email}</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <Badge variant='outline' className='flex-shrink-0 ml-2'>
-              {projectType.toUpperCase()}
-            </Badge>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
-        <CardContent className='space-y-4 pb-4'>
-          {/* Información temporal */}
-          <div className='space-y-2'>
-            {/* Fecha de creación */}
-            <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-              <IconCalendar className='h-4 w-4' />
-              <span>Creado el {createdDate}</span>
-              <span className='text-xs opacity-70'>
-                (
-                {daysSinceCreation === 0
-                  ? 'hoy'
-                  : `hace ${daysSinceCreation} día${daysSinceCreation !== 1 ? 's' : ''}`}
-                )
-              </span>
-            </div>
-
-            {/* Última actualización */}
-            {updatedDate && (
+          <CardContent className='space-y-4 pb-4'>
+            {/* Información temporal */}
+            <div className='space-y-2'>
+              {/* Fecha de creación */}
               <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
-                <IconClock className='h-4 w-4' />
-                <span>Actualizado: {updatedDate}</span>
+                <IconCalendar className='h-4 w-4' />
+                <span>Creado el {createdDate}</span>
+                <span className='text-xs opacity-70'>
+                  (
+                  {daysSinceCreation === 0
+                    ? 'hoy'
+                    : `hace ${daysSinceCreation} día${daysSinceCreation !== 1 ? 's' : ''}`}
+                  )
+                </span>
               </div>
-            )}
-          </div>
 
-          {/* Información del cliente en contexto admin */}
-          <div className='p-3 bg-muted/50 rounded-lg'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center space-x-2'>
-                <IconUser className='h-4 w-4 text-primary' />
-                <span className='text-sm font-medium'>Cliente</span>
+              {/* Última actualización */}
+              {updatedDate && (
+                <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
+                  <IconClock className='h-4 w-4' />
+                  <span>Actualizado: {updatedDate}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Información del cliente en contexto admin */}
+            <div className='p-3 bg-muted/50 rounded-lg'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center space-x-2'>
+                  <IconUser className='h-4 w-4 text-primary' />
+                  <span className='text-sm font-medium'>Cliente</span>
+                </div>
+                <Badge
+                  variant={client.role === 'admin' ? 'destructive' : 'secondary'}
+                  className='text-xs'
+                >
+                  {client.role?.toUpperCase() || 'USER'}
+                </Badge>
               </div>
-              <Badge
-                variant={client.role === 'admin' ? 'destructive' : 'secondary'}
-                className='text-xs'
+              <p className='text-sm text-muted-foreground mt-1 truncate'>{client.email}</p>
+            </div>
+
+            {/* Estadísticas del proyecto (placeholder) */}
+            <div className='grid grid-cols-2 gap-3 text-center'>
+              <div className='p-2 bg-muted/30 rounded'>
+                <div className='text-lg font-bold text-green-600'>0</div>
+                <div className='text-xs text-muted-foreground'>Recursos</div>
+              </div>
+              <div className='p-2 bg-muted/30 rounded'>
+                <div className='text-lg font-bold text-blue-600'>{daysSinceCreation}d</div>
+                <div className='text-xs text-muted-foreground'>Antigüedad</div>
+              </div>
+            </div>
+          </CardContent>
+
+          {/* Footer con botón de acción */}
+          <CardFooter className='pt-2'>
+            <Link href={`/clients/${client.id}/projects/${project.id}`} className='w-full'>
+              <Button
+                variant='outline'
+                className='w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200'
               >
-                {client.role.toUpperCase()}
-              </Badge>
-            </div>
-            <p className='text-sm text-muted-foreground mt-1 truncate'>{client.email}</p>
-          </div>
-
-          {/* Estadísticas del proyecto (placeholder) */}
-          <div className='grid grid-cols-2 gap-3 text-center'>
-            <div className='p-2 bg-muted/30 rounded'>
-              <div className='text-lg font-bold text-green-600'>0</div>
-              <div className='text-xs text-muted-foreground'>Recursos</div>
-            </div>
-            <div className='p-2 bg-muted/30 rounded'>
-              <div className='text-lg font-bold text-blue-600'>{daysSinceCreation}d</div>
-              <div className='text-xs text-muted-foreground'>Antigüedad</div>
-            </div>
-          </div>
-        </CardContent>
-
-        {/* Footer con botón de acción */}
-        <CardFooter className='pt-2'>
-          <Link href={`/clients/${client.id}/projects/${project.id}`} className='w-full'>
-            <Button
-              variant='outline'
-              className='w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200'
-            >
-              <IconFolder className='h-4 w-4 mr-2' />
-              <span>Ver proyecto</span>
-              <IconChevronRight className='h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200' />
-            </Button>
-          </Link>
-        </CardFooter>
+                <IconFolder className='h-4 w-4 mr-2' />
+                <span>Ver proyecto</span>
+                <IconChevronRight className='h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200' />
+              </Button>
+            </Link>
+          </CardFooter>
+        </Link>
       </Card>
     </div>
   )

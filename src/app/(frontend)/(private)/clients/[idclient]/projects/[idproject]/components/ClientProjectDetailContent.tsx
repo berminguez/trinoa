@@ -5,7 +5,7 @@ import { AdminBreadcrumbs } from '@/components'
 import type { User, Project } from '@/payload-types'
 import { requireAdminAccess } from '@/actions/auth/getUser'
 import { ClientProjectDetailHeader } from './ClientProjectDetailHeader'
-import { ClientProjectResourcesTable } from './ClientProjectResourcesTable'
+import { DocumentTable } from '@/app/(frontend)/(private)/projects/[id]/components/VideoTable'
 import { ClientProjectDetailContentEditable } from './ClientProjectDetailContentEditable'
 
 interface ClientProjectDetailContentProps {
@@ -123,11 +123,13 @@ export async function ClientProjectDetailContent({
         />
 
         {/* Tabla de recursos con funcionalidad administrativa */}
-        <ClientProjectResourcesTable
-          project={project}
-          client={client}
-          adminUser={adminUser}
-          initialResources={resources.docs}
+        <DocumentTable
+          resources={resources.docs}
+          projectId={projectId}
+          clientMode={{
+            clientId: clientId,
+            projectId: projectId,
+          }}
           key={resources.docs.length} // Force re-render cuando recursos cambien
         />
       </div>

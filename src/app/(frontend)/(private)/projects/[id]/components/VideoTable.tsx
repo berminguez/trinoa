@@ -78,6 +78,11 @@ interface DocumentTableProps {
   onRemoveResource?: (resourceId: string) => void
   onResetResources?: () => void
   onResourceUploadFailed?: (tempResourceId: string) => void
+  // Nuevo: Props para modo cliente
+  clientMode?: {
+    clientId: string
+    projectId: string
+  }
 }
 
 // Helper para crear columnas
@@ -91,6 +96,7 @@ export function DocumentTable({
   onRemoveResource,
   onResetResources,
   onResourceUploadFailed: _onResourceUploadFailed,
+  clientMode,
 }: DocumentTableProps) {
   // Estados de la tabla
   const [sorting, setSorting] = useState<SortingState>([])
@@ -112,6 +118,14 @@ export function DocumentTable({
   const [preResources, setPreResources] = useState<PreResource[]>([])
   const [pendingPreResources, setPendingPreResources] = useState<PreResource[]>([])
   const [loadingPreResources, setLoadingPreResources] = useState(false)
+
+  // Helper para generar URLs de recursos
+  const getResourceUrl = (resourceId: string) => {
+    if (clientMode) {
+      return `/clients/${clientMode.clientId}/projects/${clientMode.projectId}/resource/${resourceId}`
+    }
+    return `/projects/${projectId}/resource/${resourceId}`
+  }
 
   // Función para manejar el borrado de documentos
   const handleDeleteDocument = useCallback(
@@ -374,7 +388,7 @@ export function DocumentTable({
           return (
             <div className='min-w-0 max-w-xs lg:max-w-sm xl:max-w-md'>
               <Link
-                href={`/projects/${projectId}/resource/${resource.id}`}
+                href={getResourceUrl(resource.id)}
                 className='font-medium truncate text-sm lg:text-base block hover:underline'
               >
                 {row.getValue('title') as string}
@@ -576,7 +590,7 @@ export function DocumentTable({
             <div className='flex items-center gap-1'>
               {/* Botón para ver el recurso en el visualizador */}
               <Button variant='ghost' size='sm' asChild className='h-8 w-8 p-0' title='Ver recurso'>
-                <Link href={`/projects/${projectId}/resource/${resource.id}`}>
+                <Link href={getResourceUrl(resource.id)}>
                   <IconPlayerPlay className='h-4 w-4' />
                 </Link>
               </Button>
@@ -652,7 +666,7 @@ export function DocumentTable({
         enableGlobalFilter: false,
       },
     ],
-    [handleDeleteDocument, deletingResourceId, projectId], // Include projectId so links stay in sync
+    [handleDeleteDocument, deletingResourceId, projectId, getResourceUrl], // Include getResourceUrl so links stay in sync
   )
 
   // Crear instancia de tabla

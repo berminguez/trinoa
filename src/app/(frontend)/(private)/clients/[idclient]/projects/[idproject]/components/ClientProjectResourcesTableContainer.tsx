@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { ClientProjectResourcesTable } from './ClientProjectResourcesTable'
+import { DocumentTable } from '@/app/(frontend)/(private)/projects/[id]/components/VideoTable'
 import type { User, Project, Resource } from '@/payload-types'
 
 interface ClientProjectResourcesTableContainerProps {
@@ -67,24 +67,33 @@ export function ClientProjectResourcesTableContainer({
     console.log('ClientProjectResourcesTableContainer: Recurso marcado como fallido', resourceId)
   }, [])
 
-  // Función para actualizar un recurso existente
-  const updateResource = useCallback((updatedResource: Resource) => {
+  // Función para actualizar un recurso existente (adaptada para DocumentTable)
+  const updateResource = useCallback((resourceId: string, updates: Partial<Resource>) => {
     setResources((prev) =>
-      prev.map((resource) => (resource.id === updatedResource.id ? updatedResource : resource)),
+      prev.map((resource) => (resource.id === resourceId ? { ...resource, ...updates } : resource)),
     )
-    console.log('ClientProjectResourcesTableContainer: Recurso actualizado', updatedResource.id)
+    console.log('ClientProjectResourcesTableContainer: Recurso actualizado', resourceId)
   }, [])
 
+  // Función para resetear/recargar recursos
+  const resetResources = useCallback(() => {
+    setResources(initialResources)
+    console.log('ClientProjectResourcesTableContainer: Recursos reseteados')
+  }, [initialResources])
+
   return (
-    <ClientProjectResourcesTable
-      project={project}
-      client={client}
-      adminUser={adminUser}
-      initialResources={resources}
-      onResourceAdded={addResource}
-      onResourceRemoved={removeResource}
-      onResourceFailed={markResourceAsFailed}
-      onResourceUpdated={updateResource}
+    <DocumentTable
+      resources={resources}
+      projectId={project.id}
+      clientMode={{
+        clientId: client.id,
+        projectId: project.id,
+      }}
+      onAddResource={addResource}
+      onUpdateResource={updateResource}
+      onRemoveResource={removeResource}
+      onResetResources={resetResources}
+      onResourceUploadFailed={markResourceAsFailed}
     />
   )
 }

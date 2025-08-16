@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Metadata } from 'next/metadata'
+import { Metadata } from 'next'
 
 import { ClientsContent } from './components/ClientsContent'
 import { ClientsSkeleton } from './components/ClientsSkeleton'

@@ -87,7 +87,7 @@ export function ClientsGrid({
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput !== filters.searchTerm) {
-        setSearchTerm(searchInput)
+        setSearchTerm(searchInput || '')
         navigateWithFilters()
       }
     }, 500)
@@ -332,19 +332,6 @@ export function ClientsGrid({
           </div>
         </div>
       )}
-
-      {/* Estado de funcionalidades implementadas */}
-      <div className='rounded-lg bg-green-50 p-4'>
-        <p className='text-sm text-green-800'>
-          ✅ <strong>ClientsGrid completamente funcional:</strong>
-          <br />• Búsqueda en tiempo real (500ms debounce)
-          <br />• Filtros por rol con persistencia
-          <br />• Ordenamiento múltiple interactivo
-          <br />• Paginación completa con navegación
-          <br />• Estado sincronizado con URL
-          <br />• Store Zustand con persistencia local
-        </p>
-      </div>
     </div>
   )
 }
