@@ -6,11 +6,11 @@ import { ProjectDetailContent } from './components/ProjectDetailContent'
 import { ProjectDetailSkeleton } from './components/ProjectDetailSkeleton'
 
 interface ProjectDetailPageProps {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }
 
 export async function generateMetadata({ params }: ProjectDetailPageProps): Promise<Metadata> {
-  const { id } = await params
+  const { id } = params
 
   return {
     title: `Project Detail - Eidetik Admin`,
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: ProjectDetailPageProps): Prom
 }
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
-  const { id } = await params
+  const { id } = params
 
   console.log('id param', id)
 

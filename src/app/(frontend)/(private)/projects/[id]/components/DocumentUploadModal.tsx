@@ -115,6 +115,11 @@ export function DocumentUploadModal({
   const handleUrlUpload = async () => {
     if (!urlsText.trim()) return
 
+    if (!project?.id) {
+      console.error('❌ [MODAL] Project ID is missing. Cannot upload from URLs.')
+      return
+    }
+
     setIsUrlUploading(true)
     setUrlResults(null)
 
@@ -191,7 +196,9 @@ export function DocumentUploadModal({
         }}
       >
         <DialogHeader>
-          <DialogTitle>Subir Documentos a {project.title}</DialogTitle>
+          <DialogTitle>
+            {project?.title ? `Subir Documentos a ${project.title}` : 'Subir Documentos'}
+          </DialogTitle>
           <DialogDescription>
             Añade documentos e imágenes a tu proyecto. Formatos soportados: PDF, JPG, PNG, WebP
           </DialogDescription>

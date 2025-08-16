@@ -5,13 +5,13 @@ import { ClientProjectDetailContent } from './components/ClientProjectDetailCont
 import { ClientProjectDetailSkeleton } from './components/ClientProjectDetailSkeleton'
 
 interface ClientProjectDetailPageProps {
-  params: Promise<{ idclient: string; idproject: string }>
+  params: { idclient: string; idproject: string }
 }
 
 export async function generateMetadata({
   params,
 }: ClientProjectDetailPageProps): Promise<Metadata> {
-  const { idclient, idproject } = await params
+  const { idclient, idproject } = params
 
   return {
     title: `Proyecto ${idproject.slice(0, 8)}... - Cliente ${idclient.slice(0, 8)}... - Trinoa Admin`,
@@ -28,7 +28,7 @@ export async function generateMetadata({
 export default async function ClientProjectDetailPage({ params }: ClientProjectDetailPageProps) {
   // Validar acceso de administrador
   const adminUser = await requireAdminAccess()
-  const { idclient, idproject } = await params
+  const { idclient, idproject } = params
 
   return (
     <Suspense fallback={<ClientProjectDetailSkeleton />}>

@@ -6,7 +6,7 @@ import { ClientProjectsSkeleton } from './components/ClientProjectsSkeleton'
 
 interface ClientProjectsPageProps {
   params: Promise<{ idclient: string }>
-  searchParams?: { [key: string]: string | string[] | undefined }
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 export async function generateMetadata({ params }: ClientProjectsPageProps): Promise<Metadata> {
@@ -33,14 +33,10 @@ export default async function ClientProjectsPage({
   const { idclient } = await params
 
   // Convertir searchParams a formato esperado
-  const cleanSearchParams = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).map(([key, value]) => [
-          key,
-          Array.isArray(value) ? value[0] : value,
-        ]),
-      )
-    : {}
+  const sp = (await searchParams) || {}
+  const cleanSearchParams = Object.fromEntries(
+    Object.entries(sp).map(([key, value]) => [key, Array.isArray(value) ? value[0] : value]),
+  )
 
   return (
     <Suspense fallback={<ClientProjectsSkeleton />}>
