@@ -9,8 +9,8 @@ Basado en: `prd-confidence-field.md`
 - `src/actions/resources/updateResourceConfidence.ts` - Nuevo server action para actualizar confidence
 - `src/actions/resources/updateResourceConfidence.test.ts` - Tests del server action
 - `src/actions/resources/index.ts` - Índice de exports de actions de resources
-- `src/lib/utils/calculateResourceConfidence.ts` - Función utilitaria para calcular confidence
-- `src/lib/utils/calculateResourceConfidence.test.ts` - Tests de la función de cálculo
+- `src/lib/utils/calculateResourceConfidence.ts` - Función utilitaria para calcular confidence ✅ CREADO
+- `tests/unit/lib/utils/calculateResourceConfidence.test.ts` - Tests de la función de cálculo ✅ CREADO
 - `src/components/ui/confidence-badge.tsx` - Componente Badge para mostrar confidence
 - `src/components/ui/confidence-badge.test.tsx` - Tests del componente Badge
 - `src/app/(frontend)/(private)/projects/[id]/components/VideoTable.tsx` - Tabla principal donde se mostrará confidence
@@ -35,14 +35,14 @@ Basado en: `prd-confidence-field.md`
   - [x] 1.4 Configurar validación del threshold (0-100) y valor por defecto 70
   - [x] 1.5 Regenerar tipos con `pnpm payload generate:types`
 
-- [ ] 2.0 Lógica de Cálculo - Implementar función de evaluación automática
-  - [ ] 2.1 Crear función `calculateResourceConfidence(resource, threshold)` en `src/lib/utils/`
-  - [ ] 2.2 Implementar lógica para estado `empty` (sin analyzeResult.fields)
-  - [ ] 2.3 Implementar lógica para estado `needs_revision` (campos < threshold)
-  - [ ] 2.4 Implementar lógica para estado `trusted` (todos campos ≥ threshold)
-  - [ ] 2.5 Implementar lógica para estado `verified` (campos problemáticos con manual: true)
-  - [ ] 2.6 Añadir tests unitarios completos para todos los casos de la función
-  - [ ] 2.7 Crear función helper para obtener threshold de configuración con cache
+- [x] 2.0 Lógica de Cálculo - Implementar función de evaluación automática
+  - [x] 2.1 Crear función `calculateResourceConfidence(resource, threshold)` en `src/lib/utils/`
+  - [x] 2.2 Implementar lógica para estado `empty` (sin analyzeResult.fields)
+  - [x] 2.3 Implementar lógica para estado `needs_revision` (campos < threshold)
+  - [x] 2.4 Implementar lógica para estado `trusted` (todos campos ≥ threshold)
+  - [x] 2.5 Implementar lógica para estado `verified` (campos problemáticos con manual: true)
+  - [x] 2.6 Añadir tests unitarios completos para todos los casos de la función
+  - [x] 2.7 Crear función helper para obtener threshold de configuración con cache
 
 - [ ] 3.0 Server Actions - Crear acciones para actualización de confidence
   - [ ] 3.1 Crear `updateResourceConfidence(resourceId)` en `src/actions/resources/`
