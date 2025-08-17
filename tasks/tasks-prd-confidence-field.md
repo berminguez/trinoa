@@ -14,7 +14,8 @@ Basado en: `prd-confidence-field.md`
 - `src/components/ui/confidence-badge.tsx` - Componente Badge para mostrar confidence ✅ CREADO
 - `tests/unit/components/ui/confidence-badge.test.tsx` - Tests del componente Badge ✅ CREADO
 - `vitest.config.mts` - Configuración de vitest actualizada para incluir tests unitarios ✅ MODIFICADO
-- `src/app/(frontend)/(private)/projects/[id]/components/VideoTable.tsx` - Tabla principal donde se mostrará confidence
+- `docs/confidence-badge-accessibility-audit.md` - Documentación de accesibilidad y responsive design ✅ CREADO
+- `src/app/(frontend)/(private)/projects/[id]/components/VideoTable.tsx` - Tabla principal donde se mostrará confidence ✅ MODIFICADO
 - `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectsGrid.tsx` - Grid de proyectos cliente ✅ MODIFICADO
 - `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectGridItem.tsx` - Componente tarjeta de proyecto ✅ MODIFICADO
 - `src/app/(frontend)/(private)/clients/[idclient]/projects/[idproject]/resource/[idresource]/components/ClientResourceContent.tsx` - Vista detalle de recurso ✅ MODIFICADO
@@ -63,7 +64,7 @@ Basado en: `prd-confidence-field.md`
   - [x] 4.5 Añadir logging detallado para monitorear migraciones y actualizaciones
   - [x] 4.6 Configurar ejecución automática de migración en deploy (opcional)
 
-- [ ] 5.0 Visualización Frontend - Implementar badges y tablas con confidence
+- [x] 5.0 Visualización Frontend - Implementar badges y tablas con confidence
   - [x] 5.1 Crear componente `ConfidenceBadge` en `src/components/ui/` usando Shadcn Badge
   - [x] 5.2 Implementar colores distintivos: empty (gris), needs_revision (naranja), trusted (verde), verified (azul)
   - [x] 5.3 Añadir iconos de tabler y tooltips explicativos
@@ -72,4 +73,4 @@ Basado en: `prd-confidence-field.md`
   - [x] 5.6 Integrar ConfidenceBadge en ClientResourceContent (vista detalle)
   - [x] 5.7 Hacer campo filtrable y ordenable en las tablas que lo soporten
   - [x] 5.8 Crear tests unitarios del componente ConfidenceBadge
-  - [ ] 5.9 Verificar responsive design y accesibilidad del componente
+  - [x] 5.9 Verificar responsive design y accesibilidad del componente

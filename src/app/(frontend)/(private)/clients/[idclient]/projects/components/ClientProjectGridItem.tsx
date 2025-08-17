@@ -155,10 +155,11 @@ export function ClientProjectGridItem({
                   <div className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
                     Estado de Confianza
                   </div>
-                  <ConfidenceStats
-                    stats={confidenceStats}
+                                    <ConfidenceStats 
+                    stats={confidenceStats} 
                     total={confidenceStats.total}
                     className='justify-center flex-wrap gap-1'
+                    showPercentages={false}
                   />
                 </div>
               )}

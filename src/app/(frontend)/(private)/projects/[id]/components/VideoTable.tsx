@@ -973,7 +973,7 @@ export function DocumentTable({
                 <SelectItem value='all'>Todas las confianzas</SelectItem>
                 <SelectItem value='empty'>
                   <div className='flex items-center gap-2'>
-                    <ConfidenceBadge confidence='empty' showTooltip={false} className='text-xs' />
+                    <ConfidenceBadge confidence='empty' showTooltip={false} size='sm' />
                   </div>
                 </SelectItem>
                 <SelectItem value='needs_revision'>
@@ -981,13 +981,13 @@ export function DocumentTable({
                     <ConfidenceBadge
                       confidence='needs_revision'
                       showTooltip={false}
-                      className='text-xs'
+                      size='sm'
                     />
                   </div>
                 </SelectItem>
                 <SelectItem value='trusted'>
                   <div className='flex items-center gap-2'>
-                    <ConfidenceBadge confidence='trusted' showTooltip={false} className='text-xs' />
+                    <ConfidenceBadge confidence='trusted' showTooltip={false} size='sm' />
                   </div>
                 </SelectItem>
                 <SelectItem value='verified'>
@@ -995,7 +995,7 @@ export function DocumentTable({
                     <ConfidenceBadge
                       confidence='verified'
                       showTooltip={false}
-                      className='text-xs'
+                      size='sm'
                     />
                   </div>
                 </SelectItem>
