@@ -1385,45 +1385,42 @@ export const Resources: CollectionConfig = {
         // Recalcular confidence automáticamente cuando analyzeResult cambia
         if (operation === 'update' && data && req) {
           try {
-            // Obtener documento original para comparar
-            const originalDoc = await req.payload.findByID({
-              collection: 'resources',
-              id: data.id || (data as any)._id,
-              depth: 0,
-              overrideAccess: true,
-            })
-
-            const previousAnalyzeResult = (originalDoc as any)?.analyzeResult
+            // Si el update contiene analyzeResult, recalcular confidence
             const currentAnalyzeResult = (data as any)?.analyzeResult
-
-            // Verificar si analyzeResult va a cambiar
-            const previousSerialized = previousAnalyzeResult
-              ? JSON.stringify(previousAnalyzeResult)
-              : null
-            const currentSerialized = currentAnalyzeResult
-              ? JSON.stringify(currentAnalyzeResult)
-              : null
-
-            if (previousSerialized !== currentSerialized) {
+            
+            if (currentAnalyzeResult) {
               console.log(
-                `[RESOURCES_BEFORECHANGE] analyzeResult changing for resource ${originalDoc.id}, recalculating confidence...`,
+                `[RESOURCES_BEFORECHANGE] analyzeResult being updated, recalculating confidence...`,
               )
 
               // Obtener threshold y calcular nuevo confidence
               const threshold = await getConfidenceThreshold(req.payload)
-              const documentWithNewAnalyzeResult = {
-                ...originalDoc,
+              
+              // Usar los datos que se van a guardar para el cálculo
+              const documentForCalculation = {
                 ...data,
                 analyzeResult: currentAnalyzeResult,
               }
+              
               const newConfidence = calculateResourceConfidence(
-                documentWithNewAnalyzeResult,
+                documentForCalculation,
                 threshold,
               )
 
               // Añadir confidence calculado a los datos que se van a guardar
               ;(data as any).confidence = newConfidence
               console.log(`[RESOURCES_BEFORECHANGE] Confidence calculated: ${newConfidence}`)
+              console.log(`[RESOURCES_BEFORECHANGE] Threshold used: ${threshold}%`)
+              
+              // Debug: mostrar algunos campos
+              if (currentAnalyzeResult.fields) {
+                const fieldNames = Object.keys(currentAnalyzeResult.fields)
+                console.log(`[RESOURCES_BEFORECHANGE] Fields in analyzeResult: ${fieldNames.length}`)
+                fieldNames.slice(0, 3).forEach(fieldName => {
+                  const field = currentAnalyzeResult.fields[fieldName]
+                  console.log(`  - ${fieldName}: confidence=${field.confidence}, manual=${field.manual}`)
+                })
+              }
             }
           } catch (confidenceError) {
             console.warn(
