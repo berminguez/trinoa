@@ -1066,9 +1066,9 @@ export function DocumentTable({
             <AlertDialogDescription>
               ¿Estás seguro de que quieres borrar {selectedDocumentsInfo.ids.length} documento
               {selectedDocumentsInfo.ids.length !== 1 ? 's' : ''}?
-              <br />
-              <br />
-              <strong>Documentos seleccionados:</strong>
+            </AlertDialogDescription>
+            <div className='my-4'>
+              <strong className='text-sm'>Documentos seleccionados:</strong>
               <ul className='mt-2 space-y-1 max-h-32 overflow-y-auto'>
                 {selectedDocumentsInfo.titles.slice(0, 5).map((title, index) => (
                   <li key={index} className='text-sm'>
@@ -1081,9 +1081,8 @@ export function DocumentTable({
                   </li>
                 )}
               </ul>
-              <br />
-              Esta acción no se puede deshacer.
-            </AlertDialogDescription>
+            </div>
+            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>

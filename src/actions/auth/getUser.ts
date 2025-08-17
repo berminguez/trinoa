@@ -119,6 +119,67 @@ export async function getUserDisplayData(): Promise<UserDisplayData | null> {
   }
 }
 
+// Resultado extendido para manejo de estados de autenticación
+export interface AuthenticationStatus {
+  isAuthenticated: boolean
+  user?: UserDisplayData
+  isTokenExpired: boolean
+  error?: string
+}
+
+/**
+ * Verifica el estado de autenticación del usuario incluyendo detección de tokens expirados
+ *
+ * Esta función permite al layout distinguir entre:
+ * - Usuario no autenticado (nunca logueado)
+ * - Token expirado (necesita logout automático)
+ * - Usuario autenticado correctamente
+ */
+export async function getAuthenticationStatus(): Promise<AuthenticationStatus> {
+  try {
+    // Obtener el resultado completo con información de errores
+    const result = await getUserAction()
+
+    // Si es exitoso, usuario autenticado
+    if (result.success && result.data) {
+      return {
+        isAuthenticated: true,
+        user: {
+          id: result.data.id,
+          name: result.data.name || result.data.email,
+          email: result.data.email,
+        },
+        isTokenExpired: false,
+      }
+    }
+
+    // Verificar si es específicamente un token expirado
+    // getUserAction devuelve mensaje específico para SESSION_EXPIRED
+    if (result.message && result.message.includes('expirado')) {
+      console.log('[Auth] Token expirado detectado')
+      return {
+        isAuthenticated: false,
+        isTokenExpired: true,
+        error: result.message,
+      }
+    }
+
+    // Usuario no autenticado (caso normal)
+    return {
+      isAuthenticated: false,
+      isTokenExpired: false,
+      error: result.message,
+    }
+  } catch (error) {
+    console.error('Error en getAuthenticationStatus:', error)
+    return {
+      isAuthenticated: false,
+      isTokenExpired: false,
+      error: 'Error de conexión',
+    }
+  }
+}
+
 // Función para verificar si el usuario actual tiene un rol específico
 export async function hasUserRole(roleSlug: UserRole): Promise<boolean> {
   try {
