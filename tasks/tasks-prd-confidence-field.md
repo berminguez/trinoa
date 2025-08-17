@@ -6,8 +6,8 @@ Basado en: `prd-confidence-field.md`
 
 - `src/collections/Resources.ts` - Colección principal donde se añadirá el campo confidence
 - `src/globals/Configuracion.ts` - Configuración global donde se añadirá confidenceThreshold
-- `src/actions/resources/updateResourceConfidence.ts` - Nuevo server action para actualizar confidence
-- `src/actions/resources/updateResourceConfidence.test.ts` - Tests del server action
+- `src/actions/resources/updateResourceConfidence.ts` - Nuevo server action para actualizar confidence ✅ CREADO
+- `tests/unit/actions/resources/updateResourceConfidence.test.ts` - Tests del server action ✅ CREADO
 - `src/actions/resources/index.ts` - Índice de exports de actions de resources
 - `src/lib/utils/calculateResourceConfidence.ts` - Función utilitaria para calcular confidence ✅ CREADO
 - `tests/unit/lib/utils/calculateResourceConfidence.test.ts` - Tests de la función de cálculo ✅ CREADO
@@ -44,14 +44,14 @@ Basado en: `prd-confidence-field.md`
   - [x] 2.6 Añadir tests unitarios completos para todos los casos de la función
   - [x] 2.7 Crear función helper para obtener threshold de configuración con cache
 
-- [ ] 3.0 Server Actions - Crear acciones para actualización de confidence
-  - [ ] 3.1 Crear `updateResourceConfidence(resourceId)` en `src/actions/resources/`
-  - [ ] 3.2 Implementar validaciones de acceso y permisos de usuario
-  - [ ] 3.3 Integrar con función calculateResourceConfidence
-  - [ ] 3.4 Añadir manejo de errores y logging apropiado
-  - [ ] 3.5 Retornar nuevo estado calculado en response
-  - [ ] 3.6 Exportar en `src/actions/resources/index.ts`
-  - [ ] 3.7 Crear tests unitarios del server action
+- [x] 3.0 Server Actions - Crear acciones para actualización de confidence
+  - [x] 3.1 Crear `updateResourceConfidence(resourceId)` en `src/actions/resources/`
+  - [x] 3.2 Implementar validaciones de acceso y permisos de usuario
+  - [x] 3.3 Integrar con función calculateResourceConfidence
+  - [x] 3.4 Añadir manejo de errores y logging apropiado
+  - [x] 3.5 Retornar nuevo estado calculado en response
+  - [x] 3.6 Exportar en `src/actions/resources/index.ts`
+  - [x] 3.7 Crear tests unitarios del server action
 
 - [ ] 4.0 Integración con Webhooks - Conectar actualización automática con flujo existente
   - [ ] 4.1 Integrar cálculo automático en webhook de Resources (línea ~1085 aprox)
