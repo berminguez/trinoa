@@ -16,7 +16,16 @@ export const Resources: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'project', 'namespace', 'type', 'status', 'progress', 'updatedAt'],
+    defaultColumns: [
+      'title',
+      'project',
+      'namespace',
+      'type',
+      'status',
+      'confidence',
+      'progress',
+      'updatedAt',
+    ],
     listSearchableFields: ['title', 'namespace', 'description'],
   },
   fields: [
@@ -640,6 +649,35 @@ export const Resources: CollectionConfig = {
         description: 'Resultado de Azure Document Intelligence recibido via webhook',
         readOnly: true,
       },
+    },
+    // Campo de confianza calculado automáticamente
+    {
+      name: 'confidence',
+      type: 'select',
+      defaultValue: 'empty',
+      admin: {
+        description:
+          'Estado de confianza del documento basado en la calidad de los campos analizados',
+        position: 'sidebar',
+      },
+      options: [
+        {
+          label: 'Vacío o no aplica',
+          value: 'empty',
+        },
+        {
+          label: 'Necesita revisión',
+          value: 'needs_revision',
+        },
+        {
+          label: 'Confiable',
+          value: 'trusted',
+        },
+        {
+          label: 'Verificado',
+          value: 'verified',
+        },
+      ],
     },
     // Editor visual de fields de analyzeResult
     {

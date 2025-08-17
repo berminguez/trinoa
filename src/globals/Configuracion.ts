@@ -130,6 +130,36 @@ export const Configuracion: GlobalConfig = {
                 { name: 'metaPixelId', type: 'text', label: 'Meta Pixel ID' },
               ],
             },
+            {
+              name: 'confidenceSettings',
+              type: 'group',
+              label: 'Configuración de Confianza',
+              admin: {
+                description:
+                  'Configuración para el sistema de evaluación de confianza de documentos',
+              },
+              fields: [
+                {
+                  name: 'confidenceThreshold',
+                  type: 'number',
+                  label: 'Umbral de Confianza (%)',
+                  defaultValue: 70,
+                  admin: {
+                    description:
+                      'Porcentaje mínimo de confianza requerido para que un campo se considere confiable (0-100)',
+                  },
+                  validate: (value: number) => {
+                    if (typeof value !== 'number') {
+                      return 'El umbral de confianza debe ser un número'
+                    }
+                    if (value < 0 || value > 100) {
+                      return 'El umbral de confianza debe estar entre 0 y 100'
+                    }
+                    return true
+                  },
+                },
+              ],
+            },
           ],
         },
         {

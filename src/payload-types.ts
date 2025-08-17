@@ -522,6 +522,10 @@ export interface Resource {
     | boolean
     | null;
   /**
+   * Estado de confianza del documento basado en la calidad de los campos analizados
+   */
+  confidence?: ('empty' | 'needs_revision' | 'trusted' | 'verified') | null;
+  /**
    * Metadatos del procesamiento
    */
   processingMetadata?: {
@@ -1324,6 +1328,7 @@ export interface ResourcesSelect<T extends boolean = true> {
         id?: T;
       };
   analyzeResult?: T;
+  confidence?: T;
   processingMetadata?:
     | T
     | {
@@ -1595,6 +1600,15 @@ export interface Configuracion {
     metaPixelId?: string | null;
   };
   /**
+   * Configuración para el sistema de evaluación de confianza de documentos
+   */
+  confidenceSettings?: {
+    /**
+     * Porcentaje mínimo de confianza requerido para que un campo se considere confiable (0-100)
+     */
+    confidenceThreshold?: number | null;
+  };
+  /**
    * Configura el webhook de N8n que se invoca al crear un Recurso.
    */
   automationEndpoint?: {
@@ -1693,6 +1707,11 @@ export interface ConfiguracionSelect<T extends boolean = true> {
     | {
         googleAnalyticsId?: T;
         metaPixelId?: T;
+      };
+  confidenceSettings?:
+    | T
+    | {
+        confidenceThreshold?: T;
       };
   automationEndpoint?:
     | T
