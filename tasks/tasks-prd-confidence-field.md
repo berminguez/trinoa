@@ -17,7 +17,7 @@ Basado en: `prd-confidence-field.md`
 - `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectsGrid.tsx` - Grid de proyectos cliente
 - `src/app/(frontend)/(private)/clients/[idclient]/projects/[idproject]/resource/[idresource]/components/ClientResourceContent.tsx` - Vista detalle de recurso
 - `src/payload-types.ts` - Tipos autogenerados (se actualizarán automáticamente)
-- `scripts/migrate-confidence.ts` - Script de migración para recursos existentes
+- `scripts/migrate-confidence.ts` - Script de migración para recursos existentes ✅ CREADO
 
 ### Notes
 
@@ -53,13 +53,13 @@ Basado en: `prd-confidence-field.md`
   - [x] 3.6 Exportar en `src/actions/resources/index.ts`
   - [x] 3.7 Crear tests unitarios del server action
 
-- [ ] 4.0 Integración con Webhooks - Conectar actualización automática con flujo existente
-  - [ ] 4.1 Integrar cálculo automático en webhook de Resources (línea ~1085 aprox)
-  - [ ] 4.2 Añadir hook `afterChange` a Resources.ts para detectar cambios en analyzeResult
-  - [ ] 4.3 Crear script de migración `scripts/migrate-confidence.ts` para recursos existentes
-  - [ ] 4.4 Implementar función `migrateExistingResourcesConfidence()` que procese todos los recursos
-  - [ ] 4.5 Añadir logging detallado para monitorear migraciones y actualizaciones
-  - [ ] 4.6 Configurar ejecución automática de migración en deploy (opcional)
+- [x] 4.0 Integración con Webhooks - Conectar actualización automática con flujo existente
+  - [x] 4.1 Integrar cálculo automático en webhook de Resources (línea ~1085 aprox)
+  - [x] 4.2 Añadir hook `afterChange` a Resources.ts para detectar cambios en analyzeResult
+  - [x] 4.3 Crear script de migración `scripts/migrate-confidence.ts` para recursos existentes
+  - [x] 4.4 Implementar función `migrateExistingResourcesConfidence()` que procese todos los recursos
+  - [x] 4.5 Añadir logging detallado para monitorear migraciones y actualizaciones
+  - [x] 4.6 Configurar ejecución automática de migración en deploy (opcional)
 
 - [ ] 5.0 Visualización Frontend - Implementar badges y tablas con confidence
   - [ ] 5.1 Crear componente `ConfidenceBadge` en `src/components/ui/` usando Shadcn Badge

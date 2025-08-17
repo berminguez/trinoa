@@ -4,6 +4,10 @@ import { StorageManager } from '../lib/storage'
 
 import type { Media } from '../types'
 import { mapAnalyzeResultToResource } from '../lib/analyze-mappers'
+import {
+  calculateResourceConfidence,
+  getConfidenceThreshold,
+} from '../lib/utils/calculateResourceConfidence'
 import type { CollectionConfig } from 'payload'
 
 export const Resources: CollectionConfig = {
@@ -1128,6 +1132,32 @@ export const Resources: CollectionConfig = {
             overrideAccess: true,
           })
 
+          // Calcular automáticamente el campo confidence después de recibir analyzeResult
+          try {
+            const threshold = await getConfidenceThreshold(req.payload)
+            const newConfidence = calculateResourceConfidence(updated, threshold)
+
+            // Solo actualizar si el valor ha cambiado
+            if ((updated as any).confidence !== newConfidence) {
+              await req.payload.update({
+                collection: 'resources',
+                id: resourceId,
+                data: {
+                  confidence: newConfidence,
+                },
+                overrideAccess: true,
+              })
+              console.log(
+                `[RESOURCES_WEBHOOK] Confidence updated automatically: ${(updated as any).confidence} → ${newConfidence}`,
+              )
+            } else {
+              console.log(`[RESOURCES_WEBHOOK] Confidence remains: ${newConfidence}`)
+            }
+          } catch (confidenceError) {
+            // No interrumpir el flujo si hay error calculando confidence
+            console.warn('[RESOURCES_WEBHOOK] Error calculating confidence:', confidenceError)
+          }
+
           return Response.json({ success: true, data: { id: updated.id } })
         } catch (error) {
           console.error('Error in resources webhook:', error)
@@ -1607,6 +1637,54 @@ export const Resources: CollectionConfig = {
               },
             })
           } */
+        }
+
+        // Hook para actualizar confidence automáticamente cuando cambia analyzeResult
+        if (operation === 'update' && previousDoc && doc) {
+          try {
+            const previousAnalyzeResult = (previousDoc as any)?.analyzeResult
+            const currentAnalyzeResult = (doc as any)?.analyzeResult
+
+            // Verificar si analyzeResult ha cambiado (comparación básica de serialización)
+            const previousSerialized = previousAnalyzeResult
+              ? JSON.stringify(previousAnalyzeResult)
+              : null
+            const currentSerialized = currentAnalyzeResult
+              ? JSON.stringify(currentAnalyzeResult)
+              : null
+
+            if (previousSerialized !== currentSerialized) {
+              console.log(
+                `[RESOURCES_HOOK] analyzeResult changed for resource ${doc.id}, updating confidence...`,
+              )
+
+              const threshold = await getConfidenceThreshold(req.payload)
+              const newConfidence = calculateResourceConfidence(doc, threshold)
+
+              // Solo actualizar si el valor ha cambiado
+              if ((doc as any).confidence !== newConfidence) {
+                await req.payload.update({
+                  collection: 'resources',
+                  id: String(doc.id),
+                  data: {
+                    confidence: newConfidence,
+                  },
+                  overrideAccess: true,
+                })
+                console.log(
+                  `[RESOURCES_HOOK] Confidence updated automatically: ${(doc as any).confidence} → ${newConfidence}`,
+                )
+              } else {
+                console.log(`[RESOURCES_HOOK] Confidence remains: ${newConfidence}`)
+              }
+            }
+          } catch (confidenceError) {
+            // No interrumpir el flujo si hay error calculando confidence
+            console.warn(
+              '[RESOURCES_HOOK] Error calculating confidence in afterChange hook:',
+              confidenceError,
+            )
+          }
         }
       },
     ],
