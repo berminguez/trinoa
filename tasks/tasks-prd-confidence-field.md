@@ -12,7 +12,8 @@ Basado en: `prd-confidence-field.md`
 - `src/lib/utils/calculateResourceConfidence.ts` - Función utilitaria para calcular confidence ✅ CREADO
 - `tests/unit/lib/utils/calculateResourceConfidence.test.ts` - Tests de la función de cálculo ✅ CREADO
 - `src/components/ui/confidence-badge.tsx` - Componente Badge para mostrar confidence ✅ CREADO
-- `src/components/ui/confidence-badge.test.tsx` - Tests del componente Badge
+- `tests/unit/components/ui/confidence-badge.test.tsx` - Tests del componente Badge ✅ CREADO
+- `vitest.config.mts` - Configuración de vitest actualizada para incluir tests unitarios ✅ MODIFICADO
 - `src/app/(frontend)/(private)/projects/[id]/components/VideoTable.tsx` - Tabla principal donde se mostrará confidence
 - `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectsGrid.tsx` - Grid de proyectos cliente ✅ MODIFICADO
 - `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectGridItem.tsx` - Componente tarjeta de proyecto ✅ MODIFICADO
@@ -70,5 +71,5 @@ Basado en: `prd-confidence-field.md`
   - [x] 5.5 Integrar ConfidenceBadge en ClientProjectsGrid
   - [x] 5.6 Integrar ConfidenceBadge en ClientResourceContent (vista detalle)
   - [x] 5.7 Hacer campo filtrable y ordenable en las tablas que lo soporten
-  - [ ] 5.8 Crear tests unitarios del componente ConfidenceBadge
+  - [x] 5.8 Crear tests unitarios del componente ConfidenceBadge
   - [ ] 5.9 Verificar responsive design y accesibilidad del componente

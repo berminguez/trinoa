@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from './badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './tooltip'
 
-const confidenceBadgeVariants = cva('inline-flex items-center gap-1.5 text-xs font-medium', {
+const confidenceBadgeVariants = cva('inline-flex items-center gap-1.5 font-medium', {
   variants: {
     confidence: {
       empty: 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-50',
@@ -22,9 +22,15 @@ const confidenceBadgeVariants = cva('inline-flex items-center gap-1.5 text-xs fo
       verified:
         'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-50 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
     },
+    size: {
+      sm: 'text-xs px-2 py-1',
+      default: 'text-sm px-2.5 py-0.5',
+      lg: 'text-base px-3 py-1',
+    },
   },
   defaultVariants: {
     confidence: 'empty',
+    size: 'default',
   },
 })
 
@@ -54,31 +60,37 @@ const confidenceConfig = {
 export interface ConfidenceBadgeProps
   extends React.ComponentProps<typeof Badge>,
     VariantProps<typeof confidenceBadgeVariants> {
-  confidence: keyof typeof confidenceConfig
+  confidence: keyof typeof confidenceConfig | null | undefined
   showIcon?: boolean
   showTooltip?: boolean
   threshold?: number
+  size?: 'sm' | 'default' | 'lg'
 }
 
 function ConfidenceBadge({
   className,
   confidence = 'empty',
   showIcon = true,
-  showTooltip = true,
+  showTooltip = false,
   threshold,
+  size = 'default',
   ...props
 }: ConfidenceBadgeProps) {
-  const config = confidenceConfig[confidence]
+  // Handle null/undefined confidence
+  const normalizedConfidence = confidence || 'empty'
+  const config = confidenceConfig[normalizedConfidence]
   const Icon = config.icon
 
   const badgeContent = (
     <Badge
       variant='outline'
-      className={cn(confidenceBadgeVariants({ confidence }), className)}
+      role='generic'
+      aria-label={`Estado de confianza: ${config.label.toLowerCase()}`}
+      className={cn(confidenceBadgeVariants({ confidence: normalizedConfidence, size }), className)}
       {...props}
     >
       {showIcon && <Icon className='h-3 w-3 flex-shrink-0' />}
-      <span className='capitalize'>{config.label}</span>
+      <span>{config.label}</span>
     </Badge>
   )
 
@@ -111,12 +123,12 @@ function ConfidenceBadge({
 }
 
 // Componente helper para uso directo con el tipo de confidence
-export interface ConfidenceBadgeSimpleProps extends Omit<ConfidenceBadgeProps, 'confidence'> {
-  value: 'empty' | 'needs_revision' | 'trusted' | 'verified'
+export interface ConfidenceBadgeSimpleProps extends Omit<ConfidenceBadgeProps, 'showIcon' | 'showTooltip'> {
+  confidence: 'empty' | 'needs_revision' | 'trusted' | 'verified' | null | undefined
 }
 
-function ConfidenceBadgeSimple({ value, ...props }: ConfidenceBadgeSimpleProps) {
-  return <ConfidenceBadge confidence={value} {...props} />
+function ConfidenceBadgeSimple({ confidence, ...props }: ConfidenceBadgeSimpleProps) {
+  return <ConfidenceBadge confidence={confidence} showIcon={false} showTooltip={false} {...props} />
 }
 
 // Componente wrapper para mostrar distribución de confidence
@@ -126,29 +138,35 @@ export interface ConfidenceStatsProps {
     needs_revision?: number
     trusted?: number
     verified?: number
-  }
+  } | undefined
   total?: number
   className?: string
+  showPercentages?: boolean
 }
 
-function ConfidenceStats({ stats, total, className }: ConfidenceStatsProps) {
+function ConfidenceStats({ stats, total, className, showPercentages = true }: ConfidenceStatsProps) {
+  if (!stats) {
+    return <div role='group' className={cn('flex flex-wrap gap-2', className)}></div>
+  }
+
   const totalCount = total || Object.values(stats).reduce((sum, count) => sum + (count || 0), 0)
 
   if (totalCount === 0) {
-    return null
+    return <div role='group' className={cn('flex flex-wrap gap-2', className)}></div>
   }
 
   return (
-    <div className={cn('flex flex-wrap gap-2', className)}>
+    <div role='group' className={cn('flex flex-wrap gap-2', className)}>
       {(Object.entries(stats) as Array<[keyof typeof stats, number | undefined]>)
         .filter(([_, count]) => count && count > 0)
         .map(([confidence, count]) => {
           const percentage = totalCount > 0 ? (((count || 0) / totalCount) * 100).toFixed(0) : '0'
           return (
             <div key={confidence} className='flex items-center gap-1'>
-              <ConfidenceBadge confidence={confidence} showTooltip={false} className='text-xs' />
+              <ConfidenceBadge confidence={confidence} showTooltip={false} size='sm' />
               <span className='text-xs text-muted-foreground'>
-                {count} ({percentage}%)
+                {count}
+                {showPercentages && ` (${percentage}%)`}
               </span>
             </div>
           )
