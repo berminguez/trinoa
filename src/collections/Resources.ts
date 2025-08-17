@@ -1416,13 +1416,14 @@ export const Resources: CollectionConfig = {
                 ...data,
                 analyzeResult: currentAnalyzeResult,
               }
-              const newConfidence = calculateResourceConfidence(documentWithNewAnalyzeResult, threshold)
+              const newConfidence = calculateResourceConfidence(
+                documentWithNewAnalyzeResult,
+                threshold,
+              )
 
               // Añadir confidence calculado a los datos que se van a guardar
               ;(data as any).confidence = newConfidence
-              console.log(
-                `[RESOURCES_BEFORECHANGE] Confidence calculated: ${newConfidence}`,
-              )
+              console.log(`[RESOURCES_BEFORECHANGE] Confidence calculated: ${newConfidence}`)
             }
           } catch (confidenceError) {
             console.warn(
