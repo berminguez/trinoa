@@ -38,6 +38,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { ConfidenceBadge } from '@/components/ui/confidence-badge'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,6 +56,13 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -575,6 +583,45 @@ export function DocumentTable({
         },
         enableGlobalFilter: false,
       },
+      // Columna de confidence
+      {
+        accessorKey: 'confidence',
+        header: ({ column }) => {
+          return (
+            <Button
+              variant='ghost'
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              className='h-auto p-0 hover:bg-transparent'
+            >
+              Confianza
+              {column.getIsSorted() === 'asc' ? (
+                <IconArrowUp className='ml-2 h-4 w-4' />
+              ) : column.getIsSorted() === 'desc' ? (
+                <IconArrowDown className='ml-2 h-4 w-4' />
+              ) : null}
+            </Button>
+          )
+        },
+        cell: ({ row }) => {
+          const confidence =
+            (row.getValue('confidence') as 'empty' | 'needs_revision' | 'trusted' | 'verified') ||
+            'empty'
+          return (
+            <ConfidenceBadge
+              confidence={confidence}
+              showIcon={true}
+              showTooltip={true}
+              className='min-w-fit'
+            />
+          )
+        },
+        enableGlobalFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          const confidence = row.getValue(columnId) as string
+          if (!filterValue || filterValue === 'all') return true
+          return confidence === filterValue
+        },
+      },
       // Columna de acciones (ver y borrar documento)
       {
         id: 'actions',
@@ -900,7 +947,7 @@ export function DocumentTable({
 
         {/* Barra de herramientas */}
         <div className='flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0'>
-          <div className='flex items-center space-x-2'>
+          <div className='flex flex-col space-y-2 lg:flex-row lg:items-center lg:space-y-0 lg:space-x-2'>
             {/* Búsqueda global */}
             <div className='relative flex-1 lg:flex-none'>
               <IconSearch className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
@@ -911,6 +958,49 @@ export function DocumentTable({
                 className='pl-8 w-full lg:max-w-sm'
               />
             </div>
+
+            {/* Filtro de confianza */}
+            <Select
+              value={(table.getColumn('confidence')?.getFilterValue() as string) || 'all'}
+              onValueChange={(value) =>
+                table.getColumn('confidence')?.setFilterValue(value === 'all' ? '' : value)
+              }
+            >
+              <SelectTrigger className='w-full lg:w-[180px]'>
+                <SelectValue placeholder='Filtrar por confianza' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>Todas las confianzas</SelectItem>
+                <SelectItem value='empty'>
+                  <div className='flex items-center gap-2'>
+                    <ConfidenceBadge confidence='empty' showTooltip={false} className='text-xs' />
+                  </div>
+                </SelectItem>
+                <SelectItem value='needs_revision'>
+                  <div className='flex items-center gap-2'>
+                    <ConfidenceBadge
+                      confidence='needs_revision'
+                      showTooltip={false}
+                      className='text-xs'
+                    />
+                  </div>
+                </SelectItem>
+                <SelectItem value='trusted'>
+                  <div className='flex items-center gap-2'>
+                    <ConfidenceBadge confidence='trusted' showTooltip={false} className='text-xs' />
+                  </div>
+                </SelectItem>
+                <SelectItem value='verified'>
+                  <div className='flex items-center gap-2'>
+                    <ConfidenceBadge
+                      confidence='verified'
+                      showTooltip={false}
+                      className='text-xs'
+                    />
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Selector de columnas */}

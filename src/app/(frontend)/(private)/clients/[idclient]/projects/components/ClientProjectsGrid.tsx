@@ -23,7 +23,7 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import type { ClientProjectsFilters } from '@/actions/clients/types'
 import type { User, Project } from '@/payload-types'
-import { ClientProjectGridItem } from './ClientProjectGridItem'
+import { ClientProjectGridItem, type ProjectConfidenceStats } from './ClientProjectGridItem'
 
 interface PaginationInfo {
   currentPage: number
@@ -37,6 +37,7 @@ interface ClientProjectsGridProps {
   projects: Project[]
   pagination?: PaginationInfo
   currentFilters?: ClientProjectsFilters
+  projectConfidenceStats?: Record<string, ProjectConfidenceStats>
 }
 
 /**
@@ -50,6 +51,7 @@ export function ClientProjectsGrid({
   projects,
   pagination,
   currentFilters,
+  projectConfidenceStats,
 }: ClientProjectsGridProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -223,7 +225,12 @@ export function ClientProjectsGrid({
       ) : (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {projects.map((project) => (
-            <ClientProjectGridItem key={project.id} project={project} client={client} />
+            <ClientProjectGridItem
+              key={project.id}
+              project={project}
+              client={client}
+              confidenceStats={projectConfidenceStats?.[project.id]}
+            />
           ))}
         </div>
       )}

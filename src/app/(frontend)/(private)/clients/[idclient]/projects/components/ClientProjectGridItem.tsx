@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { ConfidenceStats } from '@/components/ui/confidence-badge'
 import { Button } from '@/components/ui/button'
 import {
   IconFolder,
@@ -13,9 +14,18 @@ import {
 } from '@tabler/icons-react'
 import type { User, Project } from '@/payload-types'
 
+interface ProjectConfidenceStats {
+  empty?: number
+  needs_revision?: number
+  trusted?: number
+  verified?: number
+  total?: number
+}
+
 interface ClientProjectGridItemProps {
   project: Project
   client: User
+  confidenceStats?: ProjectConfidenceStats
 }
 
 /**
@@ -24,7 +34,11 @@ interface ClientProjectGridItemProps {
  * Adaptado de ProjectGridItem para mostrar información adicional
  * del cliente y navegación hacia el detalle administrativo
  */
-export function ClientProjectGridItem({ project, client }: ClientProjectGridItemProps) {
+export function ClientProjectGridItem({
+  project,
+  client,
+  confidenceStats,
+}: ClientProjectGridItemProps) {
   // Formateo de datos del proyecto
   const projectTitle = project.title || 'Proyecto sin título'
   const createdDate = new Date(project.createdAt).toLocaleDateString('es-ES', {
@@ -119,16 +133,35 @@ export function ClientProjectGridItem({ project, client }: ClientProjectGridItem
               <p className='text-sm text-muted-foreground mt-1 truncate'>{client.email}</p>
             </div>
 
-            {/* Estadísticas del proyecto (placeholder) */}
-            <div className='grid grid-cols-2 gap-3 text-center'>
-              <div className='p-2 bg-muted/30 rounded'>
-                <div className='text-lg font-bold text-green-600'>0</div>
-                <div className='text-xs text-muted-foreground'>Recursos</div>
+            {/* Estadísticas del proyecto */}
+            <div className='space-y-3'>
+              {/* Estadísticas básicas */}
+              <div className='grid grid-cols-2 gap-3 text-center'>
+                <div className='p-2 bg-muted/30 rounded'>
+                  <div className='text-lg font-bold text-green-600'>
+                    {confidenceStats?.total || 0}
+                  </div>
+                  <div className='text-xs text-muted-foreground'>Recursos</div>
+                </div>
+                <div className='p-2 bg-muted/30 rounded'>
+                  <div className='text-lg font-bold text-blue-600'>{daysSinceCreation}d</div>
+                  <div className='text-xs text-muted-foreground'>Antigüedad</div>
+                </div>
               </div>
-              <div className='p-2 bg-muted/30 rounded'>
-                <div className='text-lg font-bold text-blue-600'>{daysSinceCreation}d</div>
-                <div className='text-xs text-muted-foreground'>Antigüedad</div>
-              </div>
+
+              {/* Estadísticas de confidence */}
+              {confidenceStats && confidenceStats.total && confidenceStats.total > 0 && (
+                <div className='space-y-2'>
+                  <div className='text-xs font-medium text-muted-foreground uppercase tracking-wide'>
+                    Estado de Confianza
+                  </div>
+                  <ConfidenceStats
+                    stats={confidenceStats}
+                    total={confidenceStats.total}
+                    className='justify-center flex-wrap gap-1'
+                  />
+                </div>
+              )}
             </div>
           </CardContent>
 
@@ -150,3 +183,5 @@ export function ClientProjectGridItem({ project, client }: ClientProjectGridItem
     </div>
   )
 }
+
+export type { ProjectConfidenceStats }

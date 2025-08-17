@@ -11,11 +11,12 @@ Basado en: `prd-confidence-field.md`
 - `src/actions/resources/index.ts` - Índice de exports de actions de resources
 - `src/lib/utils/calculateResourceConfidence.ts` - Función utilitaria para calcular confidence ✅ CREADO
 - `tests/unit/lib/utils/calculateResourceConfidence.test.ts` - Tests de la función de cálculo ✅ CREADO
-- `src/components/ui/confidence-badge.tsx` - Componente Badge para mostrar confidence
+- `src/components/ui/confidence-badge.tsx` - Componente Badge para mostrar confidence ✅ CREADO
 - `src/components/ui/confidence-badge.test.tsx` - Tests del componente Badge
 - `src/app/(frontend)/(private)/projects/[id]/components/VideoTable.tsx` - Tabla principal donde se mostrará confidence
-- `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectsGrid.tsx` - Grid de proyectos cliente
-- `src/app/(frontend)/(private)/clients/[idclient]/projects/[idproject]/resource/[idresource]/components/ClientResourceContent.tsx` - Vista detalle de recurso
+- `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectsGrid.tsx` - Grid de proyectos cliente ✅ MODIFICADO
+- `src/app/(frontend)/(private)/clients/[idclient]/projects/components/ClientProjectGridItem.tsx` - Componente tarjeta de proyecto ✅ MODIFICADO
+- `src/app/(frontend)/(private)/clients/[idclient]/projects/[idproject]/resource/[idresource]/components/ClientResourceContent.tsx` - Vista detalle de recurso ✅ MODIFICADO
 - `src/payload-types.ts` - Tipos autogenerados (se actualizarán automáticamente)
 - `scripts/migrate-confidence.ts` - Script de migración para recursos existentes ✅ CREADO
 
@@ -62,12 +63,12 @@ Basado en: `prd-confidence-field.md`
   - [x] 4.6 Configurar ejecución automática de migración en deploy (opcional)
 
 - [ ] 5.0 Visualización Frontend - Implementar badges y tablas con confidence
-  - [ ] 5.1 Crear componente `ConfidenceBadge` en `src/components/ui/` usando Shadcn Badge
-  - [ ] 5.2 Implementar colores distintivos: empty (gris), needs_revision (naranja), trusted (verde), verified (azul)
-  - [ ] 5.3 Añadir iconos de tabler y tooltips explicativos
-  - [ ] 5.4 Integrar ConfidenceBadge en VideoTable de proyectos
-  - [ ] 5.5 Integrar ConfidenceBadge en ClientProjectsGrid
-  - [ ] 5.6 Integrar ConfidenceBadge en ClientResourceContent (vista detalle)
-  - [ ] 5.7 Hacer campo filtrable y ordenable en las tablas que lo soporten
+  - [x] 5.1 Crear componente `ConfidenceBadge` en `src/components/ui/` usando Shadcn Badge
+  - [x] 5.2 Implementar colores distintivos: empty (gris), needs_revision (naranja), trusted (verde), verified (azul)
+  - [x] 5.3 Añadir iconos de tabler y tooltips explicativos
+  - [x] 5.4 Integrar ConfidenceBadge en VideoTable de proyectos
+  - [x] 5.5 Integrar ConfidenceBadge en ClientProjectsGrid
+  - [x] 5.6 Integrar ConfidenceBadge en ClientResourceContent (vista detalle)
+  - [x] 5.7 Hacer campo filtrable y ordenable en las tablas que lo soporten
   - [ ] 5.8 Crear tests unitarios del componente ConfidenceBadge
   - [ ] 5.9 Verificar responsive design y accesibilidad del componente
