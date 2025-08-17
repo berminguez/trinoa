@@ -1381,6 +1381,57 @@ export const Resources: CollectionConfig = {
             status: data.status,
           })
         }
+
+        // Recalcular confidence automáticamente cuando analyzeResult cambia
+        if (operation === 'update' && data && req) {
+          try {
+            // Obtener documento original para comparar
+            const originalDoc = await req.payload.findByID({
+              collection: 'resources',
+              id: data.id || (data as any)._id,
+              depth: 0,
+              overrideAccess: true,
+            })
+
+            const previousAnalyzeResult = (originalDoc as any)?.analyzeResult
+            const currentAnalyzeResult = (data as any)?.analyzeResult
+
+            // Verificar si analyzeResult va a cambiar
+            const previousSerialized = previousAnalyzeResult
+              ? JSON.stringify(previousAnalyzeResult)
+              : null
+            const currentSerialized = currentAnalyzeResult
+              ? JSON.stringify(currentAnalyzeResult)
+              : null
+
+            if (previousSerialized !== currentSerialized) {
+              console.log(
+                `[RESOURCES_BEFORECHANGE] analyzeResult changing for resource ${originalDoc.id}, recalculating confidence...`,
+              )
+
+              // Obtener threshold y calcular nuevo confidence
+              const threshold = await getConfidenceThreshold(req.payload)
+              const documentWithNewAnalyzeResult = {
+                ...originalDoc,
+                ...data,
+                analyzeResult: currentAnalyzeResult,
+              }
+              const newConfidence = calculateResourceConfidence(documentWithNewAnalyzeResult, threshold)
+
+              // Añadir confidence calculado a los datos que se van a guardar
+              ;(data as any).confidence = newConfidence
+              console.log(
+                `[RESOURCES_BEFORECHANGE] Confidence calculated: ${newConfidence}`,
+              )
+            }
+          } catch (confidenceError) {
+            console.warn(
+              '[RESOURCES_BEFORECHANGE] Error calculating confidence in beforeChange hook:',
+              confidenceError,
+            )
+          }
+        }
+
         return data
       },
     ],
@@ -1639,13 +1690,13 @@ export const Resources: CollectionConfig = {
           } */
         }
 
-        // Hook para actualizar confidence automáticamente cuando cambia analyzeResult
+        // LOG: Documentar cambios para debug
         if (operation === 'update' && previousDoc && doc) {
           try {
             const previousAnalyzeResult = (previousDoc as any)?.analyzeResult
             const currentAnalyzeResult = (doc as any)?.analyzeResult
 
-            // Verificar si analyzeResult ha cambiado (comparación básica de serialización)
+            // Verificar si analyzeResult ha cambiado
             const previousSerialized = previousAnalyzeResult
               ? JSON.stringify(previousAnalyzeResult)
               : null
@@ -1655,35 +1706,11 @@ export const Resources: CollectionConfig = {
 
             if (previousSerialized !== currentSerialized) {
               console.log(
-                `[RESOURCES_HOOK] analyzeResult changed for resource ${doc.id}, updating confidence...`,
+                `[RESOURCES_HOOK] analyzeResult changed for resource ${doc.id} - confidence should be recalculated on next load`,
               )
-
-              const threshold = await getConfidenceThreshold(req.payload)
-              const newConfidence = calculateResourceConfidence(doc, threshold)
-
-              // Solo actualizar si el valor ha cambiado
-              if ((doc as any).confidence !== newConfidence) {
-                await req.payload.update({
-                  collection: 'resources',
-                  id: String(doc.id),
-                  data: {
-                    confidence: newConfidence,
-                  },
-                  overrideAccess: true,
-                })
-                console.log(
-                  `[RESOURCES_HOOK] Confidence updated automatically: ${(doc as any).confidence} → ${newConfidence}`,
-                )
-              } else {
-                console.log(`[RESOURCES_HOOK] Confidence remains: ${newConfidence}`)
-              }
             }
-          } catch (confidenceError) {
-            // No interrumpir el flujo si hay error calculando confidence
-            console.warn(
-              '[RESOURCES_HOOK] Error calculating confidence in afterChange hook:',
-              confidenceError,
-            )
+          } catch (logError) {
+            console.warn('[RESOURCES_HOOK] Error logging analyzeResult changes:', logError)
           }
         }
       },

@@ -978,11 +978,7 @@ export function DocumentTable({
                 </SelectItem>
                 <SelectItem value='needs_revision'>
                   <div className='flex items-center gap-2'>
-                    <ConfidenceBadge
-                      confidence='needs_revision'
-                      showTooltip={false}
-                      size='sm'
-                    />
+                    <ConfidenceBadge confidence='needs_revision' showTooltip={false} size='sm' />
                   </div>
                 </SelectItem>
                 <SelectItem value='trusted'>
@@ -992,11 +988,7 @@ export function DocumentTable({
                 </SelectItem>
                 <SelectItem value='verified'>
                   <div className='flex items-center gap-2'>
-                    <ConfidenceBadge
-                      confidence='verified'
-                      showTooltip={false}
-                      size='sm'
-                    />
+                    <ConfidenceBadge confidence='verified' showTooltip={false} size='sm' />
                   </div>
                 </SelectItem>
               </SelectContent>
