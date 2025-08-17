@@ -30,48 +30,48 @@ function PrivateLayoutSkeleton() {
 
 // Layout protegido con autenticación SIMPLIFICADO
 function ProtectedContent({ children }: { children: React.ReactNode }) {
-  const [isInitializing, setIsInitializing] = useState(true)
-  const [hasError, setHasError] = useState(false)
-  const [isHandlingExpiredToken, setIsHandlingExpiredToken] = useState(false)
+  const [authState, setAuthState] = useState<
+    'initializing' | 'authenticated' | 'unauthenticated' | 'error' | 'expired'
+  >('initializing')
 
   const router = useRouter()
-  const { user, isAuthenticated, setUser } = useAuthStore()
+  const { user, isAuthenticated, setUser, clearAuth } = useAuthStore()
 
-  // SOLO UNA verificación al montar con manejo de tokens expirados
+  // Función para manejar tokens expirados
+  const handleTokenExpired = async () => {
+    try {
+      console.log('[PrivateLayout] Handling token expiration...')
+      setAuthState('expired')
+
+      // Limpiar estado local
+      clearAuth()
+
+      // Hacer logout en el servidor (limpiar cookies)
+      await logoutAction()
+
+      console.log('[PrivateLayout] Logout completed, redirecting to login')
+      router.push('/login?reason=session_expired')
+    } catch (error) {
+      console.error('[PrivateLayout] Error during token expiry handling:', error)
+      router.push('/login?reason=auth_error')
+    }
+  }
+
+  // Verificación de autenticación unificada
   useEffect(() => {
-    async function initializeAuth() {
+    let isMounted = true
+
+    const initializeAuth = async () => {
       try {
         console.log('[PrivateLayout] Initializing auth check...')
 
-        // Si ya tenemos usuario autenticado, verificar si el token sigue válido
-        if (user && isAuthenticated) {
-          console.log('[PrivateLayout] User in store, verifying token validity:', user.email)
-
-          // Verificar si el token sigue siendo válido
-          const authStatus = await getAuthenticationStatus()
-
-          if (authStatus.isAuthenticated) {
-            console.log('[PrivateLayout] Token still valid for user:', user.email)
-            setIsInitializing(false)
-            return
-          }
-
-          if (authStatus.isTokenExpired) {
-            console.log('[PrivateLayout] Token expired for user:', user.email, '- forcing logout')
-            // Token expirado: limpiar sesión local y forzar logout
-            await handleTokenExpired()
-            return
-          }
-
-          // Otro tipo de error: tratar como no autenticado
-          console.log('[PrivateLayout] Auth verification failed:', authStatus.error)
-        }
-
-        // Solo si NO tenemos usuario o la verificación falló, verificar con PayloadCMS
-        console.log('[PrivateLayout] Checking authentication status with PayloadCMS...')
+        // Verificar autenticación con PayloadCMS
         const authStatus = await getAuthenticationStatus()
 
+        if (!isMounted) return
+
         if (authStatus.isAuthenticated && authStatus.user) {
+          // Usuario autenticado correctamente
           setUser({
             id: authStatus.user.id,
             name: authStatus.user.name,
@@ -79,63 +79,44 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
             role: undefined,
           })
           console.log('[PrivateLayout] User authenticated:', authStatus.user.email)
+          setAuthState('authenticated')
         } else if (authStatus.isTokenExpired) {
-          console.log('[PrivateLayout] Token expired during check - forcing logout')
+          // Token expirado
+          console.log('[PrivateLayout] Token expired - handling logout')
           await handleTokenExpired()
-          return
         } else {
+          // No autenticado
           console.log('[PrivateLayout] No valid authentication, redirecting to login')
+          setAuthState('unauthenticated')
           router.push('/login?reason=auth_required')
-          return
         }
       } catch (error) {
         console.error('[PrivateLayout] Auth error:', error)
-        setHasError(true)
-        setTimeout(() => {
-          router.push('/login?reason=auth_error')
-        }, 2000)
-      } finally {
-        setIsInitializing(false)
+        if (isMounted) {
+          setAuthState('error')
+          setTimeout(() => {
+            router.push('/login?reason=auth_error')
+          }, 2000)
+        }
       }
     }
 
-    // Función para manejar tokens expirados
-    async function handleTokenExpired() {
-      try {
-        console.log('[PrivateLayout] Handling token expiration...')
-        setIsHandlingExpiredToken(true)
-
-        // Limpiar estado local
-        const { clearAuth } = useAuthStore.getState()
-        clearAuth()
-
-        // Hacer logout en el servidor (limpiar cookies)
-        await logoutAction()
-
-        console.log('[PrivateLayout] Logout completed, redirecting to login')
-        router.push('/login?reason=session_expired')
-      } catch (error) {
-        console.error('[PrivateLayout] Error during token expiry handling:', error)
-        // En caso de error, aún así redirigir al login
-        router.push('/login?reason=auth_error')
-      } finally {
-        setIsHandlingExpiredToken(false)
-        setIsInitializing(false)
-      }
-    }
-
-    // Solo ejecutar si necesitamos inicializar
-    if (isInitializing) {
+    // Solo ejecutar si estamos inicializando
+    if (authState === 'initializing') {
       initializeAuth()
     }
-  }, [isAuthenticated, isInitializing, router, setUser, user]) // Dependencias necesarias
 
-  // Estados de carga y error
-  if (isInitializing) {
+    return () => {
+      isMounted = false
+    }
+  }, [authState, router, setUser, clearAuth]) // Dependencias mínimas necesarias
+
+  // Estados de carga y error basados en authState
+  if (authState === 'initializing') {
     return <PrivateLayoutSkeleton />
   }
 
-  if (isHandlingExpiredToken) {
+  if (authState === 'expired') {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gray-50'>
         <div className='text-center'>
@@ -149,7 +130,7 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (hasError) {
+  if (authState === 'error') {
     return (
       <div className='flex min-h-screen items-center justify-center bg-gray-50'>
         <div className='text-center'>
@@ -165,7 +146,7 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
     )
   }
 
-  if (!isAuthenticated || !user) {
+  if (authState !== 'authenticated' || !user) {
     return <PrivateLayoutSkeleton />
   }
 

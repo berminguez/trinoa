@@ -123,20 +123,20 @@ export default async function PageContent({ params }: PageContentProps) {
                   resourceId={String(resourceRes.id)}
                   initialTitle={viewerProps.title}
                 />
-                
+
                 {/* Confidence Badge */}
                 <div className='flex items-center gap-2 mt-2 mb-2'>
-                  <ConfidenceBadge 
+                  <ConfidenceBadge
                     confidence={resourceRes.confidence || 'empty'}
                     showIcon={true}
                     showTooltip={true}
-                    size="default"
+                    size='default'
                   />
                   <span className='text-xs text-muted-foreground'>
                     Estado de confianza del documento
                   </span>
                 </div>
-                
+
                 {viewerProps.file.filename ? (
                   <p className='text-xs text-muted-foreground break-all'>
                     {viewerProps.file.filename}
