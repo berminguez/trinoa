@@ -1,5 +1,5 @@
 'use client'
-import { IconFolder, IconVideo } from '@tabler/icons-react'
+import { IconFolder, IconFileDescription } from '@tabler/icons-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -12,11 +12,11 @@ interface ProjectGridItemProps {
 }
 
 export function ProjectGridItem({ project }: ProjectGridItemProps) {
-  const [videoCount, setVideoCount] = useState<number>(0)
+  const [docCount, setDocCount] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const fetchVideoCount = async () => {
+    const fetchDocCount = async () => {
       try {
         setIsLoading(true)
 
@@ -25,20 +25,20 @@ export function ProjectGridItem({ project }: ProjectGridItemProps) {
 
         if (response.ok) {
           const data = await response.json()
-          setVideoCount(data.count || 0)
+          setDocCount(data.count || 0)
         } else {
-          console.error('Error fetching video count:', response.statusText)
-          setVideoCount(0)
+          console.error('Error fetching documents count:', response.statusText)
+          setDocCount(0)
         }
       } catch (error) {
-        console.error('Error fetching video count:', error)
-        setVideoCount(0)
+        console.error('Error fetching documents count:', error)
+        setDocCount(0)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchVideoCount()
+    fetchDocCount()
   }, [project.id])
 
   return (
@@ -54,8 +54,8 @@ export function ProjectGridItem({ project }: ProjectGridItemProps) {
           <h3 className='font-semibold text-lg mb-2 truncate'>{project.title}</h3>
           <div className='flex justify-between items-center text-sm text-muted-foreground'>
             <div className='flex items-center gap-1'>
-              <IconVideo className='h-4 w-4' />
-              <span>{isLoading ? '...' : `${videoCount} video${videoCount !== 1 ? 's' : ''}`}</span>
+              <IconFileDescription className='h-4 w-4' />
+              <span>{isLoading ? '...' : `${docCount} documento${docCount !== 1 ? 's' : ''}`}</span>
             </div>
             <span>{new Date(project.createdAt).toLocaleDateString()}</span>
           </div>
