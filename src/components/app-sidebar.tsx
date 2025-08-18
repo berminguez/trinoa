@@ -53,29 +53,9 @@ const baseNavigation = [
     icon: IconFolder,
   },
   {
-    title: 'Playground',
-    url: '/playground',
-    icon: IconRobot,
-  },
-  {
-    title: 'API Keys',
-    url: '/api-keys',
-    icon: IconKey,
-  },
-  {
-    title: 'Lifecycle',
-    url: '#',
-    icon: IconListDetails,
-  },
-  {
     title: 'Analytics',
     url: '#',
     icon: IconChartBar,
-  },
-  {
-    title: 'Team',
-    url: '#',
-    icon: IconUsers,
   },
 ]
 

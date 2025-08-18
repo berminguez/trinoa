@@ -16,6 +16,14 @@ export const Users: CollectionConfig = {
       label: 'Nombre',
     },
     {
+      name: 'empresa',
+      type: 'text',
+      label: 'Empresa',
+      admin: {
+        description: 'Empresa o organización a la que pertenece el usuario',
+      },
+    },
+    {
       name: 'role',
       type: 'select',
       label: 'Rol',

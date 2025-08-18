@@ -1,4 +1,5 @@
 import type { User } from '@/payload-types'
+import { CreateClientModal } from './CreateClientModal'
 
 interface ClientsHeaderProps {
   adminUser: User
@@ -30,8 +31,7 @@ export function ClientsHeader({ adminUser, totalClients }: ClientsHeaderProps) {
         </div>
 
         <div className='text-right'>
-          <p className='text-sm text-muted-foreground'>Administrador conectado</p>
-          <p className='font-medium'>{adminUser.name || adminUser.email}</p>
+          <CreateClientModal />
         </div>
       </div>
 

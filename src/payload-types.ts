@@ -145,6 +145,10 @@ export interface User {
   id: string;
   name?: string | null;
   /**
+   * Empresa o organización a la que pertenece el usuario
+   */
+  empresa?: string | null;
+  /**
    * Rol del usuario para control de acceso
    */
   role?: ('admin' | 'user' | 'api') | null;
@@ -1086,6 +1090,7 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  empresa?: T;
   role?: T;
   updatedAt?: T;
   createdAt?: T;
