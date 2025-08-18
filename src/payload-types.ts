@@ -643,6 +643,10 @@ export interface FieldTranslation {
    */
   order?: number | null;
   label: string;
+  /**
+   * Indica si el campo es obligatorio
+   */
+  isRequired?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1360,6 +1364,7 @@ export interface FieldTranslationsSelect<T extends boolean = true> {
   key?: T;
   order?: T;
   label?: T;
+  isRequired?: T;
   updatedAt?: T;
   createdAt?: T;
 }

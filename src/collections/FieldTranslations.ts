@@ -34,6 +34,14 @@ export const FieldTranslations: CollectionConfig = {
       type: 'text',
       required: true,
     },
+    {
+      name: 'isRequired',
+      label: 'Obligatorio',
+      type: 'checkbox',
+      defaultValue: false,
+      required: false,
+      admin: { description: 'Indica si el campo es obligatorio' },
+    },
   ],
 }
 
