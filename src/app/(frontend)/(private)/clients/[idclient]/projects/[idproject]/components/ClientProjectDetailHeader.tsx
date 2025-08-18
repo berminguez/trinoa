@@ -84,8 +84,14 @@ export function ClientProjectDetailHeader({
                         {block.children?.map((child: any) => child.text).join('') || ''}
                       </p>
                     ))
+                  ) : project.description ? (
+                    <p className='text-sm text-muted-foreground'>
+                      {typeof project.description === 'string'
+                        ? project.description
+                        : 'Descripción no disponible'}
+                    </p>
                   ) : (
-                    <p className='text-sm text-muted-foreground'>{project.description}</p>
+                    <p className='text-sm text-muted-foreground'>Sin descripción</p>
                   )}
                 </div>
               </div>
@@ -104,7 +110,7 @@ export function ClientProjectDetailHeader({
                 </div>
               </div>
               <Badge variant={client.role === 'admin' ? 'destructive' : 'secondary'}>
-                {client.role.toUpperCase()}
+                {(client.role || 'user').toUpperCase()}
               </Badge>
             </div>
           </div>

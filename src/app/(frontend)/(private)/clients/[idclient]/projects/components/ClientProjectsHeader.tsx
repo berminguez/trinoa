@@ -39,7 +39,7 @@ export function ClientProjectsHeader({
               <p className='text-muted-foreground flex items-center gap-2'>
                 {client.email}
                 <Badge variant={client.role === 'admin' ? 'destructive' : 'secondary'}>
-                  {client.role.toUpperCase()}
+                  {(client.role || 'user').toUpperCase()}
                 </Badge>
               </p>
             </div>

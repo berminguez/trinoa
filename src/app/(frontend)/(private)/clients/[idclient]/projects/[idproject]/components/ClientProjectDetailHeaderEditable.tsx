@@ -241,8 +241,14 @@ export function ClientProjectDetailHeaderEditable({
                         {block.children?.map((child: any) => child.text).join('') || ''}
                       </p>
                     ))
+                  ) : project.description ? (
+                    <p className='text-sm text-muted-foreground'>
+                      {typeof project.description === 'string'
+                        ? project.description
+                        : 'Descripción no disponible'}
+                    </p>
                   ) : (
-                    <p className='text-sm text-muted-foreground'>{project.description}</p>
+                    <p className='text-sm text-muted-foreground'>Sin descripción</p>
                   )}
                 </div>
               </div>
@@ -261,7 +267,7 @@ export function ClientProjectDetailHeaderEditable({
                 </div>
               </div>
               <Badge variant={client.role === 'admin' ? 'destructive' : 'secondary'}>
-                {client.role.toUpperCase()}
+                {(client.role || 'user').toUpperCase()}
               </Badge>
             </div>
           </div>
@@ -284,10 +290,9 @@ export function ClientProjectDetailHeaderEditable({
           {/* Acciones administrativas */}
           <div className='space-y-2'>
             <DocumentUploadModal
-              projectId={project.id}
+              project={project}
               onResourceUploaded={onResourceUploaded}
               onResourceUploadFailed={onResourceUploadFailed}
-              onResourceAdded={onResourceAdded}
               trigger={
                 <Button className='w-full gap-2'>
                   <IconUpload className='h-4 w-4' />

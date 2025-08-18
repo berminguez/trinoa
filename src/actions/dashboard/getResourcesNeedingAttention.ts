@@ -47,7 +47,7 @@ export async function getResourcesNeedingAttention(): Promise<{
     }
 
     // Construir filtros según el rol del usuario
-    const baseWhere =
+    const baseWhere: any =
       user.role === 'admin'
         ? {} // Admins ven todos los recursos
         : {

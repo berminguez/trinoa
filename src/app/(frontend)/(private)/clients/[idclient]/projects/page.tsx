@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Metadata } from 'next/metadata'
+import { Metadata } from 'next'
 import { requireAdminAccess } from '@/actions/auth/getUser'
 import { ClientProjectsContent } from './components/ClientProjectsContent'
 import { ClientProjectsSkeleton } from './components/ClientProjectsSkeleton'

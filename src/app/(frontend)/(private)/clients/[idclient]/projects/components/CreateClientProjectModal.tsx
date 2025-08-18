@@ -181,7 +181,7 @@ export function CreateClientProjectModal({
               variant={client.role === 'admin' ? 'destructive' : 'secondary'}
               className='text-xs'
             >
-              {client.role.toUpperCase()}
+              {(client.role || 'user').toUpperCase()}
             </Badge>
           </div>
         </div>

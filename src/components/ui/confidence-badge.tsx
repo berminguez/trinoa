@@ -16,7 +16,8 @@ const confidenceBadgeVariants = cva(
   {
     variants: {
       confidence: {
-        empty: 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-50 focus-visible:ring-gray-300',
+        empty:
+          'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-50 focus-visible:ring-gray-300',
         needs_revision:
           'bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-50 focus-visible:ring-orange-300 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800',
         trusted:
@@ -34,7 +35,7 @@ const confidenceBadgeVariants = cva(
       confidence: 'empty',
       size: 'default',
     },
-  }
+  },
 )
 
 const confidenceConfig = {
@@ -101,12 +102,12 @@ function ConfidenceBadge({
       {...props}
     >
       {showIcon && (
-        <Icon 
+        <Icon
           className={cn(
             'flex-shrink-0',
-            size === 'sm' ? 'h-2.5 w-2.5' : size === 'lg' ? 'h-4 w-4' : 'h-3 w-3'
+            size === 'sm' ? 'h-2.5 w-2.5' : size === 'lg' ? 'h-4 w-4' : 'h-3 w-3',
           )}
-          aria-hidden="true"
+          aria-hidden='true'
         />
       )}
       <span className='truncate'>{config.label}</span>
@@ -121,8 +122,8 @@ function ConfidenceBadge({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
-        <TooltipContent 
-          side='top' 
+        <TooltipContent
+          side='top'
           className='max-w-xs sm:max-w-sm'
           id={tooltipId}
           role='tooltip'
@@ -144,7 +145,8 @@ function ConfidenceBadge({
 }
 
 // Componente helper para uso directo con el tipo de confidence
-export interface ConfidenceBadgeSimpleProps extends Omit<ConfidenceBadgeProps, 'showIcon' | 'showTooltip'> {
+export interface ConfidenceBadgeSimpleProps
+  extends Omit<ConfidenceBadgeProps, 'showIcon' | 'showTooltip'> {
   confidence: 'empty' | 'needs_revision' | 'trusted' | 'verified' | null | undefined
 }
 
@@ -154,26 +156,45 @@ function ConfidenceBadgeSimple({ confidence, ...props }: ConfidenceBadgeSimplePr
 
 // Componente wrapper para mostrar distribución de confidence
 export interface ConfidenceStatsProps {
-  stats: {
-    empty?: number
-    needs_revision?: number
-    trusted?: number
-    verified?: number
-  } | undefined
+  stats:
+    | {
+        empty?: number
+        needs_revision?: number
+        trusted?: number
+        verified?: number
+      }
+    | undefined
   total?: number
   className?: string
   showPercentages?: boolean
 }
 
-function ConfidenceStats({ stats, total, className, showPercentages = true }: ConfidenceStatsProps) {
+function ConfidenceStats({
+  stats,
+  total,
+  className,
+  showPercentages = true,
+}: ConfidenceStatsProps) {
   if (!stats) {
-    return <div role='group' aria-label='Estadísticas de confianza vacías' className={cn('flex flex-wrap gap-2', className)}></div>
+    return (
+      <div
+        role='group'
+        aria-label='Estadísticas de confianza vacías'
+        className={cn('flex flex-wrap gap-2', className)}
+      ></div>
+    )
   }
 
   const totalCount = total || Object.values(stats).reduce((sum, count) => sum + (count || 0), 0)
 
   if (totalCount === 0) {
-    return <div role='group' aria-label='Sin estadísticas de confianza' className={cn('flex flex-wrap gap-2', className)}></div>
+    return (
+      <div
+        role='group'
+        aria-label='Sin estadísticas de confianza'
+        className={cn('flex flex-wrap gap-2', className)}
+      ></div>
+    )
   }
 
   const statsEntries = (Object.entries(stats) as Array<[keyof typeof stats, number | undefined]>)
@@ -185,34 +206,35 @@ function ConfidenceStats({ stats, total, className, showPercentages = true }: Co
     })
 
   return (
-    <div 
-      role='group' 
+    <div
+      role='group'
       aria-label={`Estadísticas de confianza: ${totalCount} recursos en total`}
       className={cn('flex flex-wrap gap-1.5 sm:gap-2', className)}
     >
       {statsEntries.map(([confidence, count]) => {
         const percentage = totalCount > 0 ? (((count || 0) / totalCount) * 100).toFixed(0) : '0'
         const config = confidenceConfig[confidence]
-        
+
         return (
-          <div 
-            key={confidence} 
+          <div
+            key={confidence}
             className='flex items-center gap-1 min-w-fit'
             role='listitem'
             aria-label={`${config.label}: ${count} recursos${showPercentages ? `, ${percentage}%` : ''}`}
           >
-            <ConfidenceBadge 
-              confidence={confidence} 
-              showTooltip={false} 
+            <ConfidenceBadge
+              confidence={confidence}
+              showTooltip={false}
               size='sm'
-              aria-hidden="true"
+              aria-hidden='true'
             />
             <span className='text-xs text-muted-foreground whitespace-nowrap'>
               <span className='font-medium'>{count}</span>
               {showPercentages && (
                 <span className='opacity-75'>
-                  {' '}(<span className='sr-only'>{percentage} por ciento</span>
-                  <span aria-hidden="true">{percentage}%</span>)
+                  {' '}
+                  (<span className='sr-only'>{percentage} por ciento</span>
+                  <span aria-hidden='true'>{percentage}%</span>)
                 </span>
               )}
             </span>
@@ -224,4 +246,6 @@ function ConfidenceStats({ stats, total, className, showPercentages = true }: Co
 }
 
 export { ConfidenceBadge, ConfidenceBadgeSimple, ConfidenceStats, confidenceConfig }
-export type { ConfidenceValue } from '@/payload-types'
+
+// Export confidence value type
+export type ConfidenceValue = keyof typeof confidenceConfig

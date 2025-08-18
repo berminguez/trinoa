@@ -60,22 +60,22 @@ export interface DeleteProjectAsAdminResult {
 /**
  * Utilidades para server actions administrativos
  */
-export const AdminProjectActions = {
-  // Crear proyecto para cliente
-  create: createProjectForClient,
+// export const AdminProjectActions = {
+//   // Crear proyecto para cliente
+//   create: createProjectForClient,
 
-  // Actualizar proyecto como admin
-  update: updateProjectAsAdmin,
+//   // Actualizar proyecto como admin
+//   update: updateProjectAsAdmin,
 
-  // Obtener proyecto con datos completos
-  get: getProjectAsAdmin,
+//   // Obtener proyecto con datos completos
+//   get: getProjectAsAdmin,
 
-  // Obtener estadísticas del proyecto
-  getStats: getProjectStatsAsAdmin,
+//   // Obtener estadísticas del proyecto
+//   getStats: getProjectStatsAsAdmin,
 
-  // Eliminar proyecto y recursos
-  delete: deleteProjectAsAdmin,
-} as const
+//   // Eliminar proyecto y recursos
+//   delete: deleteProjectAsAdmin,
+// } as const
 
 /**
  * Constantes para validaciones administrativas

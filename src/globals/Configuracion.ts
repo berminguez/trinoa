@@ -148,8 +148,8 @@ export const Configuracion: GlobalConfig = {
                     description:
                       'Porcentaje mínimo de confianza requerido para que un campo se considere confiable (0-100)',
                   },
-                  validate: (value: number) => {
-                    if (typeof value !== 'number') {
+                  validate: (value: number | null | undefined) => {
+                    if (value == null || typeof value !== 'number') {
                       return 'El umbral de confianza debe ser un número'
                     }
                     if (value < 0 || value > 100) {

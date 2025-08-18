@@ -246,19 +246,21 @@ export async function requireAdminAccess(): Promise<User> {
     }
 
     // Verificar si el usuario tiene rol de administrador
-    if (user.role !== 'admin') {
+    if (user!.role !== 'admin') {
       console.log(
-        `requireAdminAccess: Usuario ${user.email} no es admin (rol: ${user.role}), redirigiendo a dashboard`,
+        `requireAdminAccess: Usuario ${user!.email} no es admin (rol: ${user!.role}), redirigiendo a dashboard`,
       )
       redirect(createAdminAccessDeniedUrl())
     }
 
-    console.log(`requireAdminAccess: Acceso admin concedido para usuario ${user.email}`)
-    return user
+    console.log(`requireAdminAccess: Acceso admin concedido para usuario ${user!.email}`)
+    return user!
   } catch (error) {
     console.error('Error en requireAdminAccess:', error)
     // En caso de error, redirigir a login por seguridad
     redirect(createAdminLoginUrl())
+    // TypeScript no sabe que redirect nunca retorna, por lo que agregamos esta línea
+    throw new Error('Redirect should have occurred')
   }
 }
 

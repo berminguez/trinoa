@@ -5,13 +5,13 @@ import config from '@payload-config'
 import { requireAdminAccess } from '@/actions/auth/getUser'
 import type { Project, User } from '@/payload-types'
 
-interface CreateProjectForClientData {
+export interface CreateProjectForClientData {
   title: string
   description?: string
   clientId: string
 }
 
-interface CreateProjectForClientResult {
+export interface CreateProjectForClientResult {
   success: boolean
   data?: {
     project: Project
@@ -146,7 +146,7 @@ export async function createProjectForClient(
     // 4. Crear proyecto
     const project = (await payload.create({
       collection: 'projects',
-      data: projectData,
+      data: projectData as any, // TypeScript: slug se auto-genera en hooks
     })) as Project
 
     console.log(`createProjectForClient: Proyecto creado exitosamente:`, {

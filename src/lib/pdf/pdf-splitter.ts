@@ -87,7 +87,6 @@ async function optimizePdfDocument(doc: PDFDocument): Promise<PDFDocument> {
       useObjectStreams: false, // Descomprimir streams de objetos para mejor compresión posterior
       addDefaultPage: false, // No añadir página por defecto
       objectsPerTick: 50, // Procesar objetos en lotes pequeños para mejor rendimiento
-      updateMetadata: false, // No actualizar metadatos automáticamente
     })
 
     // Recargar el documento desde los bytes limpios
@@ -98,7 +97,6 @@ async function optimizePdfDocument(doc: PDFDocument): Promise<PDFDocument> {
       useObjectStreams: true, // Usar streams de objetos para máxima compresión
       addDefaultPage: false,
       objectsPerTick: 100, // Lotes más grandes en la segunda pasada
-      updateMetadata: false,
     })
 
     // Retornar documento final optimizado
@@ -154,7 +152,6 @@ export async function splitPdfIntoSegments(
         useObjectStreams: true, // Usar streams de objetos para mejor compresión
         addDefaultPage: false, // No añadir página por defecto
         objectsPerTick: 50, // Procesar en lotes para rendimiento
-        updateMetadata: false, // No actualizar metadatos innecesarios
       })
 
       const originalSize = (await newDoc.save()).length

@@ -41,13 +41,13 @@ export async function getOptimizedDashboardData(): Promise<{
       // Obtener todos los recursos con datos relevantes
       payload.find({
         collection: 'resources',
-        where: isAdmin
+        where: (isAdmin
           ? {}
           : {
               project: {
                 createdBy: { equals: user.id },
               },
-            },
+            }) as any,
         limit: 100, // Limitar para performance
         sort: '-updatedAt',
         select: {
@@ -103,11 +103,11 @@ export async function getOptimizedDashboardData(): Promise<{
         where: {
           ...(isAdmin
             ? {}
-            : {
+            : ({
                 project: {
                   createdBy: { equals: user.id },
                 },
-              }),
+              } as any)),
           or: [
             { confidence: { equals: 'needs-review' } },
             { status: { equals: 'failed' } },
@@ -200,7 +200,7 @@ async function processOptimizedData({
     }) || []
 
   // Métricas de usuarios (solo admin)
-  let userMetrics = null
+  let userMetrics: any = undefined
   if (isAdmin && usersData) {
     // Calcular proyectos por usuario de forma optimizada
     const usersWithActivity = await Promise.all(
