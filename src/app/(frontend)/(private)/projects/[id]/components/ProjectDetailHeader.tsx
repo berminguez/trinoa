@@ -28,7 +28,7 @@ interface ProjectDetailHeaderProps {
   onResourceAdded?: (resource: Resource) => void
   onUploadComplete?: () => void
   onMultiInvoiceUploadStarted?: (fileName: string) => void
-  documentTableRef?: React.RefObject<DocumentTableRef>
+  documentTableRef?: React.RefObject<DocumentTableRef | null>
 }
 
 export function ProjectDetailHeader({

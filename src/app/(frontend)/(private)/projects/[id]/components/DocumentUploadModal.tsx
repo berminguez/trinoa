@@ -39,7 +39,7 @@ interface DocumentUploadModalProps {
   onResourceUploaded?: (resource: any) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
   onMultiInvoiceUploadStarted?: (fileName: string) => void
-  documentTableRef?: React.RefObject<DocumentTableRef>
+  documentTableRef?: React.RefObject<DocumentTableRef | null>
 }
 
 export function DocumentUploadModal({
