@@ -25,15 +25,91 @@ interface GetUserResult {
 
 export async function getUserAction(): Promise<GetUserResult> {
   try {
+    console.log('[getUserAction] 🔍 Starting user fetch...')
+
     // Obtener cookies de autenticación
     const cookieStore = await cookies()
     const payloadToken = cookieStore.get('payload-token')
 
+    console.log('[getUserAction] 🍪 Token check:', {
+      hasToken: !!payloadToken,
+      tokenLength: payloadToken?.value.length || 0,
+    })
+
     // Si no hay token, el usuario no está autenticado
     if (!payloadToken) {
+      console.log('[getUserAction] ❌ No token found')
       const authError = createErrorResult('AUTHENTICATION_ERROR', 'Usuario no autenticado')
       return toLegacyFormat(authError)
     }
+
+    // ALTERNATIVA: Probar también con getPayload directo
+    try {
+      console.log('[getUserAction] 🔧 Trying direct payload access...')
+      const { getPayload } = await import('payload')
+      const payload = await getPayload({ config: (await import('@/payload.config')).default })
+
+      // Verificar si el JWT está expirado ANTES de intentar usarlo
+      try {
+        const jwtParts = payloadToken.value.split('.')
+        if (jwtParts.length === 3) {
+          const jwtPayload = JSON.parse(Buffer.from(jwtParts[1], 'base64').toString())
+          const isExpired = jwtPayload.exp ? Date.now() / 1000 > jwtPayload.exp : false
+
+          console.log('[getUserAction] 🔑 JWT payload decoded:', {
+            hasId: !!jwtPayload.id,
+            hasEmail: !!jwtPayload.email,
+            exp: jwtPayload.exp,
+            isExpired,
+          })
+
+          // Si el token está expirado, retornar error inmediatamente
+          if (isExpired) {
+            console.log('[getUserAction] ⏰ JWT token is expired, triggering session cleanup')
+            await revalidateAfterSessionExpired()
+            const sessionError = createErrorResult(
+              'SESSION_EXPIRED',
+              SECURITY_MESSAGES.SESSION_EXPIRED,
+            )
+            return toLegacyFormat(sessionError)
+          }
+
+          if (jwtPayload.id) {
+            // Si el token es válido, buscar el usuario
+            const user = await payload.findByID({
+              collection: 'users',
+              id: jwtPayload.id,
+            })
+            console.log('[getUserAction] 👤 Direct user fetch result:', {
+              found: !!user,
+              userEmail: user?.email,
+              userRole: user?.role,
+            })
+
+            if (user) {
+              console.log('[getUserAction] ✅ Got user via direct payload access!')
+              const successResult = createSuccessResult(
+                user as User,
+                'Usuario obtenido correctamente (directo)',
+              )
+              return toLegacyFormat(successResult)
+            }
+          }
+        }
+      } catch (jwtError) {
+        console.log(
+          '[getUserAction] ⚠️ JWT decode failed:',
+          jwtError instanceof Error ? jwtError.message : String(jwtError),
+        )
+      }
+    } catch (directError) {
+      console.log(
+        '[getUserAction] ⚠️ Direct payload access failed:',
+        directError instanceof Error ? directError.message : String(directError),
+      )
+    }
+
+    console.log('[getUserAction] 📡 Falling back to API call to /api/users/me...')
 
     // Llamada al endpoint /api/users/me de PayloadCMS
     const response = await fetch(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/users/me`, {
@@ -46,23 +122,48 @@ export async function getUserAction(): Promise<GetUserResult> {
       cache: 'no-store',
     })
 
+    console.log('[getUserAction] 📊 API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
+    })
+
     const data: GetUserResponse = await response.json()
 
-    // Manejar errores de respuesta usando el sistema centralizado
+    console.log('[getUserAction] 📄 Raw response data:', data)
+    console.log('[getUserAction] 📄 Response data analysis:', {
+      hasUser: !!data.user,
+      userEmail: data.user?.email,
+      userRole: data.user?.role,
+      hasErrors: !!data.errors,
+      dataKeys: Object.keys(data),
+    })
+
+    // Para getUserAction, manejar específicamente 401/403 como sesión expirada
+    if (response.status === 401 || response.status === 403) {
+      // Revalidar rutas cuando detectamos sesión expirada
+      await revalidateAfterSessionExpired()
+
+      const sessionError = createErrorResult('SESSION_EXPIRED', SECURITY_MESSAGES.SESSION_EXPIRED)
+      return toLegacyFormat(sessionError)
+    }
+
+    // Manejar otros errores usando el sistema centralizado
     const responseError = handlePayloadResponse(response, data)
     if (responseError) {
-      // Para getUserAction, mantener mensajes específicos de sesión
-      if (response.status === 401 || response.status === 403) {
-        // Revalidar rutas cuando detectamos sesión expirada
-        await revalidateAfterSessionExpired()
-
-        const sessionError = createErrorResult('SESSION_EXPIRED', SECURITY_MESSAGES.SESSION_EXPIRED)
-        return toLegacyFormat(sessionError)
-      }
       return toLegacyFormat(responseError)
     }
 
     if (!data.user) {
+      console.log(
+        '[getUserAction] ❌ No user in response data - API returned 200 but no user object',
+      )
+      console.log('[getUserAction] 🔍 This could mean:', [
+        '1. Token is valid but user was deleted',
+        '2. PayloadCMS configuration issue',
+        '3. Token belongs to different collection',
+        '4. JWT payload is corrupted',
+      ])
       const dataError = createErrorResult(
         'SERVER_ERROR',
         'No se pudieron obtener los datos del usuario',
@@ -135,12 +236,22 @@ export interface AuthenticationStatus {
  */
 export async function getAuthenticationStatus(): Promise<AuthenticationStatus> {
   try {
+    console.log('[getAuthenticationStatus] 🔍 Starting authentication check...')
+
     // Obtener el resultado completo con información de errores
     const result = await getUserAction()
 
+    console.log('[getAuthenticationStatus] 📊 getUserAction result:', {
+      success: result.success,
+      hasData: !!result.data,
+      message: result.message,
+      userEmail: result.data?.email,
+      userRole: result.data?.role,
+    })
+
     // Si es exitoso, usuario autenticado
     if (result.success && result.data) {
-      return {
+      const authResult = {
         isAuthenticated: true,
         user: {
           id: result.data.id,
@@ -149,12 +260,19 @@ export async function getAuthenticationStatus(): Promise<AuthenticationStatus> {
         },
         isTokenExpired: false,
       }
+      console.log('[getAuthenticationStatus] ✅ Authentication successful:', authResult)
+      return authResult
     }
 
     // Verificar si es específicamente un token expirado
-    // getUserAction devuelve mensaje específico para SESSION_EXPIRED
-    if (result.message && result.message.includes('expirado')) {
-      console.log('[Auth] Token expirado detectado')
+    if (
+      result.message &&
+      (result.message.includes('expirado') || result.message === SECURITY_MESSAGES.SESSION_EXPIRED)
+    ) {
+      console.log(
+        '[getAuthenticationStatus] ⏰ Token expired detected, triggering logout:',
+        result.message,
+      )
       return {
         isAuthenticated: false,
         isTokenExpired: true,
@@ -163,13 +281,14 @@ export async function getAuthenticationStatus(): Promise<AuthenticationStatus> {
     }
 
     // Usuario no autenticado (caso normal)
+    console.log('[getAuthenticationStatus] ❌ User not authenticated:', result.message)
     return {
       isAuthenticated: false,
       isTokenExpired: false,
       error: result.message,
     }
   } catch (error) {
-    console.error('Error en getAuthenticationStatus:', error)
+    console.error('[getAuthenticationStatus] 💥 Error:', error)
     return {
       isAuthenticated: false,
       isTokenExpired: false,

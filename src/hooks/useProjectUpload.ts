@@ -5,6 +5,7 @@ import axios, { type AxiosProgressEvent } from 'axios'
 import { runSplitterPipeline } from '@/actions/splitter/runPipeline'
 import { toast } from 'sonner'
 import { addFileId } from '@/lib/utils/fileUtils'
+import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
 
 export interface UploadFile extends File {
   id: string
@@ -24,6 +25,8 @@ interface UseProjectUploadOptions {
   onUploadComplete?: () => void
   onResourceUploaded?: (resource: any) => void // Callback para optimistic updates
   onResourceUploadFailed?: (tempResourceId: string) => void // Callback para rollback
+  onMultiInvoiceUploadStarted?: (fileName: string) => void // Callback para feedback inmediato de multifacturas
+  onPreResourceCreated?: (preResource: any) => void // Callback cuando se crea un pre-resource exitosamente
 }
 
 interface UseProjectUploadReturn {
@@ -42,6 +45,8 @@ export function useProjectUpload({
   onUploadComplete,
   onResourceUploaded,
   onResourceUploadFailed,
+  onMultiInvoiceUploadStarted,
+  onPreResourceCreated,
 }: UseProjectUploadOptions): UseProjectUploadReturn {
   const [files, setFiles] = useState<UploadFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -287,12 +292,17 @@ export function useProjectUpload({
           projectIdType: typeof projectId,
           projectIdLength: projectId?.length,
           duration: file.duration,
+          isMultiInvoice: file.isMultiInvoice,
         })
 
-        // Optimistic update: añadir inmediatamente a la tabla
-        if (onResourceUploaded) {
+        // Optimistic update: añadir inmediatamente a la tabla (solo para uploads normales)
+        if (onResourceUploaded && !file.isMultiInvoice) {
           console.log('[UPLOAD] Adding optimistic update to UI')
           onResourceUploaded(tempResource)
+        } else if (file.isMultiInvoice) {
+          console.log(
+            '[MULTI-INVOICE] Skipping optimistic update - pre-resources will handle UI updates',
+          )
         }
 
         // Marcar archivo como subiendo y asociar ID temporal
@@ -316,6 +326,20 @@ export function useProjectUpload({
 
         let response: any
         if (file.isMultiInvoice && file.type?.includes('pdf')) {
+          // 🎉 FEEDBACK INMEDIATO para multifacturas
+          console.log('📄 [MULTI-INVOICE] Starting multi-invoice upload:', file.name)
+
+          // Mostrar toast inmediato
+          toast.success('Documento multifactura enviado', {
+            description: `Procesando "${file.name}". Te notificaremos cuando esté listo.`,
+            duration: 4000,
+          })
+
+          // Notificar callback para actualizar pre-resources inmediatamente
+          if (onMultiInvoiceUploadStarted) {
+            onMultiInvoiceUploadStarted(file.name)
+          }
+
           // Usar endpoint multipart (igual patrón que /api/resources/upload) para evitar límites de server actions
           const splitterForm = new FormData()
           splitterForm.append('file', uniqueFile)
@@ -332,7 +356,72 @@ export function useProjectUpload({
             },
           })
           if (!res.data?.success) throw new Error(res.data?.error || 'pre-resource upload failed')
+
+          // Obtener el pre-resource completo si se creó exitosamente
+          if (res.data?.data?.preResourceId && onPreResourceCreated) {
+            console.log(
+              '🎯 [MULTI-INVOICE] Pre-resource created with ID:',
+              res.data.data.preResourceId,
+            )
+
+            // Crear pre-resource temporal inmediatamente para mostrar el cartel
+            const tempPreResource = {
+              id: res.data.data.preResourceId,
+              project: projectId,
+              user: 'current-user',
+              file: 'temp-file',
+              originalName: file.name.replace(/\.[^/.]+$/, ''),
+              status: 'pending' as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+
+            console.log(
+              '📋 [MULTI-INVOICE] Adding temporary pre-resource for immediate display:',
+              tempPreResource,
+            )
+            onPreResourceCreated(tempPreResource)
+
+            // Intentar obtener el pre-resource real con delay para timing
+            setTimeout(async () => {
+              try {
+                console.log('🔍 [MULTI-INVOICE] Fetching real pre-resource data...')
+                const preResourcesResult = await getProjectPreResources(projectId)
+
+                if (preResourcesResult.success && preResourcesResult.data) {
+                  const preResource = preResourcesResult.data.find(
+                    (pr: any) => pr.id === res.data.data.preResourceId,
+                  )
+
+                  if (preResource) {
+                    console.log(
+                      '📋 [MULTI-INVOICE] Real pre-resource found, updating:',
+                      preResource,
+                    )
+                    onPreResourceCreated(preResource)
+                  } else {
+                    console.warn(
+                      '⚠️ [MULTI-INVOICE] Real pre-resource not found yet, will be picked up by polling',
+                    )
+                  }
+                } else {
+                  console.warn(
+                    '⚠️ [MULTI-INVOICE] Could not fetch pre-resources after creation:',
+                    preResourcesResult.error,
+                  )
+                }
+              } catch (error) {
+                console.error('❌ [MULTI-INVOICE] Error fetching real pre-resource:', error)
+              }
+            }, 1000) // 1 segundo de delay
+          }
+
+          // La subida fue exitosa independientemente de si pudimos obtener el pre-resource completo
           response = { data: { success: true }, status: 200, statusText: 'OK' }
+          console.log(
+            '✅ [MULTI-INVOICE] Upload completed successfully, pre-resource created with ID:',
+            res.data.data.preResourceId,
+          )
         } else {
           response = await axios.post('/api/resources/upload', formData, {
             headers: {
@@ -364,11 +453,18 @@ export function useProjectUpload({
 
         setFiles((prev) => prev.map((f) => (f.id === file.id ? completedFile : f)))
 
-        // Limpiar URL temporal
-        URL.revokeObjectURL(tempResource.file.url)
+        // Limpiar URL temporal (solo si se creó)
+        if (!file.isMultiInvoice) {
+          URL.revokeObjectURL(tempResource.file.url)
+        }
 
-        // Reemplazar recurso temporal con el real
-        if (response.data?.success && response.data?.data?.resource && onResourceUploaded) {
+        // Reemplazar recurso temporal con el real (solo para uploads normales, no multi-facturas)
+        if (
+          response.data?.success &&
+          response.data?.data?.resource &&
+          onResourceUploaded &&
+          !file.isMultiInvoice
+        ) {
           // Añadir marcador para indicar que es una actualización
           const realResource = {
             ...response.data.data.resource,
@@ -377,17 +473,25 @@ export function useProjectUpload({
           onResourceUploaded(realResource)
         }
 
+        // Para multi-facturas, el recurso temporal ya se removió, y los recursos derivados aparecerán cuando se complete el procesamiento
+
         return completedFile
       } catch (error) {
         console.error('[UPLOAD] Upload failed for file:', file.name, error)
 
-        // Limpiar URL temporal en caso de error
-        URL.revokeObjectURL(tempResource.file.url)
+        // Limpiar URL temporal en caso de error (solo si se creó)
+        if (!file.isMultiInvoice) {
+          URL.revokeObjectURL(tempResource.file.url)
+        }
 
-        // Rollback: remover el recurso temporal de la tabla
-        if (onResourceUploadFailed) {
+        // Rollback: remover el recurso temporal de la tabla (solo si se agregó)
+        if (onResourceUploadFailed && !file.isMultiInvoice) {
           console.log('[UPLOAD] Performing rollback for tempResourceId:', tempResourceId)
           onResourceUploadFailed(tempResourceId)
+        } else if (file.isMultiInvoice) {
+          console.log(
+            '[MULTI-INVOICE] Upload failed, but no rollback needed (no optimistic update was made)',
+          )
         }
 
         // Determinar mensaje de error específico
@@ -459,7 +563,7 @@ export function useProjectUpload({
         return errorFile
       }
     },
-    [projectId],
+    [projectId, onPreResourceCreated],
   )
 
   // Función para añadir archivos

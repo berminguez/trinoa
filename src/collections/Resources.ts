@@ -1015,10 +1015,66 @@ export const Resources: CollectionConfig = {
             return Response.json({ success: false, error: 'Invalid JSON body' }, { status: 400 })
           }
 
+          console.log('[RESOURCES_WEBHOOK] Body meta:', {
+            modelId: body?.modelId,
+            modelo: body?.modelo,
+            status: body?.status,
+            caso: body?.caso,
+            tipo: body?.tipo,
+            error: body?.error,
+            errorMessage: body?.errorMessage,
+          })
+
+          // Verificar si es un error desde el backend
+          if (body?.status === 'failed' || body?.status === 'error') {
+            console.log('[RESOURCES_WEBHOOK] Processing error status from backend')
+
+            // Preparar logs de error
+            const errorLog = {
+              step: 'azure-analyze',
+              status: 'error' as const,
+              at: new Date().toISOString(),
+              details: body?.errorMessage || body?.error || 'Processing failed in external backend',
+              data: {
+                modelId: body?.modelId,
+                modelo: body?.modelo,
+                jobStatus: body?.status,
+                caso: body?.caso,
+                tipo: body?.tipo,
+                errorDetails: body?.errorDetails || null,
+                errorCode: body?.errorCode || null,
+              },
+            }
+
+            // Actualizar resource con status failed y logs de error
+            await req.payload.update({
+              collection: 'resources',
+              id: resourceId,
+              data: {
+                status: 'failed',
+                logs: [errorLog],
+                // Preservar caso y tipo si vienen en el body
+                ...(typeof body?.caso === 'string' && body.caso.length > 0 && { caso: body.caso }),
+                ...(typeof body?.tipo === 'string' && body.tipo.length > 0 && { tipo: body.tipo }),
+              },
+              overrideAccess: true,
+            })
+
+            return Response.json({
+              success: true,
+              data: {
+                id: resourceId,
+                status: 'failed',
+                message: 'Error status processed successfully',
+              },
+            })
+          }
+
+          // Para casos exitosos, validar analyzeResult
           const analyzeResult = body?.analyzeResult
           if (!analyzeResult) {
             return Response.json(
-              { success: false, error: 'Missing analyzeResult in body' },
+              { success: false, error: 'Missing analyzeResult in body for successful processing' },
               { status: 400 },
             )
           }
@@ -1026,13 +1082,6 @@ export const Resources: CollectionConfig = {
             '[RESOURCES_WEBHOOK] Received analyzeResult keys:',
             Object.keys(analyzeResult || {}),
           )
-          console.log('[RESOURCES_WEBHOOK] Body meta:', {
-            modelId: body?.modelId,
-            modelo: body?.modelo,
-            status: body?.status,
-            caso: body?.caso,
-            tipo: body?.tipo,
-          })
 
           // Fusionar analyzeResult recibido con el actual para preservar ediciones manuales
           let mergedAnalyzeResult: any = analyzeResult
