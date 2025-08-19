@@ -379,8 +379,18 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   )
                 }
               } else {
-                // Pre-resource no encontrado, probablemente fue eliminado
-                completedIds.push(processingPr.id)
+                // Pre-resource no encontrado en la base de datos
+                // Podría ser temporal o eliminado - solo agregar a completedIds si no es temporal
+                if (!processingPr.id.startsWith('temp-') && processingPr.id.length > 10) {
+                  completedIds.push(processingPr.id)
+                  console.log(
+                    `⚠️ [DOCUMENT-TABLE] Pre-resource not found (possibly deleted): ${processingPr.id}`,
+                  )
+                } else {
+                  console.log(
+                    `🗑️ [DOCUMENT-TABLE] Removing temporary pre-resource: ${processingPr.id}`,
+                  )
+                }
               }
             }
 
@@ -389,18 +399,40 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
 
             // Si alguno se completó, mostrar notificación y actualizar resources
             if (completedIds.length > 0) {
+              console.log('🎯 [DOCUMENT-TABLE] Processing completed pre-resources:', {
+                completedIds,
+                allPreResourcesCount: allPreResources.length,
+                processingPreResourcesCount: processingPreResources.length,
+              })
+
+              // Solo usar datos frescos de la base de datos para evitar estados obsoletos
+              // NO usar processingPreResources como fallback porque puede contener datos temporales obsoletos
               const completedPreResources = completedIds
-                .map(
-                  (id) =>
-                    allPreResources.find((pr) => pr.id === id) ||
-                    processingPreResources.find((pr) => pr.id === id),
-                )
-                .filter(Boolean)
+                .map((id) => allPreResources.find((pr) => pr.id === id))
+                .filter(Boolean) // Solo incluir pre-resources que existen en la base de datos
+
+              console.log(
+                '🔍 [DOCUMENT-TABLE] Completed pre-resources details:',
+                completedPreResources.map((pr) => ({
+                  id: pr?.id || 'unknown',
+                  status: pr?.status || 'unknown',
+                  originalName: pr?.originalName || 'unknown',
+                })),
+              )
 
               const successCount = completedPreResources.filter(
-                (pr) => pr?.status === 'done',
+                (pr) => pr && pr.status === 'done',
               ).length
-              const errorCount = completedPreResources.filter((pr) => pr?.status === 'error').length
+              const errorCount = completedPreResources.filter(
+                (pr) => pr && pr.status === 'error',
+              ).length
+
+              console.log('📊 [DOCUMENT-TABLE] Status counts:', {
+                total: completedPreResources.length,
+                successCount,
+                errorCount,
+                statuses: completedPreResources.map((pr) => pr?.status || 'unknown'),
+              })
 
               if (successCount > 0) {
                 toast.success('¡Documentos procesados!', {
@@ -409,6 +441,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
               }
 
               if (errorCount > 0) {
+                console.warn(
+                  '⚠️ [DOCUMENT-TABLE] Detected errors in pre-resources:',
+                  completedPreResources.filter((pr) => pr && pr.status === 'error'),
+                )
                 toast.error('Error en procesamiento', {
                   description: `${errorCount} documento${errorCount !== 1 ? 's' : ''} ${errorCount !== 1 ? 'fallaron' : 'falló'} al procesarse`,
                 })
