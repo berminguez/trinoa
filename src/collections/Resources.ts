@@ -1198,7 +1198,28 @@ export const Resources: CollectionConfig = {
           // Calcular automáticamente el campo confidence después de recibir analyzeResult
           try {
             const threshold = await getConfidenceThreshold(req.payload)
-            const newConfidence = calculateResourceConfidence(updated, threshold)
+            // Obtener campos obligatorios desde field-translations
+            let requiredFieldNames: string[] = []
+            try {
+              const translations = await req.payload.find({
+                collection: 'field-translations' as any,
+                limit: 1000,
+                depth: 0,
+              } as any)
+              const docs = Array.isArray((translations as any)?.docs)
+                ? (translations as any).docs
+                : []
+              requiredFieldNames = docs
+                .filter((d: any) => d?.isRequired)
+                .map((d: any) => String(d.key))
+                .filter(Boolean)
+            } catch (e) {
+              console.warn('[RESOURCES_WEBHOOK] No se pudieron cargar campos obligatorios', e)
+            }
+
+            const newConfidence = calculateResourceConfidence(updated, threshold, {
+              requiredFieldNames,
+            })
 
             // Solo actualizar si el valor ha cambiado
             if ((updated as any).confidence !== newConfidence) {
@@ -1465,7 +1486,31 @@ export const Resources: CollectionConfig = {
                 analyzeResult: currentAnalyzeResult,
               }
 
-              const newConfidence = calculateResourceConfidence(documentForCalculation, threshold)
+              // Obtener campos obligatorios desde field-translations
+              let requiredFieldNames: string[] = []
+              try {
+                const translations = await req.payload.find({
+                  collection: 'field-translations' as any,
+                  limit: 1000,
+                  depth: 0,
+                } as any)
+                const docs = Array.isArray((translations as any)?.docs)
+                  ? (translations as any).docs
+                  : []
+                requiredFieldNames = docs
+                  .filter((d: any) => d?.isRequired)
+                  .map((d: any) => String(d.key))
+                  .filter(Boolean)
+              } catch (e) {
+                console.warn(
+                  '[RESOURCES_BEFORECHANGE] No se pudieron cargar campos obligatorios',
+                  e,
+                )
+              }
+
+              const newConfidence = calculateResourceConfidence(documentForCalculation, threshold, {
+                requiredFieldNames,
+              })
 
               // Añadir confidence calculado a los datos que se van a guardar
               ;(data as any).confidence = newConfidence

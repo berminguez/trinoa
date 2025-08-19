@@ -22,6 +22,7 @@ export async function updateResourceAction(
   resourceId: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updates: any,
+  options?: { skipRevalidate?: boolean },
 ): Promise<UpdateResourceResult> {
   try {
     // 1) Autenticación obligatoria
@@ -125,11 +126,13 @@ export async function updateResourceAction(
       user,
     })) as Resource
 
-    // Revalidar la ruta específica del recurso
-    try {
-      revalidatePath(`/projects/${projectId}/resource/${resourceId}`)
-    } catch (revalidateError) {
-      console.warn('[UPDATE_RESOURCE] Failed to revalidate path', revalidateError)
+    // Revalidar la ruta específica del recurso (se puede omitir)
+    if (!options?.skipRevalidate) {
+      try {
+        revalidatePath(`/projects/${projectId}/resource/${resourceId}`)
+      } catch (revalidateError) {
+        console.warn('[UPDATE_RESOURCE] Failed to revalidate path', revalidateError)
+      }
     }
 
     return { success: true, data: updated }

@@ -10,6 +10,7 @@ import type { Resource } from '@/payload-types'
 export function calculateResourceConfidence(
   resource: any, // Resource type con analyzeResult
   threshold: number,
+  options?: { requiredFieldNames?: Set<string> | string[] },
 ): 'empty' | 'needs_revision' | 'trusted' | 'verified' {
   // Convertir threshold de porcentaje (0-100) a decimal (0-1)
   const thresholdDecimal = threshold / 100
@@ -32,6 +33,12 @@ export function calculateResourceConfidence(
   const lowConfidenceFields: string[] = []
   const manualFields: string[] = []
 
+  const requiredSet: Set<string> | null = Array.isArray(options?.requiredFieldNames)
+    ? new Set(options?.requiredFieldNames as string[])
+    : options?.requiredFieldNames instanceof Set
+      ? (options?.requiredFieldNames as Set<string>)
+      : null
+
   for (const fieldName of fieldNames) {
     const field = fields[fieldName]
 
@@ -40,6 +47,7 @@ export function calculateResourceConfidence(
       continue
     }
 
+    const isRequired = requiredSet ? requiredSet.has(fieldName) : true
     const confidence = field.confidence
     const isManual = field.manual === true
 
@@ -48,8 +56,13 @@ export function calculateResourceConfidence(
       manualFields.push(fieldName)
     }
 
-    // Si el campo tiene confidence < threshold y no es manual, añadirlo a low confidence
-    if (typeof confidence === 'number' && confidence < thresholdDecimal && !isManual) {
+    // Si el campo es obligatorio y tiene confidence < threshold y no es manual, añadirlo a low confidence
+    if (
+      isRequired &&
+      typeof confidence === 'number' &&
+      confidence < thresholdDecimal &&
+      !isManual
+    ) {
       lowConfidenceFields.push(fieldName)
     }
   }
@@ -63,8 +76,9 @@ export function calculateResourceConfidence(
       continue
     }
 
+    const isRequired = requiredSet ? requiredSet.has(fieldName) : true
     const confidence = field.confidence
-    if (typeof confidence === 'number' && confidence < thresholdDecimal) {
+    if (isRequired && typeof confidence === 'number' && confidence < thresholdDecimal) {
       originalLowConfidenceFields.push(fieldName)
     }
   }
