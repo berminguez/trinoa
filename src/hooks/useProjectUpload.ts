@@ -24,6 +24,7 @@ interface UseProjectUploadOptions {
   onUploadComplete?: () => void
   onResourceUploaded?: (resource: any) => void // Callback para optimistic updates
   onResourceUploadFailed?: (tempResourceId: string) => void // Callback para rollback
+  onMultiInvoiceUploadStarted?: (fileName: string) => void // Callback para feedback inmediato de multifacturas
 }
 
 interface UseProjectUploadReturn {
@@ -42,6 +43,7 @@ export function useProjectUpload({
   onUploadComplete,
   onResourceUploaded,
   onResourceUploadFailed,
+  onMultiInvoiceUploadStarted,
 }: UseProjectUploadOptions): UseProjectUploadReturn {
   const [files, setFiles] = useState<UploadFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -316,6 +318,20 @@ export function useProjectUpload({
 
         let response: any
         if (file.isMultiInvoice && file.type?.includes('pdf')) {
+          // 🎉 FEEDBACK INMEDIATO para multifacturas
+          console.log('📄 [MULTI-INVOICE] Starting multi-invoice upload:', file.name)
+
+          // Mostrar toast inmediato
+          toast.success('Documento multifactura enviado', {
+            description: `Procesando "${file.name}". Te notificaremos cuando esté listo.`,
+            duration: 4000,
+          })
+
+          // Notificar callback para actualizar pre-resources inmediatamente
+          if (onMultiInvoiceUploadStarted) {
+            onMultiInvoiceUploadStarted(file.name)
+          }
+
           // Usar endpoint multipart (igual patrón que /api/resources/upload) para evitar límites de server actions
           const splitterForm = new FormData()
           splitterForm.append('file', uniqueFile)

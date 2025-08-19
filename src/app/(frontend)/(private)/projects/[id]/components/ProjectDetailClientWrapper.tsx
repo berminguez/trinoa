@@ -24,6 +24,37 @@ export function ProjectDetailClientWrapper({
   projectId,
   getProjectResourcesAction,
 }: ProjectDetailClientWrapperProps) {
+  // Función para crear pre-resource temporal optimista
+  const handleMultiInvoiceUploadStarted = useCallback(
+    (fileName: string) => {
+      console.log('🎯 [PROJECT-WRAPPER] Multi-invoice upload started:', fileName)
+
+      // Crear un pre-resource temporal para mostrar inmediatamente
+      const tempPreResource = {
+        id: `temp-${Date.now()}`,
+        project: projectId,
+        user: 'current-user', // Será reemplazado por datos reales
+        file: 'temp-file',
+        originalName: fileName.replace(/\.[^/.]+$/, ''),
+        status: 'pending' as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isTemporary: true, // Flag para identificar temporales
+      }
+
+      // Disparar evento para que VideoTable agregue inmediatamente el pre-resource temporal
+      window.dispatchEvent(
+        new CustomEvent('addTemporaryPreResource', {
+          detail: {
+            projectId,
+            preResource: tempPreResource,
+          },
+        }),
+      )
+    },
+    [projectId],
+  )
+
   // Función para refrescar pre-resources inmediatamente después de subir
   const handlePreResourceRefreshNeeded = useCallback(async () => {
     console.log('🔄 [PROJECT-WRAPPER] Pre-resource refresh requested')
@@ -56,6 +87,7 @@ export function ProjectDetailClientWrapper({
         project={project}
         user={user}
         onUploadComplete={handlePreResourceRefreshNeeded}
+        onMultiInvoiceUploadStarted={handleMultiInvoiceUploadStarted}
       />
       <DocumentTableContainer
         initialResources={initialResources}

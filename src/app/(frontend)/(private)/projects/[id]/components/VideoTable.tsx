@@ -281,10 +281,34 @@ export function DocumentTable({
       }
     }
 
+    const handleAddTemporaryPreResource = (event: CustomEvent) => {
+      console.log('🎯 [DOCUMENT-TABLE] Adding temporary pre-resource:', event.detail)
+      if (event.detail?.projectId === projectId && event.detail?.preResource) {
+        const tempPreResource = event.detail.preResource
+
+        // Agregar inmediatamente a la lista de pre-resources
+        setPreResources((prev) => [tempPreResource, ...prev])
+        setPendingPreResources((prev) => [tempPreResource, ...prev])
+
+        console.log(
+          '✅ [DOCUMENT-TABLE] Temporary pre-resource added:',
+          tempPreResource.originalName,
+        )
+      }
+    }
+
     window.addEventListener('forcePreResourcesReload', handleForceReload as EventListener)
+    window.addEventListener(
+      'addTemporaryPreResource',
+      handleAddTemporaryPreResource as EventListener,
+    )
 
     return () => {
       window.removeEventListener('forcePreResourcesReload', handleForceReload as EventListener)
+      window.removeEventListener(
+        'addTemporaryPreResource',
+        handleAddTemporaryPreResource as EventListener,
+      )
     }
   }, [projectId])
 
@@ -333,8 +357,40 @@ export function DocumentTable({
               pr.status === 'pending' || pr.status === 'processing' || pr.status === 'splitting',
           )
 
+          // Reemplazar pre-resources temporales con datos reales si llegaron
+          const realPreResources = updatedPreResources.filter((pr) => !pr.id.startsWith('temp-'))
+          const currentTemporaryPrs = preResources.filter((pr: any) => pr.isTemporary)
+
+          // Buscar si hay nuevos pre-resources reales que correspondan a temporales
+          currentTemporaryPrs.forEach((tempPr: any) => {
+            const matchingReal = realPreResources.find(
+              (realPr) =>
+                realPr.originalName === tempPr.originalName &&
+                new Date(realPr.createdAt).getTime() > new Date(tempPr.createdAt).getTime() - 10000, // 10s tolerance
+            )
+
+            if (matchingReal) {
+              console.log('🔄 [DOCUMENT-TABLE] Replacing temporary pre-resource with real one:', {
+                temp: tempPr.id,
+                real: matchingReal.id,
+                originalName: tempPr.originalName,
+              })
+
+              // Remover el temporal y agregar el real si no está ya
+              setPreResources((prev) => prev.filter((pr: any) => pr.id !== tempPr.id))
+              if (!preResources.find((pr) => pr.id === matchingReal.id)) {
+                setPreResources((prev) => [
+                  matchingReal,
+                  ...prev.filter((pr: any) => !pr.isTemporary),
+                ])
+              }
+            }
+          })
+
           // Verificar si algún pre-resource cambió de pending a done
-          const previousPendingIds = pendingPreResources.map((pr) => pr.id)
+          const previousPendingIds = pendingPreResources
+            .filter((pr: any) => !pr.isTemporary) // Excluir temporales del cálculo
+            .map((pr) => pr.id)
           const currentPendingIds = newPendingPreResources.map((pr) => pr.id)
           const completedPreResourceIds = previousPendingIds.filter(
             (id) => !currentPendingIds.includes(id),

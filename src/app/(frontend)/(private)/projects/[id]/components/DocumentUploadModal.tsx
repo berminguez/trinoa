@@ -37,6 +37,7 @@ interface DocumentUploadModalProps {
   onUploadComplete?: () => void
   onResourceUploaded?: (resource: any) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
+  onMultiInvoiceUploadStarted?: (fileName: string) => void
 }
 
 export function DocumentUploadModal({
@@ -45,6 +46,7 @@ export function DocumentUploadModal({
   onUploadComplete,
   onResourceUploaded,
   onResourceUploadFailed,
+  onMultiInvoiceUploadStarted,
 }: DocumentUploadModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [uploadMethod, setUploadMethod] = useState<'files' | 'urls'>('files')
@@ -84,6 +86,7 @@ export function DocumentUploadModal({
       },
       onResourceUploaded,
       onResourceUploadFailed,
+      onMultiInvoiceUploadStarted,
     })
 
   // Configuración de react-dropzone

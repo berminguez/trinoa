@@ -26,6 +26,7 @@ interface ProjectDetailHeaderProps {
   onResourceUploadFailed?: (tempResourceId: string) => void
   onResourceAdded?: (resource: Resource) => void
   onUploadComplete?: () => void
+  onMultiInvoiceUploadStarted?: (fileName: string) => void
 }
 
 export function ProjectDetailHeader({
@@ -35,6 +36,7 @@ export function ProjectDetailHeader({
   onResourceUploadFailed,
   onResourceAdded,
   onUploadComplete,
+  onMultiInvoiceUploadStarted,
 }: ProjectDetailHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(project.title)
@@ -253,6 +255,7 @@ export function ProjectDetailHeader({
           }}
           onResourceUploaded={onResourceUploaded}
           onResourceUploadFailed={onResourceUploadFailed}
+          onMultiInvoiceUploadStarted={onMultiInvoiceUploadStarted}
         />
       </div>
 
