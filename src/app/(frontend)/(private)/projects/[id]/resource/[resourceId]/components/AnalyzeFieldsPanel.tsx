@@ -265,6 +265,9 @@ export default function AnalyzeFieldsPanel({
   }, [baseVisibleIndices, revealedIndices])
 
   const canRevealMore = visibleIndices.length < 12
+  const hasEmpresaServicioBase = React.useMemo(() => {
+    return Object.prototype.hasOwnProperty.call(fields, 'EmpresaServicio1')
+  }, [fields])
 
   const revealNext = () => {
     for (let i = 1; i <= 12; i++) {
@@ -299,6 +302,9 @@ export default function AnalyzeFieldsPanel({
   }, [combustibleBaseVisible, combustibleRevealedIndices])
 
   const combustibleCanRevealMore = combustibleVisibleIndices.length < 10
+  const hasNombreCombustibleBase = React.useMemo(() => {
+    return Object.prototype.hasOwnProperty.call(fields, 'NombreCombustible1')
+  }, [fields])
 
   const revealNextCombustible = () => {
     for (let i = 1; i <= 10; i++) {
@@ -424,9 +430,11 @@ export default function AnalyzeFieldsPanel({
                 </TableBody>
               </Table>
             ) : null}
-            <Button variant='outline' size='sm' onClick={revealNext} disabled={!canRevealMore}>
-              <IconPlus className='h-4 w-4 mr-1' /> Añadir
-            </Button>
+            {hasEmpresaServicioBase ? (
+              <Button variant='outline' size='sm' onClick={revealNext} disabled={!canRevealMore}>
+                <IconPlus className='h-4 w-4 mr-1' /> Añadir Empresa/ Servicio
+              </Button>
+            ) : null}
           </div>
         )
       })()}
@@ -466,14 +474,16 @@ export default function AnalyzeFieldsPanel({
                 </TableBody>
               </Table>
             ) : null}
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={revealNextCombustible}
-              disabled={!combustibleCanRevealMore}
-            >
-              <IconPlus className='h-4 w-4 mr-1' /> Añadir combustible
-            </Button>
+            {hasNombreCombustibleBase ? (
+              <Button
+                variant='outline'
+                size='sm'
+                onClick={revealNextCombustible}
+                disabled={!combustibleCanRevealMore}
+              >
+                <IconPlus className='h-4 w-4 mr-1' /> Añadir Combustible
+              </Button>
+            ) : null}
           </div>
         )
       })()}
