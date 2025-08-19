@@ -153,11 +153,11 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
     console.log('[PRE-RESOURCES] Iniciando división de PDF en segmentos...')
 
     try {
-      // Obtener el filename original del media para generar nombres de segmentos
-      const originalFilename = (media as any)?.filename || 'documento.pdf'
+      // Obtener el nombre original del pre-resource para generar nombres de segmentos
+      const originalName = (pre as any)?.originalName || 'Documento'
 
       // Dividir PDF y subir segmentos a S3
-      const segmentMediaRecords = await splitPdfAndUpload(fileUrl, pages, originalFilename)
+      const segmentMediaRecords = await splitPdfAndUpload(fileUrl, pages, originalName)
 
       console.log(
         '[PRE-RESOURCES] PDF dividido exitosamente en',
@@ -170,7 +170,7 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
 
       for (let i = 0; i < segmentMediaRecords.length; i++) {
         const segmentMedia = segmentMediaRecords[i]
-        const segmentTitle = `${(pre as any)?.title || 'Documento'} - Segmento ${i + 1}`
+        const segmentTitle = `${originalName} - Segmento ${i + 1}`
 
         // Crear el resource que apunta al media ya creado
         const projectId = typeof pre.project === 'object' ? pre.project.id : pre.project
@@ -400,6 +400,15 @@ export const PreResources: CollectionConfig = {
       relationTo: 'media',
       required: true,
       admin: { description: 'Archivo PDF original subido', position: 'sidebar' },
+    },
+    {
+      name: 'originalName',
+      type: 'text',
+      admin: {
+        description:
+          'Nombre original del archivo sin extensión para usar en los recursos derivados',
+        position: 'sidebar',
+      },
     },
     {
       name: 'status',

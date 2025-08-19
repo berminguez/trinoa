@@ -6,9 +6,7 @@ import type { CollectionConfig } from 'payload'
 export const Media: CollectionConfig = {
   slug: 'media',
   access: {
-    read: ({ req: { user }, data }) => {
-      console.log('user', user)
-      console.log('data', data)
+    read: ({ req: { user } }) => {
       return Boolean(user)
     },
   },

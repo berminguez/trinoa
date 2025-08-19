@@ -25,6 +25,7 @@ interface ProjectDetailHeaderProps {
   onResourceUploaded?: (resource: Resource) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
   onResourceAdded?: (resource: Resource) => void
+  onUploadComplete?: () => void
 }
 
 export function ProjectDetailHeader({
@@ -33,6 +34,7 @@ export function ProjectDetailHeader({
   onResourceUploaded,
   onResourceUploadFailed,
   onResourceAdded,
+  onUploadComplete,
 }: ProjectDetailHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(project.title)
@@ -244,8 +246,10 @@ export function ProjectDetailHeader({
         <DocumentUploadModal
           project={project}
           onUploadComplete={() => {
-            // Refrescar la página para obtener los datos más recientes
-            window.location.reload()
+            console.log('🎉 [PROJECT-HEADER] Upload completed, triggering refresh...')
+            if (onUploadComplete) {
+              onUploadComplete()
+            }
           }}
           onResourceUploaded={onResourceUploaded}
           onResourceUploadFailed={onResourceUploadFailed}

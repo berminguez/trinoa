@@ -86,6 +86,7 @@ interface DocumentTableProps {
   onRemoveResource?: (resourceId: string) => void
   onResetResources?: () => void
   onResourceUploadFailed?: (tempResourceId: string) => void
+  onTriggerPreResourcesRefresh?: () => void
   // Nuevo: Props para modo cliente
   clientMode?: {
     clientId: string
@@ -104,6 +105,7 @@ export function DocumentTable({
   onRemoveResource,
   onResetResources,
   onResourceUploadFailed: _onResourceUploadFailed,
+  onTriggerPreResourcesRefresh,
   clientMode,
 }: DocumentTableProps) {
   // Estados de la tabla
@@ -261,6 +263,30 @@ export function DocumentTable({
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // Escuchar eventos de refresh forzado desde el wrapper
+  useEffect(() => {
+    const handleForceReload = (event: CustomEvent) => {
+      console.log('🔄 [DOCUMENT-TABLE] Force reload event received:', event.detail)
+      if (event.detail?.projectId === projectId && event.detail?.preResources) {
+        setPreResources(event.detail.preResources)
+        const newPendingPreResources = event.detail.preResources.filter(
+          (pr: PreResource) =>
+            pr.status === 'pending' || pr.status === 'processing' || pr.status === 'splitting',
+        )
+        setPendingPreResources(newPendingPreResources)
+        console.log(
+          `✅ [DOCUMENT-TABLE] Forced reload: ${newPendingPreResources.length} pending pre-resources`,
+        )
+      }
+    }
+
+    window.addEventListener('forcePreResourcesReload', handleForceReload as EventListener)
+
+    return () => {
+      window.removeEventListener('forcePreResourcesReload', handleForceReload as EventListener)
+    }
+  }, [projectId])
 
   // Cargar pre-resources inicialmente
   useEffect(() => {

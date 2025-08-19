@@ -35,6 +35,12 @@ export async function createPreResource(
     const media = (await payload.findByID({ collection: 'media', id: input.mediaId })) as Media
     if (!media) return { success: false, error: 'Archivo no encontrado' }
 
+    // Extraer nombre original del media para usar en recursos derivados
+    const mediaFilename = (media as any)?.filename || 'Documento'
+    const originalNameWithoutExtension = mediaFilename
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9\s.-]/g, '_')
+
     // Crear pre-resource en estado pending
     const pre = (await payload.create({
       collection: 'pre-resources',
@@ -42,6 +48,7 @@ export async function createPreResource(
         project: input.projectId,
         user: user.id,
         file: media.id,
+        originalName: originalNameWithoutExtension,
         status: 'pending',
         lastUpdatedBy: user.id,
       },

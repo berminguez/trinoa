@@ -90,6 +90,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       },
     } as any)
 
+    // Extraer nombre original limpio sin extensión para usar en recursos derivados
+    const originalNameWithoutExtension = file.name
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9\s.-]/g, '_')
+
     // Crear PreResource
     const pre = await payload.create({
       collection: 'pre-resources',
@@ -97,6 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         project: projectId,
         user: authUser.id,
         file: (media as any).id,
+        originalName: originalNameWithoutExtension,
         status: 'pending',
       },
       overrideAccess: true,

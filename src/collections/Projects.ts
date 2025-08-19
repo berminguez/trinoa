@@ -19,7 +19,6 @@ export const Projects: CollectionConfig = {
 
       // Los admins pueden ver todos los proyectos
       if (user.role === 'admin') {
-        console.log(`Admin access granted: User ${user.id} can read all projects`)
         return true
       }
 

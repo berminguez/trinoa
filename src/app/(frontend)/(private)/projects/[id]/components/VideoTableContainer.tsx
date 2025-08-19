@@ -3,12 +3,17 @@
 import { useState, useCallback } from 'react'
 import { DocumentTable } from './VideoTable'
 import type { Resource } from '@/payload-types'
+import { toast } from 'sonner'
 
 interface DocumentTableContainerProps {
   initialResources: Resource[]
   projectId: string
   onResourceAdded?: (resource: Resource) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
+  onPreResourceRefreshNeeded?: () => void
+  getProjectResourcesAction?: (
+    projectId: string,
+  ) => Promise<{ success: boolean; data?: Resource[]; error?: string }>
 }
 
 export function DocumentTableContainer({
@@ -16,6 +21,8 @@ export function DocumentTableContainer({
   projectId,
   onResourceAdded,
   onResourceUploadFailed,
+  onPreResourceRefreshNeeded,
+  getProjectResourcesAction,
 }: DocumentTableContainerProps) {
   // Estado local para manejar los recursos con optimistic updates
   const [resources, setResources] = useState<Resource[]>(initialResources)
@@ -70,10 +77,43 @@ export function DocumentTableContainer({
     setResources((prev) => prev.filter((resource) => resource.id !== resourceId))
   }, [])
 
-  // Función para resetear a los datos iniciales (en caso de error)
-  const resetResources = useCallback(() => {
-    setResources(initialResources)
-  }, [initialResources])
+  // Función para refrescar resources desde la base de datos
+  const resetResources = useCallback(async () => {
+    if (!getProjectResourcesAction) {
+      console.warn('⚠️ [RESOURCES] No refresh action provided, keeping current state')
+      return
+    }
+
+    try {
+      console.log('🔄 [RESOURCES] Refreshing resources from database...')
+      const result = await getProjectResourcesAction(projectId)
+
+      if (result.success && result.data) {
+        setResources(result.data)
+        console.log(`✅ [RESOURCES] Refreshed ${result.data.length} resources`)
+      } else {
+        console.warn('⚠️ [RESOURCES] Failed to refresh resources:', result.error)
+        // En caso de error, mantener el estado actual en lugar de volver a initialResources
+        toast.error('Error al actualizar la lista de documentos')
+      }
+    } catch (error) {
+      console.error('❌ [RESOURCES] Error refreshing resources:', error)
+      toast.error('Error al actualizar la lista de documentos')
+    }
+  }, [projectId, getProjectResourcesAction])
+
+  // Función para refrescar pre-resources inmediatamente (ej: después de subir)
+  const triggerPreResourcesRefresh = useCallback(() => {
+    console.log('🔄 [PRE-RESOURCES] Triggering immediate refresh...')
+
+    // Notificar al componente padre si existe el callback
+    if (onPreResourceRefreshNeeded) {
+      onPreResourceRefreshNeeded()
+    }
+
+    // También enviar evento personalizado para que el DocumentTable pueda escuchar
+    window.dispatchEvent(new CustomEvent('refreshPreResources', { detail: { projectId } }))
+  }, [projectId, onPreResourceRefreshNeeded])
 
   return (
     <DocumentTable
@@ -84,6 +124,7 @@ export function DocumentTableContainer({
       onRemoveResource={removeResource}
       onResetResources={resetResources}
       onResourceUploadFailed={handleResourceUploadFailed}
+      onTriggerPreResourcesRefresh={triggerPreResourcesRefresh}
     />
   )
 }

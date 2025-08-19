@@ -19,13 +19,11 @@ export const ApiKeys: CollectionConfig = {
 
       // Los admins pueden ver todas las keys
       if (user.role === 'admin') {
-        console.log(`Admin access granted: User ${user.id} can read all API keys`)
         return true
       }
 
       // Los usuarios normales solo pueden ver sus propias keys
       if (user.role === 'user') {
-        console.log(`User access granted: User ${user.id} can read own API keys only`)
         return {
           user: {
             equals: user.id,

@@ -1387,7 +1387,7 @@ export const Resources: CollectionConfig = {
           try {
             // Si el update contiene analyzeResult, recalcular confidence
             const currentAnalyzeResult = (data as any)?.analyzeResult
-            
+
             if (currentAnalyzeResult) {
               console.log(
                 `[RESOURCES_BEFORECHANGE] analyzeResult being updated, recalculating confidence...`,
@@ -1395,30 +1395,31 @@ export const Resources: CollectionConfig = {
 
               // Obtener threshold y calcular nuevo confidence
               const threshold = await getConfidenceThreshold(req.payload)
-              
+
               // Usar los datos que se van a guardar para el cálculo
               const documentForCalculation = {
                 ...data,
                 analyzeResult: currentAnalyzeResult,
               }
-              
-              const newConfidence = calculateResourceConfidence(
-                documentForCalculation,
-                threshold,
-              )
+
+              const newConfidence = calculateResourceConfidence(documentForCalculation, threshold)
 
               // Añadir confidence calculado a los datos que se van a guardar
               ;(data as any).confidence = newConfidence
               console.log(`[RESOURCES_BEFORECHANGE] Confidence calculated: ${newConfidence}`)
               console.log(`[RESOURCES_BEFORECHANGE] Threshold used: ${threshold}%`)
-              
+
               // Debug: mostrar algunos campos
               if (currentAnalyzeResult.fields) {
                 const fieldNames = Object.keys(currentAnalyzeResult.fields)
-                console.log(`[RESOURCES_BEFORECHANGE] Fields in analyzeResult: ${fieldNames.length}`)
-                fieldNames.slice(0, 3).forEach(fieldName => {
+                console.log(
+                  `[RESOURCES_BEFORECHANGE] Fields in analyzeResult: ${fieldNames.length}`,
+                )
+                fieldNames.slice(0, 3).forEach((fieldName) => {
                   const field = currentAnalyzeResult.fields[fieldName]
-                  console.log(`  - ${fieldName}: confidence=${field.confidence}, manual=${field.manual}`)
+                  console.log(
+                    `  - ${fieldName}: confidence=${field.confidence}, manual=${field.manual}`,
+                  )
                 })
               }
             }
@@ -1635,12 +1636,30 @@ export const Resources: CollectionConfig = {
               updateData.status = 'failed'
             }
 
-            await req.payload.update({
-              collection: 'resources',
-              id: String(doc.id),
-              data: updateData,
-              overrideAccess: true,
-            })
+            // Verificar si el resource existe antes de intentar actualizarlo
+            try {
+              await req.payload.findByID({
+                collection: 'resources',
+                id: String(doc.id),
+              })
+
+              await req.payload.update({
+                collection: 'resources',
+                id: String(doc.id),
+                data: updateData,
+                overrideAccess: true,
+              })
+            } catch (findError) {
+              // Si el resource no se encuentra, lo loggearemos pero no fallaremos
+              if ((findError as any)?.status === 404) {
+                console.warn(
+                  '[AUTOMATION] Resource not found for webhook log update, likely timing issue:',
+                  String(doc.id),
+                )
+                return // Salir silenciosamente si el resource no existe
+              }
+              throw findError // Re-lanzar otros errores
+            }
           } catch (error) {
             // No interrumpir el flujo por errores del webhook; solo loggear
             console.error('[AUTOMATION] Exception while sending webhook:', error)
@@ -1663,7 +1682,16 @@ export const Resources: CollectionConfig = {
                 data: { logs: [...currentLogs, errLog] },
                 overrideAccess: true,
               })
-            } catch {}
+            } catch (logError) {
+              // Manejar silenciosamente errores al escribir logs de error
+              // Esto puede suceder si hay timing issues con resources recién creados
+              if ((logError as any)?.status === 404) {
+                console.warn(
+                  '[AUTOMATION] Could not log webhook error, resource not found:',
+                  String(doc.id),
+                )
+              }
+            }
           }
         }
 

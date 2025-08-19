@@ -696,6 +696,10 @@ export interface PreResource {
    */
   file: string | Media;
   /**
+   * Nombre original del archivo sin extensión para usar en los recursos derivados
+   */
+  originalName?: string | null;
+  /**
    * Estado de procesamiento del pre‑resource
    */
   status: 'pending' | 'processing' | 'splitting' | 'error' | 'done';
@@ -1404,6 +1408,7 @@ export interface PreResourcesSelect<T extends boolean = true> {
       };
   user?: T;
   file?: T;
+  originalName?: T;
   status?: T;
   splitterResponse?:
     | T

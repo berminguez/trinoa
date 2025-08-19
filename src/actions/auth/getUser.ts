@@ -48,8 +48,6 @@ export async function getUserAction(): Promise<GetUserResult> {
 
     const data: GetUserResponse = await response.json()
 
-    console.log('data user me', data)
-
     // Manejar errores de respuesta usando el sistema centralizado
     const responseError = handlePayloadResponse(response, data)
     if (responseError) {

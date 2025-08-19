@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: 'Gestiona tus proyectos de video y recursos multimedia',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function ProjectsPage() {
   return (
     <Suspense fallback={<ProjectsSkeleton />}>

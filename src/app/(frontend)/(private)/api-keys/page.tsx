@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   description: 'Gestiona tus API Keys para conectar servicios externos mediante MCP o API',
 }
 
+export const dynamic = 'force-dynamic'
+
 export default function ApiKeysPage() {
   return (
     <Suspense fallback={<ApiKeysSkeleton />}>

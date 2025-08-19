@@ -271,7 +271,7 @@ export async function splitPdfAndUpload(
     const uploadedMediaRecords: any[] = []
 
     for (let i = 0; i < pdfSegments.length; i++) {
-      const segmentTitle = `Documento - Segmento ${i + 1}`
+      const segmentTitle = `${originalFilename} - Segmento ${i + 1}`
       const mediaRecord = await uploadPdfSegmentToS3(
         pdfSegments[i],
         originalFilename,

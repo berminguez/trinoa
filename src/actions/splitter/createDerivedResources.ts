@@ -70,7 +70,9 @@ export async function createDerivedResources(
 
     const projectId = String(pre.project as any)
     const namespace = `project-${projectId}-documents`
-    const baseName = String((media as any)?.filename || 'document.pdf').replace(/\.[^/.]+$/, '')
+
+    // Usar el nombre original guardado en el PreResource en lugar del filename del media
+    const baseName = String((pre as any)?.originalName || 'Documento')
 
     const createdResourceIds: string[] = []
 
@@ -103,7 +105,7 @@ export async function createDerivedResources(
       const resource = (await payload.create({
         collection: 'resources',
         data: {
-          title: partName.replace(/\.[^/.]+$/, ''),
+          title: `${baseName} - Segmento ${partIndex}`,
           project: projectId,
           namespace,
           type: 'document',

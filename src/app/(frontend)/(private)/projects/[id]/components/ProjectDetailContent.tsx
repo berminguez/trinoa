@@ -3,9 +3,9 @@ import { redirect, notFound } from 'next/navigation'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import type { Project } from '@/payload-types'
+import { getProjectResources } from '@/actions/projects/getProjectResources'
 
-import { ProjectDetailHeader } from './ProjectDetailHeader'
-import { DocumentTableContainer } from './VideoTableContainer'
+import { ProjectDetailClientWrapper } from './ProjectDetailClientWrapper'
 
 interface ProjectDetailContentProps {
   projectId: string
@@ -24,19 +24,10 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
   // Obtener proyecto con verificación de ownership
   let project: Project
   try {
-    console.log('Attempting to fetch project with ID:', projectId)
-    console.log('Current user:', { id: user.id, role: user.role })
-
     project = await payload.findByID({
       collection: 'projects',
       id: projectId,
       depth: 1,
-    })
-
-    console.log('Project found:', {
-      id: project.id,
-      title: project.title,
-      createdBy: project.createdBy,
     })
 
     // Verificar ownership (usuario es dueño o admin)
@@ -44,14 +35,6 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
       typeof project.createdBy === 'object' ? project.createdBy.id : project.createdBy
     const isOwner = createdByUserId === user.id
     const isAdmin = user.role === 'admin'
-
-    console.log('Access check:', {
-      isOwner,
-      isAdmin,
-      userRole: user.role,
-      createdByUserId,
-      currentUserId: user.id,
-    })
 
     if (!isOwner && !isAdmin) {
       console.log('Access denied: User is not owner or admin')
@@ -81,13 +64,12 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
   })
 
   return (
-    <div className='flex-1 space-y-6 p-4 pt-6'>
-      <ProjectDetailHeader project={project} user={user} />
-      <DocumentTableContainer
-        initialResources={resources.docs}
-        projectId={projectId}
-        key={resources.docs.length} // Force re-render when resources change
-      />
-    </div>
+    <ProjectDetailClientWrapper
+      project={project}
+      user={user}
+      initialResources={resources.docs}
+      projectId={projectId}
+      getProjectResourcesAction={getProjectResources}
+    />
   )
 }

@@ -40,6 +40,11 @@ export async function createPreResourceFromUpload(
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_')
     const filename = addFileId(originalName.endsWith('.pdf') ? originalName : `${originalName}.pdf`)
 
+    // Extraer nombre original limpio sin extensión para usar en recursos derivados
+    const originalNameWithoutExtension = file.name
+      .replace(/\.[^/.]+$/, '')
+      .replace(/[^a-zA-Z0-9\s.-]/g, '_')
+
     // Crear Media en PayloadCMS
     const media = (await payload.create({
       collection: 'media',
@@ -67,6 +72,7 @@ export async function createPreResourceFromUpload(
         project: projectId,
         user: user.id,
         file: media.id,
+        originalName: originalNameWithoutExtension,
         status: 'pending',
         lastUpdatedBy: user.id,
       },

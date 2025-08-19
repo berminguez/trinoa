@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation'
 
 import config from '@/payload.config'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const headers = await getHeaders()
   const payloadConfig = await config
