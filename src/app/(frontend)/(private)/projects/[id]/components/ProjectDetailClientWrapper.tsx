@@ -1,11 +1,12 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useRef } from 'react'
 import type { Project, Resource, User } from '@/payload-types'
 import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
 
 import { ProjectDetailHeader } from './ProjectDetailHeader'
 import { DocumentTableContainer } from './VideoTableContainer'
+import type { DocumentTableRef } from './VideoTable'
 
 interface ProjectDetailClientWrapperProps {
   project: Project
@@ -24,6 +25,8 @@ export function ProjectDetailClientWrapper({
   projectId,
   getProjectResourcesAction,
 }: ProjectDetailClientWrapperProps) {
+  // Ref para acceder a los métodos del DocumentTable desde el modal de upload
+  const documentTableRef = useRef<DocumentTableRef>(null)
   // Función para crear pre-resource temporal optimista
   const handleMultiInvoiceUploadStarted = useCallback(
     (fileName: string) => {
@@ -88,8 +91,10 @@ export function ProjectDetailClientWrapper({
         user={user}
         onUploadComplete={handlePreResourceRefreshNeeded}
         onMultiInvoiceUploadStarted={handleMultiInvoiceUploadStarted}
+        documentTableRef={documentTableRef}
       />
       <DocumentTableContainer
+        ref={documentTableRef}
         initialResources={initialResources}
         projectId={projectId}
         onPreResourceRefreshNeeded={handlePreResourceRefreshNeeded}

@@ -30,6 +30,7 @@ import { useProjectUpload, type UploadFile } from '@/hooks/useProjectUpload'
 import { uploadFromUrls } from '@/actions/documents/uploadFromUrls'
 import type { Project } from '@/payload-types'
 import { DocumentUploader } from '@/components'
+import type { DocumentTableRef } from './VideoTable'
 
 interface DocumentUploadModalProps {
   project: Project
@@ -38,6 +39,7 @@ interface DocumentUploadModalProps {
   onResourceUploaded?: (resource: any) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
   onMultiInvoiceUploadStarted?: (fileName: string) => void
+  documentTableRef?: React.RefObject<DocumentTableRef>
 }
 
 export function DocumentUploadModal({
@@ -47,6 +49,7 @@ export function DocumentUploadModal({
   onResourceUploaded,
   onResourceUploadFailed,
   onMultiInvoiceUploadStarted,
+  documentTableRef,
 }: DocumentUploadModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [uploadMethod, setUploadMethod] = useState<'files' | 'urls'>('files')
@@ -87,6 +90,27 @@ export function DocumentUploadModal({
       onResourceUploaded,
       onResourceUploadFailed,
       onMultiInvoiceUploadStarted,
+      onPreResourceCreated: (preResource) => {
+        // Cuando se crea un pre-resource exitosamente, agregarlo al DocumentTable
+        console.log('✅ [MODAL] Pre-resource created, adding to DocumentTable:', preResource)
+        console.log('🔍 [MODAL] DocumentTable ref status:', {
+          refExists: !!documentTableRef,
+          currentExists: !!documentTableRef?.current,
+          addPreResourceExists: !!documentTableRef?.current?.addPreResource,
+        })
+
+        if (documentTableRef?.current?.addPreResource) {
+          console.log('📋 [MODAL] Calling documentTableRef.current.addPreResource...')
+          documentTableRef.current.addPreResource(preResource)
+          console.log('✅ [MODAL] addPreResource called successfully')
+        } else {
+          console.error('❌ [MODAL] DocumentTable ref or addPreResource method not available:', {
+            refExists: !!documentTableRef,
+            currentExists: !!documentTableRef?.current,
+            addPreResourceExists: !!documentTableRef?.current?.addPreResource,
+          })
+        }
+      },
     })
 
   // Configuración de react-dropzone

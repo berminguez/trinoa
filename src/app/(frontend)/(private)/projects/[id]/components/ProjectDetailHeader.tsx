@@ -18,6 +18,7 @@ import { updateProjectAction } from '@/actions/projects/updateProject'
 import { useProjectsStore } from '@/stores/projects-store'
 import { DocumentUploadModal } from './DocumentUploadModal'
 import type { Project, User, Resource } from '@/payload-types'
+import type { DocumentTableRef } from './VideoTable'
 
 interface ProjectDetailHeaderProps {
   project: Project
@@ -27,6 +28,7 @@ interface ProjectDetailHeaderProps {
   onResourceAdded?: (resource: Resource) => void
   onUploadComplete?: () => void
   onMultiInvoiceUploadStarted?: (fileName: string) => void
+  documentTableRef?: React.RefObject<DocumentTableRef>
 }
 
 export function ProjectDetailHeader({
@@ -37,6 +39,7 @@ export function ProjectDetailHeader({
   onResourceAdded,
   onUploadComplete,
   onMultiInvoiceUploadStarted,
+  documentTableRef,
 }: ProjectDetailHeaderProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(project.title)
@@ -256,6 +259,7 @@ export function ProjectDetailHeader({
           onResourceUploaded={onResourceUploaded}
           onResourceUploadFailed={onResourceUploadFailed}
           onMultiInvoiceUploadStarted={onMultiInvoiceUploadStarted}
+          documentTableRef={documentTableRef}
         />
       </div>
 
