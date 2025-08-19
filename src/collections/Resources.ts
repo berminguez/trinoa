@@ -1539,27 +1539,6 @@ export const Resources: CollectionConfig = {
           }
         }
 
-        return data
-      },
-    ],
-    afterChange: [
-      async ({ doc, operation, previousDoc, req }) => {
-        // Hook simplificado - solo log para documentos
-        if (operation === 'create' && (doc.type === 'document' || doc.type === 'image')) {
-          try {
-            const mediaFile = doc.file as Media
-            console.log('✅ [RESOURCES] Document resource created successfully:', {
-              resourceId: doc.id,
-              fileName: mediaFile?.filename || 'unknown',
-              fileSize: mediaFile?.filesize || 0,
-              type: doc.type,
-              namespace: doc.namespace,
-            })
-          } catch (error) {
-            console.error('❌ [RESOURCES] Error in afterChange hook:', error)
-          }
-        }
-
         // Hook de automatización: disparar webhook N8n al crear cualquier recurso
         if (operation === 'create') {
           try {
@@ -1574,7 +1553,7 @@ export const Resources: CollectionConfig = {
             const automation = configuracion?.automationEndpoint
             if (!automation || !automation.enabled || !automation.url) {
               console.log('[AUTOMATION] Webhook disabled or URL missing. Skipping webhook.')
-              return
+              return data
             }
 
             const method = String(automation.httpMethod || 'POST').toUpperCase()
@@ -1601,67 +1580,43 @@ export const Resources: CollectionConfig = {
             let fetchUrl = url
             const init: RequestInit = { method }
 
-            // Intentar obtener URL del media. Preferir URL firmada S3 si filename existe
+            // Obtener información del archivo para el webhook
             let fileUrl: string | null = null
             let fileMeta: any = undefined
             try {
-              const media =
-                typeof (doc as any).file === 'string'
-                  ? await req.payload.findByID({
-                      collection: 'media',
-                      id: String((doc as any).file),
-                    })
-                  : ((doc as any).file as any)
+              const media = await req.payload.findByID({
+                collection: 'media',
+                id: String(data.file),
+              })
               fileMeta = media
                 ? {
-                    id: String((media as any)?.id ?? ''),
-                    filename: (media as any)?.filename ?? undefined,
-                    filesize: (media as any)?.filesize ?? undefined,
-                    mimeType: (media as any)?.mimeType ?? (media as any)?.mime_type ?? undefined,
+                    id: String(media.id),
+                    filename: media.filename,
+                    filesize: media.filesize,
+                    mimeType: media.mimeType,
                   }
                 : undefined
-              const rawUrl = (media as any)?.url ?? null
-              if (rawUrl) {
-                const isAbsolute = /^https?:\/\//i.test(String(rawUrl))
-                if (isAbsolute) {
-                  fileUrl = String(rawUrl)
-                } else {
-                  // Base URL desde configuración o cabeceras
-                  const configuredBase: string | undefined =
-                    configuracion?.seo?.baseUrl || configuracion?.brand?.baseUrl
-                  const headerHost = (req as any)?.headers?.host as string | undefined
-                  const headerProto =
-                    ((req as any)?.headers?.['x-forwarded-proto'] as string | undefined) || 'https'
-                  const derivedBase = headerHost ? `${headerProto}://${headerHost}` : undefined
-                  const base = configuredBase || derivedBase
-                  fileUrl = base ? `${base}${String(rawUrl)}` : String(rawUrl)
-                }
-              }
-              // Si disponemos de filename (clave en S3), generamos URL firmada prioritaria
-              const s3Key = (media as any)?.filename as string | undefined
-              if (s3Key) {
+
+              if (media?.filename) {
                 try {
-                  const signed = await StorageManager.getSignedUrl(s3Key, 3600)
-                  fileUrl = signed
+                  fileUrl = await StorageManager.getSignedUrl(media.filename, 3600)
                 } catch (e) {
-                  console.warn(
-                    '[AUTOMATION] Failed to create signed URL, falling back to raw url:',
-                    e,
-                  )
+                  console.warn('[AUTOMATION] Failed to create signed URL:', e)
                 }
               }
-            } catch {}
+            } catch (mediaError) {
+              console.warn('[AUTOMATION] Could not fetch media info:', mediaError)
+            }
 
             if (method === 'GET') {
               const u = new URL(url)
               u.searchParams.set('event', 'resource.created')
-              u.searchParams.set('resourceId', String(doc.id))
-              u.searchParams.set('namespace', String((doc as any).namespace || ''))
-              u.searchParams.set('type', String((doc as any).type || ''))
+              u.searchParams.set('resourceId', 'temp-id') // En beforeChange no tenemos ID aún
+              u.searchParams.set('namespace', String(data.namespace || ''))
+              u.searchParams.set('type', String(data.type || ''))
               if (fileUrl) u.searchParams.set('fileUrl', String(fileUrl))
               fetchUrl = u.toString()
             } else {
-              // POST: siempre enviamos cuerpo JSON mínimo
               headers['Content-Type'] = 'application/json'
 
               const minimalFile = fileMeta
@@ -1672,27 +1627,15 @@ export const Resources: CollectionConfig = {
                   }
                 : undefined
 
-              // Valores de caso y tipo_suministro (solo aplica cuando caso === 'factura_suministros')
-              const casoValue = (doc as any)?.caso as string | undefined
-              const tipo = (doc as any)?.tipo as string | undefined
-              const tipoSuministroValue =
-                casoValue === 'factura_suministros'
-                  ? (((doc as any)?.factura_suministros as any)?.tipo_suministro as
-                      | string
-                      | undefined)
-                  : undefined
-
               const payloadBody = {
                 event: 'resource.created',
-                resourceId: String(doc.id),
-                namespace: String((doc as any).namespace || ''),
-                type: String((doc as any).type || ''),
+                resourceId: 'temp-id', // En beforeChange no tenemos ID aún
+                namespace: String(data.namespace || ''),
+                type: String(data.type || ''),
                 fileUrl,
                 file: minimalFile,
-                // Si no existen, JSON.stringify omitirá estas propiedades (equivalente a undefined)
-                caso: casoValue,
-                tipo: tipo,
-                tipo_suministro: tipoSuministroValue,
+                caso: data.caso,
+                tipo: data.tipo,
               }
               init.body = JSON.stringify(payloadBody)
             }
@@ -1703,11 +1646,13 @@ export const Resources: CollectionConfig = {
             const controller = new AbortController()
             const timer = setTimeout(() => controller.abort(), 10000)
             ;(init as any).signal = controller.signal
+
             console.log('[AUTOMATION] Calling webhook...', {
               fetchUrl,
               method,
               headers: Object.keys(headers),
             })
+
             const res = await fetch(fetchUrl, init)
             clearTimeout(timer)
             const ok = res.ok
@@ -1720,20 +1665,19 @@ export const Resources: CollectionConfig = {
 
             try {
               responseText = await res.text()
+              console.log('[AUTOMATION] Webhook response text:', responseText)
 
               // Intentar extraer executionId de la respuesta de n8n
               if (ok && responseText) {
                 try {
                   const responseJson = JSON.parse(responseText)
 
-                  // n8n puede devolver el executionId en diferentes formatos
                   executionId =
                     responseJson?.executionId ||
                     responseJson?.data?.executionId ||
                     responseJson?.execution?.id ||
                     null
 
-                  // También intentar extraer URL de ejecución si está disponible
                   executionUrl =
                     responseJson?.executionUrl ||
                     responseJson?.data?.executionUrl ||
@@ -1744,18 +1688,20 @@ export const Resources: CollectionConfig = {
                     console.log(
                       `[AUTOMATION] Extracted executionId from n8n response: ${executionId}`,
                     )
-                    if (executionUrl) {
-                      console.log(`[AUTOMATION] Extracted executionUrl: ${executionUrl}`)
-                    }
+                    // Añadir executionId directamente a los datos que se van a guardar
+                    data.executionId = executionId
+                    console.log(`[AUTOMATION] Adding executionId ${executionId} to resource data`)
                   }
                 } catch (parseError) {
                   console.warn('[AUTOMATION] Could not parse webhook response as JSON:', parseError)
                 }
               }
-            } catch {}
+            } catch (responseError) {
+              console.warn('[AUTOMATION] Error reading response:', responseError)
+            }
 
-            // Añadir log del webhook
-            const currentLogs = Array.isArray((doc as any).logs) ? (doc as any).logs : []
+            // Añadir log del webhook a los datos
+            const currentLogs = Array.isArray(data.logs) ? data.logs : []
             const newLog = {
               step: 'automation-webhook',
               status: ok ? ('success' as const) : ('error' as const),
@@ -1773,79 +1719,58 @@ export const Resources: CollectionConfig = {
               },
             }
 
-            // Si la respuesta fue OK, marcamos el recurso como processing
-            const updateData: any = { logs: [...currentLogs, newLog] }
+            data.logs = [...currentLogs, newLog]
+
+            // Establecer estado basado en la respuesta del webhook
             if (ok) {
-              updateData.status = 'processing'
-              updateData.startedAt = (doc as any).startedAt || new Date().toISOString()
-
-              // Si tenemos executionId, guardarlo en el resource
-              if (executionId) {
-                updateData.executionId = executionId
-                console.log(`[AUTOMATION] Saving executionId ${executionId} to resource ${doc.id}`)
-              }
+              data.status = 'processing'
+              data.startedAt = new Date().toISOString()
             } else {
-              updateData.status = 'failed'
+              data.status = 'failed'
             }
 
-            // Verificar si el resource existe antes de intentar actualizarlo
-            try {
-              await req.payload.findByID({
-                collection: 'resources',
-                id: String(doc.id),
-              })
-
-              await req.payload.update({
-                collection: 'resources',
-                id: String(doc.id),
-                data: updateData,
-                overrideAccess: true,
-              })
-            } catch (findError) {
-              // Si el resource no se encuentra, lo loggearemos pero no fallaremos
-              if ((findError as any)?.status === 404) {
-                console.warn(
-                  '[AUTOMATION] Resource not found for webhook log update, likely timing issue:',
-                  String(doc.id),
-                )
-                return // Salir silenciosamente si el resource no existe
-              }
-              throw findError // Re-lanzar otros errores
-            }
+            console.log(
+              `[AUTOMATION] Webhook processed successfully. ExecutionId: ${executionId || 'none'}`,
+            )
           } catch (error) {
-            // No interrumpir el flujo por errores del webhook; solo loggear
             console.error('[AUTOMATION] Exception while sending webhook:', error)
-            try {
-              const current = await req.payload.findByID({
-                collection: 'resources',
-                id: String(doc.id),
-              })
-              const currentLogs = Array.isArray((current as any).logs) ? (current as any).logs : []
-              const errLog = {
-                step: 'automation-webhook',
-                status: 'error' as const,
-                at: new Date().toISOString(),
-                details: 'Excepción al enviar webhook',
-                data: { error: String(error) },
-              }
-              await req.payload.update({
-                collection: 'resources',
-                id: String(doc.id),
-                data: { logs: [...currentLogs, errLog] },
-                overrideAccess: true,
-              })
-            } catch (logError) {
-              // Manejar silenciosamente errores al escribir logs de error
-              // Esto puede suceder si hay timing issues con resources recién creados
-              if ((logError as any)?.status === 404) {
-                console.warn(
-                  '[AUTOMATION] Could not log webhook error, resource not found:',
-                  String(doc.id),
-                )
-              }
+
+            // Añadir log de error
+            const currentLogs = Array.isArray(data.logs) ? data.logs : []
+            const errLog = {
+              step: 'automation-webhook',
+              status: 'error' as const,
+              at: new Date().toISOString(),
+              details: 'Excepción al enviar webhook',
+              data: { error: String(error) },
             }
+            data.logs = [...currentLogs, errLog]
+            // No cambiar el status por errores de webhook
           }
         }
+
+        return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, operation, previousDoc, req }) => {
+        // Hook simplificado - solo log para documentos
+        if (operation === 'create' && (doc.type === 'document' || doc.type === 'image')) {
+          try {
+            const mediaFile = doc.file as Media
+            console.log('✅ [RESOURCES] Document resource created successfully:', {
+              resourceId: doc.id,
+              fileName: mediaFile?.filename || 'unknown',
+              fileSize: mediaFile?.filesize || 0,
+              type: doc.type,
+              namespace: doc.namespace,
+            })
+          } catch (error) {
+            console.error('❌ [RESOURCES] Error in afterChange hook:', error)
+          }
+        }
+
+        // Webhook ya manejado en beforeChange - no se necesita lógica adicional aquí
 
         // Hook para enviar webhooks cuando cambia el estado
         if (

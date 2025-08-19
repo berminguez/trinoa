@@ -11,8 +11,8 @@ Sistema simplificado para mapear `executionId` de n8n con resources de Trinoa y 
 
 ### 2. Flujo Normal (Éxito)
 
-1. **Creación de Resource**: Se crea un nuevo resource en Trinoa
-2. **Webhook a N8n**: El hook `afterChange` envía webhook a n8n con datos del resource
+1. **Inicio de Creación**: Se inicia la creación de un nuevo resource en Trinoa
+2. **Webhook a N8n**: El hook `beforeChange` envía webhook a n8n con datos del resource
 3. **Respuesta de N8n**: N8n responde con `executionId` en el JSON de respuesta:
    ```json
    {
@@ -21,9 +21,10 @@ Sistema simplificado para mapear `executionId` de n8n con resources de Trinoa y 
      "message": "Workflow started successfully"
    }
    ```
-4. **Guardado Automático**: Se guarda el `executionId` en el campo del resource automáticamente
-5. **Procesamiento**: N8n procesa el resource normalmente
-6. **Webhook de Resultado**: N8n envía resultado final al webhook existente `/api/resources/:id/webhook`
+4. **Guardado Automático**: El `executionId` se incluye en los datos del resource antes de guardarlo
+5. **Resource Creado**: Se guarda el resource con el `executionId` en una sola operación
+6. **Procesamiento**: N8n procesa el resource normalmente
+7. **Webhook de Resultado**: N8n envía resultado final al webhook existente `/api/resources/:id/webhook`
 
 ### 3. Flujo de Error
 
@@ -184,6 +185,27 @@ curl -X POST https://tu-dominio.com/api/resources/errors \
 3. **Menos puntos de falla**: Arquitectura más simple y robusta
 4. **Fácil debugging**: ExecutionId visible directamente en el admin
 5. **Performance**: Búsquedas directas sin complejidad adicional
+
+## Mejora con BeforeChange Hook
+
+### 🚀 **Beneficios de usar `beforeChange` vs `afterChange`:**
+
+- ✅ **Sin timing issues**: No hay problemas de sincronización de transacciones
+- ✅ **Una sola operación**: Todo se guarda en una sola transacción de DB
+- ✅ **Más eficiente**: No necesita updates posteriores
+- ✅ **Código más limpio**: Sin setTimeout ni retries complejos
+- ✅ **Más confiable**: Menos puntos de falla
+
+### 🔄 **Flujo Optimizado:**
+
+```
+beforeChange → Webhook → Response → Include executionId → Save Resource
+```
+
+vs. Flujo anterior (problemático):
+```
+afterChange → Webhook → Response → Separate Update → Timing Issues
+```
 
 ## Regenerar Tipos
 
