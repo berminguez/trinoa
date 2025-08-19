@@ -51,9 +51,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           </div>
 
           {/* Indicador de salud del sistema */}
-          <div className='px-4 lg:px-6'>
+          {/*     <div className='px-4 lg:px-6'>
             <SystemHealthIndicator />
-          </div>
+          </div> */}
 
           {/* Métricas globales del sistema */}
           <div className='px-4 lg:px-6'>
@@ -66,6 +66,9 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
               {/* Overview de usuarios */}
               <UsersOverview />
 
+              {/* Alertas de recursos que necesitan atención */}
+              <AlertsPanel />
+
               {/* Estadísticas del sistema */}
               {/*   <SystemStats /> */}
             </div>
@@ -74,11 +77,8 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
           {/* Alertas globales y acciones rápidas */}
           <div className='px-4 lg:px-6'>
             <div className='grid grid-cols-1 gap-6 xl:grid-cols-2'>
-              {/* Alertas de recursos que necesitan atención */}
-              <AlertsPanel />
-
               {/* Acciones rápidas para administradores */}
-              <Card>
+              {/*     <Card>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <IconTrendingUp className='h-5 w-5' />
@@ -120,7 +120,7 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
                     </a>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
           </div>
 

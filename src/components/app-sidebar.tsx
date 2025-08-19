@@ -36,9 +36,9 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
+import Link from 'next/link'
 
 // Navegación base disponible para todos los usuarios
 const baseNavigation = [
@@ -179,13 +179,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className='data-[slot=sidebar-menu-button]:!p-1.5'>
-              <a href='#'>
-                <div className='w-[100px] h-[30px]'>
-                  <Logo />
-                </div>
-              </a>
-            </SidebarMenuButton>
+            <Link href='/dashboard'>
+              <div className='ml-2 w-[140px] h-[40px]'>
+                <Logo />
+              </div>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
