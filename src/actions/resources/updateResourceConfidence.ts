@@ -80,10 +80,30 @@ export async function updateResourceConfidence(
       }
     }
 
-    // 6) Calcular nuevo estado de confidence
-    const newConfidence = calculateResourceConfidence(resource, threshold)
+    // 6) Cargar lista de campos obligatorios desde field-translations
+    let requiredFieldNames: string[] = []
+    try {
+      const translations = await payload.find({
+        collection: 'field-translations',
+        limit: 1000,
+        depth: 0,
+        user,
+      })
+      const docs = Array.isArray(translations?.docs) ? translations.docs : []
+      requiredFieldNames = docs
+        .filter((d: any) => d?.isRequired)
+        .map((d: any) => String(d.key))
+        .filter(Boolean)
+    } catch (e) {
+      console.warn('[UPDATE_RESOURCE_CONFIDENCE] No se pudieron cargar campos obligatorios', e)
+    }
 
-    // 7) Solo actualizar si el valor ha cambiado
+    // 7) Calcular nuevo estado de confidence considerando obligatoriedad
+    const newConfidence = calculateResourceConfidence(resource, threshold, {
+      requiredFieldNames,
+    })
+
+    // 8) Solo actualizar si el valor ha cambiado
     if (resource.confidence === newConfidence) {
       return {
         success: true,
@@ -95,7 +115,7 @@ export async function updateResourceConfidence(
       }
     }
 
-    // 8) Actualizar el recurso con el nuevo confidence
+    // 9) Actualizar el recurso con el nuevo confidence
     const updated = (await payload.update({
       collection: 'resources',
       id: resourceId,
@@ -107,7 +127,7 @@ export async function updateResourceConfidence(
       user,
     })) as Resource
 
-    // 9) Revalidar rutas que podrían mostrar este recurso
+    // 10) Revalidar rutas que podrían mostrar este recurso
     try {
       const projectId = typeof project === 'object' ? project.id : project
       revalidatePath(`/projects/${projectId}`)

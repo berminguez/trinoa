@@ -47,7 +47,8 @@ const confidenceConfig = {
   needs_revision: {
     icon: IconAlertTriangle,
     label: 'Necesita revisión',
-    description: 'El documento tiene campos con confianza menor al umbral establecido.',
+    description:
+      'El documento tiene campos obligatorios con confianza menor al umbral establecido.',
   },
   trusted: {
     icon: IconShieldCheck,
@@ -118,22 +119,33 @@ function ConfidenceBadge({
     return badgeContent
   }
 
+  const tooltipStyleByConfidence: Record<keyof typeof confidenceConfig, string> = {
+    empty:
+      'bg-gray-50 text-gray-900 border border-gray-200 dark:bg-gray-900 dark:text-gray-100 dark:border-gray-800',
+    needs_revision:
+      'bg-orange-50 text-orange-900 border border-orange-200 dark:bg-orange-950 dark:text-orange-100 dark:border-orange-900',
+    trusted:
+      'bg-green-50 text-green-900 border border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-900',
+    verified:
+      'bg-blue-50 text-blue-900 border border-blue-200 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-900',
+  }
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
         <TooltipContent
           side='top'
-          className='max-w-xs sm:max-w-sm'
+          className={cn('max-w-xs sm:max-w-sm', tooltipStyleByConfidence[normalizedConfidence])}
           id={tooltipId}
           role='tooltip'
           aria-live='polite'
         >
           <div className='space-y-1'>
             <p className='font-medium text-sm'>{config.label}</p>
-            <p className='text-xs text-muted-foreground leading-relaxed'>{tooltipDescription}</p>
+            <p className='text-xs leading-relaxed opacity-90'>{tooltipDescription}</p>
             {threshold && (
-              <p className='text-xs text-muted-foreground opacity-75 border-t pt-1 mt-2'>
+              <p className='text-xs opacity-80 border-t border-current/20 pt-1 mt-2'>
                 Umbral actual: {threshold}%
               </p>
             )}
