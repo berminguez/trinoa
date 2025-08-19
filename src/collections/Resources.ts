@@ -27,6 +27,7 @@ export const Resources: CollectionConfig = {
       'type',
       'status',
       'confidence',
+      'executionId',
       'progress',
       'updatedAt',
     ],
@@ -88,6 +89,19 @@ export const Resources: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'Campo gestionado automáticamente por el sistema al guardar',
+      },
+    },
+
+    // ID de ejecución de n8n para mapeo y gestión de errores
+    {
+      name: 'executionId',
+      label: 'N8n Execution ID',
+      type: 'text',
+      required: false,
+      admin: {
+        position: 'sidebar',
+        description: 'ID de ejecución de n8n asociado a este resource',
+        readOnly: true,
       },
     },
 
@@ -1654,9 +1668,45 @@ export const Resources: CollectionConfig = {
             const ok = res.ok
             const status = res.status
             console.log('[AUTOMATION] Webhook response:', { ok, status })
+
             let responseText = ''
+            let executionId: string | null = null
+            let executionUrl: string | null = null
+
             try {
               responseText = await res.text()
+
+              // Intentar extraer executionId de la respuesta de n8n
+              if (ok && responseText) {
+                try {
+                  const responseJson = JSON.parse(responseText)
+
+                  // n8n puede devolver el executionId en diferentes formatos
+                  executionId =
+                    responseJson?.executionId ||
+                    responseJson?.data?.executionId ||
+                    responseJson?.execution?.id ||
+                    null
+
+                  // También intentar extraer URL de ejecución si está disponible
+                  executionUrl =
+                    responseJson?.executionUrl ||
+                    responseJson?.data?.executionUrl ||
+                    responseJson?.execution?.url ||
+                    null
+
+                  if (executionId) {
+                    console.log(
+                      `[AUTOMATION] Extracted executionId from n8n response: ${executionId}`,
+                    )
+                    if (executionUrl) {
+                      console.log(`[AUTOMATION] Extracted executionUrl: ${executionUrl}`)
+                    }
+                  }
+                } catch (parseError) {
+                  console.warn('[AUTOMATION] Could not parse webhook response as JSON:', parseError)
+                }
+              }
             } catch {}
 
             // Añadir log del webhook
@@ -1666,13 +1716,15 @@ export const Resources: CollectionConfig = {
               status: ok ? ('success' as const) : ('error' as const),
               at: new Date().toISOString(),
               details: ok
-                ? `Webhook enviado correctamente (status ${status})`
+                ? `Webhook enviado correctamente (status ${status})${executionId ? ` - ExecutionId: ${executionId}` : ''}`
                 : `Webhook falló (status ${status})`,
               data: {
                 url: fetchUrl,
                 method,
                 headers: Object.keys(headers),
                 responsePreview: responseText?.slice(0, 300),
+                executionId: executionId || null,
+                executionUrl: executionUrl || null,
               },
             }
 
@@ -1681,6 +1733,12 @@ export const Resources: CollectionConfig = {
             if (ok) {
               updateData.status = 'processing'
               updateData.startedAt = (doc as any).startedAt || new Date().toISOString()
+
+              // Si tenemos executionId, guardarlo en el resource
+              if (executionId) {
+                updateData.executionId = executionId
+                console.log(`[AUTOMATION] Saving executionId ${executionId} to resource ${doc.id}`)
+              }
             } else {
               updateData.status = 'failed'
             }

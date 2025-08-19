@@ -268,6 +268,10 @@ export interface Resource {
    * Campo gestionado automáticamente por el sistema al guardar
    */
   lastUpdatedBy?: (string | null) | User;
+  /**
+   * ID de ejecución de n8n asociado a este resource
+   */
+  executionId?: string | null;
   nombre_cliente?: string | null;
   /**
    * Selecciona el tipo de caso para mostrar los campos correspondientes
@@ -1191,6 +1195,7 @@ export interface ResourcesSelect<T extends boolean = true> {
   project?: T;
   namespace?: T;
   lastUpdatedBy?: T;
+  executionId?: T;
   nombre_cliente?: T;
   caso?: T;
   tipo?: T;
