@@ -7,14 +7,14 @@ import PageSkeleton from './components/PageSkeleton'
 export default async function AnalyticsPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string>
+  searchParams?: Promise<Record<string, string>>
 }) {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
   return (
     <Suspense fallback={<PageSkeleton />}>
       {/* Server Component */}
-      <PageContent searchParams={searchParams} />
+      <PageContent searchParams={await searchParams} />
     </Suspense>
   )
 }
