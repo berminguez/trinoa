@@ -226,7 +226,7 @@ export function DocumentUploadModal({
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className='gap-2'>
+          <Button className='gap-2 w-full sm:w-auto'>
             <IconUpload className='h-4 w-4' />
             Subir Documentos
           </Button>
@@ -234,7 +234,7 @@ export function DocumentUploadModal({
       </DialogTrigger>
 
       <DialogContent
-        className='sm:max-w-2xl'
+        className='max-w-[95vw] sm:max-w-2xl'
         onInteractOutside={(e) => {
           // Prevenir cerrar el modal si se está subiendo
           if (isUploading || isUrlUploading) {
@@ -345,7 +345,7 @@ export function DocumentUploadModal({
             {files.length > 0 && (
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
-                  <h4 className='text-sm font-medium'>Selected Files ({files.length})</h4>
+                  <h4 className='text-sm font-medium'>Archivos seleccionados ({files.length})</h4>
                   {!isUploading && (
                     <Button
                       variant='ghost'
@@ -353,7 +353,7 @@ export function DocumentUploadModal({
                       onClick={clearFiles}
                       className='text-xs text-muted-foreground hover:text-foreground'
                     >
-                      Clear All
+                      Limpiar todo
                     </Button>
                   )}
                 </div>
@@ -373,26 +373,26 @@ export function DocumentUploadModal({
                       {validatingCount > 0 && (
                         <p className='text-blue-600 flex items-center gap-1'>
                           <IconLoader2 className='h-3 w-3 animate-spin' />
-                          Validating {validatingCount} file{validatingCount !== 1 ? 's' : ''}...
+                          Validando {validatingCount} archivo{validatingCount !== 1 ? 's' : ''}...
                         </p>
                       )}
                       {uploadingCount > 0 && (
                         <p className='text-orange-600 flex items-center gap-1'>
                           <IconLoader2 className='h-3 w-3 animate-spin' />
-                          Uploading {uploadingCount} file{uploadingCount !== 1 ? 's' : ''}...
+                          Subiendo {uploadingCount} archivo{uploadingCount !== 1 ? 's' : ''}...
                         </p>
                       )}
                       {completedCount > 0 && (
                         <p className='text-green-600 flex items-center gap-1'>
                           <IconCheck className='h-3 w-3' />
-                          {completedCount} file{completedCount !== 1 ? 's' : ''} uploaded
-                          successfully
+                          {completedCount} archivo{completedCount !== 1 ? 's' : ''} subido
+                          correctamente
                         </p>
                       )}
                       {errorCount > 0 && (
                         <p className='text-red-600 flex items-center gap-1'>
                           <IconAlertCircle className='h-3 w-3' />
-                          {errorCount} file{errorCount !== 1 ? 's' : ''} failed
+                          {errorCount} archivo{errorCount !== 1 ? 's' : ''} falló
                         </p>
                       )}
                       {validCount > 0 &&
@@ -402,7 +402,7 @@ export function DocumentUploadModal({
                         completedCount === 0 && (
                           <p className='text-green-600 flex items-center gap-1'>
                             <IconCheck className='h-3 w-3' />
-                            All files validated and ready for upload
+                            Todos los archivos validados y listos para subir
                           </p>
                         )}
                     </div>

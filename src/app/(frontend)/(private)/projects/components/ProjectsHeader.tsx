@@ -11,9 +11,7 @@ export function ProjectsHeader({ user }: ProjectsHeaderProps) {
     <div className='flex items-center justify-between'>
       <div className='space-y-1'>
         <h1 className='text-3xl font-bold tracking-tight'>Projects</h1>
-        <p className='text-muted-foreground'>
-          Gestiona tus proyectos de video y recursos multimedia
-        </p>
+        <p className='text-muted-foreground'>Gestiona tus proyectos</p>
       </div>
 
       <CreateProjectModal />

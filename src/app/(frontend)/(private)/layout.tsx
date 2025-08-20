@@ -196,10 +196,11 @@ function ProtectedContent({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
+      <SidebarInset className='w-full min-w-0'>
         <div className='flex min-w-0 flex-1 flex-col overflow-hidden'>
           <SiteHeader />
-          <div className='min-w-0 flex-1 overflow-hidden'>{children}</div>
+          {/* Panel derecho ocupa el ancho disponible sin desplazar fuera de pantalla */}
+          <div className='min-w-0 flex-1 overflow-auto'>{children}</div>
         </div>
       </SidebarInset>
     </SidebarProvider>

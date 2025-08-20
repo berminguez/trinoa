@@ -1,31 +1,25 @@
 'use client'
 
 import {
-  IconCamera,
   IconChartBar,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
   IconFolder,
   IconHelp,
-  IconListDetails,
-  IconReport,
   IconSearch,
   IconSettings,
-  IconUsers,
-  IconRobot,
   IconHome,
-  IconCircles,
-  IconKey,
   IconUserCog,
+  IconDatabase,
+  IconReport,
+  IconFileWord,
+  IconCamera,
+  IconFileAi,
+  IconFileDescription,
 } from '@tabler/icons-react'
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+// import { useEffect, useState } from 'react'
 
 import { Logo } from '@/components/logo'
-import { NavDocuments } from '@/components/nav-documents'
+// import { NavDocuments } from '@/components/nav-documents'
 import { NavMain } from '@/components/nav-main'
 import { NavSecondary } from '@/components/nav-secondary'
 import { NavUser } from '@/components/nav-user'
@@ -180,7 +174,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href='/dashboard'>
-              <div className='ml-2 w-[140px] h-[40px]'>
+              <div className='ml-2 w-[120px] h-[36px]'>
                 <Logo />
               </div>
             </Link>

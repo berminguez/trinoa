@@ -172,7 +172,7 @@ export function ProjectDetailHeader({
   return (
     <div className='space-y-4'>
       {/* Title and badges */}
-      <div className='flex items-center justify-between'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <div className='space-y-2 flex-1'>
           {/* Título editable */}
           <div className='flex items-center gap-2 group'>
@@ -248,19 +248,21 @@ export function ProjectDetailHeader({
           </div>
         </div>
 
-        <DocumentUploadModal
-          project={project}
-          onUploadComplete={() => {
-            console.log('🎉 [PROJECT-HEADER] Upload completed, triggering refresh...')
-            if (onUploadComplete) {
-              onUploadComplete()
-            }
-          }}
-          onResourceUploaded={onResourceUploaded}
-          onResourceUploadFailed={onResourceUploadFailed}
-          onMultiInvoiceUploadStarted={onMultiInvoiceUploadStarted}
-          documentTableRef={documentTableRef}
-        />
+        <div className='w-full sm:w-auto'>
+          <DocumentUploadModal
+            project={project}
+            onUploadComplete={() => {
+              console.log('🎉 [PROJECT-HEADER] Upload completed, triggering refresh...')
+              if (onUploadComplete) {
+                onUploadComplete()
+              }
+            }}
+            onResourceUploaded={onResourceUploaded}
+            onResourceUploadFailed={onResourceUploadFailed}
+            onMultiInvoiceUploadStarted={onMultiInvoiceUploadStarted}
+            documentTableRef={documentTableRef}
+          />
+        </div>
       </div>
 
       {/* Toolbar */}

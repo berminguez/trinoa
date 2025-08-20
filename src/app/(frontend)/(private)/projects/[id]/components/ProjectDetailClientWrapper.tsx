@@ -94,7 +94,7 @@ export function ProjectDetailClientWrapper({
   }, [projectId])
 
   return (
-    <div className='flex-1 space-y-6 p-4 pt-6'>
+    <div className='flex-1 space-y-6 p-2 md:p-3 lg:p-4 pt-4 sm:pt-6 overflow-x-hidden'>
       <ProjectDetailHeader
         project={project}
         user={user}
@@ -103,14 +103,16 @@ export function ProjectDetailClientWrapper({
         onMultiInvoiceUploadStarted={handleMultiInvoiceUploadStarted}
         documentTableRef={containerRef}
       />
-      <DocumentTableContainer
-        ref={containerRef}
-        initialResources={initialResources}
-        projectId={projectId}
-        onPreResourceRefreshNeeded={handlePreResourceRefreshNeeded}
-        getProjectResourcesAction={getProjectResourcesAction}
-        key={initialResources.length} // Force re-render when resources change
-      />
+      <div className='-mx-2 md:-mx-3 lg:mx-0'>
+        <DocumentTableContainer
+          ref={containerRef}
+          initialResources={initialResources}
+          projectId={projectId}
+          onPreResourceRefreshNeeded={handlePreResourceRefreshNeeded}
+          getProjectResourcesAction={getProjectResourcesAction}
+          key={initialResources.length} // Force re-render when resources change
+        />
+      </div>
     </div>
   )
 }

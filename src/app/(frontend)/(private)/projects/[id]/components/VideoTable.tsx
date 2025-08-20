@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useImperativeHandle,
   forwardRef,
+  useRef,
 } from 'react'
 import Link from 'next/link'
 import {
@@ -78,12 +79,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { Resource } from '@/payload-types'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import type { Resource, PreResource } from '@/payload-types'
 import { deleteDocument } from '@/actions/documents/deleteDocument'
 import { deleteBulkDocuments } from '@/actions/documents/deleteBulkDocuments'
 import { toast } from 'sonner'
 import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
-import type { PreResource } from '@/payload-types'
 
 // Interfaz para métodos expuestos del DocumentTable
 export interface DocumentTableRef {
@@ -124,6 +125,47 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
     },
     ref,
   ) => {
+    // Link con tooltip sólo si hay truncado visual
+    const TruncatedTitleLink: React.FC<{ href: string; text: string }> = ({ href, text }) => {
+      const ref = useRef<HTMLAnchorElement | null>(null)
+      const [isTruncated, setIsTruncated] = useState(false)
+
+      useEffect(() => {
+        const el = ref.current
+        if (!el) return
+        const check = () => setIsTruncated(el.scrollWidth > el.clientWidth)
+        check()
+        const ro = new ResizeObserver(check)
+        ro.observe(el)
+        window.addEventListener('resize', check)
+        return () => {
+          ro.disconnect()
+          window.removeEventListener('resize', check)
+        }
+      }, [text])
+
+      const anchor = (
+        <Link
+          ref={ref as any}
+          href={href}
+          className='font-medium truncate text-sm lg:text-base block hover:underline max-w-[200px] lg:max-w-[240px] xl:max-w-[270px]'
+        >
+          {text}
+        </Link>
+      )
+
+      if (!isTruncated) return anchor
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>{anchor}</TooltipTrigger>
+            <TooltipContent side='top' align='start' className='max-w-sm break-words'>
+              {text}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )
+    }
     // Estados de la tabla
     const [sorting, setSorting] = useState<SortingState>([])
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -142,7 +184,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
 
     // Estados para monitoreo de pre-resources
     const [processingPreResources, setProcessingPreResources] = useState<PreResource[]>([])
-    const [loadingPreResources, setLoadingPreResources] = useState(false)
+    const [_loadingPreResources, setLoadingPreResources] = useState(false)
 
     // Helper para generar URLs de recursos
     const getResourceUrl = (resourceId: string) => {
@@ -258,25 +300,35 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
       }
     }, [selectedDocumentsInfo, projectId, onRemoveResource, setRowSelection])
 
-    // Manejar responsive columns en el cliente
+    // Manejar responsive columns en función del ancho REAL del contenedor (no del viewport)
+    const containerRef = useRef<HTMLDivElement | null>(null)
     useEffect(() => {
-      const handleResize = () => {
-        const width = window.innerWidth
+      const el = containerRef.current
+      if (!el) return
+
+      const updateFromWidth = (width: number) => {
         setColumnVisibility((prev) => ({
           ...prev,
-          type: width > 768,
-          createdAt: width > 1024,
-          status: width > 640,
-          actions: width > 480, // Ocultar acciones en móviles muy pequeños
+          // Umbrales relativos al ancho disponible del bloque derecho
+          type: width > 680,
+          createdAt: width > 900,
+          status: width > 560,
+          caso: width > 740,
+          tipo: width > 820,
+          actions: true,
         }))
       }
 
-      // Configurar inicial
-      handleResize()
+      // Inicial
+      updateFromWidth(el.clientWidth)
 
-      // Listener para cambios de tamaño
-      window.addEventListener('resize', handleResize)
-      return () => window.removeEventListener('resize', handleResize)
+      const ro = new ResizeObserver((entries) => {
+        const entry = entries[0]
+        const width = entry?.contentRect?.width || el.clientWidth
+        updateFromWidth(width)
+      })
+      ro.observe(el)
+      return () => ro.disconnect()
     }, [])
 
     // Función para agregar pre-resource al estado (disponible externamente)
@@ -502,30 +554,30 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           accessorKey: 'title',
           header: ({ column }) => {
             return (
-              <Button
-                variant='ghost'
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                className='h-auto p-0 hover:bg-transparent'
-              >
-                Nombre del archivo
-                {column.getIsSorted() === 'asc' ? (
-                  <IconArrowUp className='ml-2 h-4 w-4' />
-                ) : column.getIsSorted() === 'desc' ? (
-                  <IconArrowDown className='ml-2 h-4 w-4' />
-                ) : null}
-              </Button>
+              <div className='w-[28%] xl:w-[26%]'>
+                <Button
+                  variant='ghost'
+                  onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                  className='h-auto p-0 hover:bg-transparent'
+                >
+                  Nombre del archivo
+                  {column.getIsSorted() === 'asc' ? (
+                    <IconArrowUp className='ml-2 h-4 w-4' />
+                  ) : column.getIsSorted() === 'desc' ? (
+                    <IconArrowDown className='ml-2 h-4 w-4' />
+                  ) : null}
+                </Button>
+              </div>
             )
           },
           cell: ({ row }) => {
             const resource = row.original
+            const title = row.getValue('title') as string
+            const visibleTitle =
+              typeof title === 'string' && title.length > 7 ? title.slice(0, -7) : title
             return (
-              <div className='min-w-0 max-w-xs lg:max-w-sm xl:max-w-md'>
-                <Link
-                  href={getResourceUrl(resource.id)}
-                  className='font-medium truncate text-sm lg:text-base block hover:underline'
-                >
-                  {row.getValue('title') as string}
-                </Link>
+              <div className='min-w-0'>
+                <TruncatedTitleLink href={getResourceUrl(resource.id)} text={visibleTitle} />
               </div>
             )
           },
@@ -618,32 +670,6 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             const value = (row.getValue('tipo') as string) || '-'
             return <span className='text-sm'>{value}</span>
           },
-        },
-        // Columna de fecha de subida
-        {
-          accessorKey: 'createdAt',
-          header: ({ column }) => {
-            return (
-              <Button
-                variant='ghost'
-                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                className='h-auto p-0 hover:bg-transparent'
-              >
-                <IconCalendar className='mr-2 h-4 w-4' />
-                Subido
-                {column.getIsSorted() === 'asc' ? (
-                  <IconArrowUp className='ml-2 h-4 w-4' />
-                ) : column.getIsSorted() === 'desc' ? (
-                  <IconArrowDown className='ml-2 h-4 w-4' />
-                ) : null}
-              </Button>
-            )
-          },
-          cell: ({ row }) => {
-            const date = new Date(row.getValue('createdAt'))
-            return <div className='text-sm text-muted-foreground'>{date.toLocaleDateString()}</div>
-          },
-          enableGlobalFilter: false,
         },
         // Columna de estado
         {
@@ -746,6 +772,32 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             if (!filterValue || filterValue === 'all') return true
             return confidence === filterValue
           },
+        },
+        // Columna de fecha de subida (a la derecha de Confianza)
+        {
+          accessorKey: 'createdAt',
+          header: ({ column }) => {
+            return (
+              <Button
+                variant='ghost'
+                onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className='h-auto p-0 hover:bg-transparent'
+              >
+                <IconCalendar className='mr-2 h-4 w-4' />
+                Subido
+                {column.getIsSorted() === 'asc' ? (
+                  <IconArrowUp className='ml-2 h-4 w-4' />
+                ) : column.getIsSorted() === 'desc' ? (
+                  <IconArrowDown className='ml-2 h-4 w-4' />
+                ) : null}
+              </Button>
+            )
+          },
+          cell: ({ row }) => {
+            const date = new Date(row.getValue('createdAt'))
+            return <div className='text-sm text-muted-foreground'>{date.toLocaleDateString()}</div>
+          },
+          enableGlobalFilter: false,
         },
         // Columna de acciones (ver y borrar documento)
         {
@@ -923,6 +975,12 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             if (typeof data.progress === 'number' && data.progress !== current.progress) {
               updates.progress = data.progress
             }
+            if (
+              typeof (data as any).confidence === 'string' &&
+              (data as any).confidence !== (current as any).confidence
+            ) {
+              ;(updates as any).confidence = (data as any).confidence as any
+            }
             if ((data as any).startedAt && (data as any).startedAt !== (current as any).startedAt) {
               ;(updates as any).startedAt = (data as any).startedAt
             }
@@ -984,341 +1042,362 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
     }
 
     return (
-      <Card>
-        <CardHeader>
-          <div className='flex items-center justify-between'>
-            <CardTitle>Documentos</CardTitle>
-            <div className='flex items-center gap-2'>
-              <span className='text-sm text-muted-foreground'>
-                {resources.length} documento{resources.length !== 1 ? 's' : ''}
-              </span>
-              {Object.keys(rowSelection).length > 0 && (
-                <Badge variant='secondary' className='text-xs'>
-                  {Object.keys(rowSelection).length} seleccionado
-                  {Object.keys(rowSelection).length !== 1 ? 's' : ''}
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Badge de notificación para pre-resources en procesamiento */}
-          {processingPreResources.length > 0 && (
-            <div className='mt-3 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-              <IconLoader2 className='h-4 w-4 text-blue-600 animate-spin' />
-              <div className='flex-1'>
-                <p className='text-sm font-medium text-blue-800'>
-                  Procesando {processingPreResources.length} documento
-                  {processingPreResources.length !== 1 ? 's' : ''} multifactura
-                </p>
-                <p className='text-xs text-blue-600'>
-                  {(() => {
-                    const splittingCount = processingPreResources.filter(
-                      (pr) => pr.status === 'splitting',
-                    ).length
-                    const processingCount = processingPreResources.filter(
-                      (pr) => pr.status === 'processing',
-                    ).length
-                    const pendingCount = processingPreResources.filter(
-                      (pr) => pr.status === 'pending',
-                    ).length
-
-                    const parts = []
-                    if (pendingCount > 0) parts.push(`${pendingCount} analizando con IA`)
-                    if (processingCount > 0) parts.push(`${processingCount} en análisis`)
-                    if (splittingCount > 0) parts.push(`${splittingCount} dividiendo PDF`)
-
-                    return parts.length > 0
-                      ? `Estado: ${parts.join(', ')}. Los nuevos documentos aparecerán cuando esté listo.`
-                      : 'Los documentos se están procesando. Los nuevos documentos aparecerán cuando estén listos.'
-                  })()}
-                </p>
-              </div>
-              <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100'>
-                {processingPreResources.length} en proceso
-              </Badge>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          {/* Barra de acciones para elementos seleccionados */}
-          {Object.keys(rowSelection).length > 0 && (
-            <div className='flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+      <div ref={containerRef} className='min-w-0'>
+        <Card>
+          <CardHeader>
+            <div className='flex items-center justify-between'>
+              <CardTitle>Documentos</CardTitle>
               <div className='flex items-center gap-2'>
-                <span className='text-sm font-medium text-blue-800'>
-                  {Object.keys(rowSelection).length} documento
-                  {Object.keys(rowSelection).length !== 1 ? 's' : ''} seleccionado
-                  {Object.keys(rowSelection).length !== 1 ? 's' : ''}
+                <span className='text-sm text-muted-foreground'>
+                  {resources.length} documento{resources.length !== 1 ? 's' : ''}
                 </span>
+                {Object.keys(rowSelection).length > 0 && (
+                  <Badge variant='secondary' className='text-xs'>
+                    {Object.keys(rowSelection).length} seleccionado
+                    {Object.keys(rowSelection).length !== 1 ? 's' : ''}
+                  </Badge>
+                )}
               </div>
-              <div className='flex items-center gap-2'>
+            </div>
+
+            {/* Badge de notificación para pre-resources en procesamiento */}
+            {processingPreResources.length > 0 && (
+              <div className='mt-3 flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                <IconLoader2 className='h-4 w-4 text-blue-600 animate-spin' />
+                <div className='flex-1'>
+                  <p className='text-sm font-medium text-blue-800'>
+                    Procesando {processingPreResources.length} documento
+                    {processingPreResources.length !== 1 ? 's' : ''} multifactura
+                  </p>
+                  <p className='text-xs text-blue-600'>
+                    {(() => {
+                      const splittingCount = processingPreResources.filter(
+                        (pr) => pr.status === 'splitting',
+                      ).length
+                      const processingCount = processingPreResources.filter(
+                        (pr) => pr.status === 'processing',
+                      ).length
+                      const pendingCount = processingPreResources.filter(
+                        (pr) => pr.status === 'pending',
+                      ).length
+
+                      const parts = []
+                      if (pendingCount > 0) parts.push(`${pendingCount} analizando con IA`)
+                      if (processingCount > 0) parts.push(`${processingCount} en análisis`)
+                      if (splittingCount > 0) parts.push(`${splittingCount} dividiendo PDF`)
+
+                      return parts.length > 0
+                        ? `Estado: ${parts.join(', ')}. Los nuevos documentos aparecerán cuando esté listo.`
+                        : 'Los documentos se están procesando. Los nuevos documentos aparecerán cuando estén listos.'
+                    })()}
+                  </p>
+                </div>
+                <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100'>
+                  {processingPreResources.length} en proceso
+                </Badge>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            {/* Barra de acciones para elementos seleccionados */}
+            {Object.keys(rowSelection).length > 0 && (
+              <div className='flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm font-medium text-blue-800'>
+                    {Object.keys(rowSelection).length} documento
+                    {Object.keys(rowSelection).length !== 1 ? 's' : ''} seleccionado
+                    {Object.keys(rowSelection).length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setRowSelection({})}
+                    className='text-blue-700 border-blue-300 hover:bg-blue-100'
+                  >
+                    Limpiar Selección
+                  </Button>
+                  <Button
+                    variant='destructive'
+                    size='sm'
+                    onClick={handleBulkDeleteClick}
+                    disabled={isDeleting}
+                    className='bg-red-600 hover:bg-red-700'
+                  >
+                    {isDeleting ? (
+                      <IconLoader2 className='h-4 w-4 mr-1 animate-spin' />
+                    ) : (
+                      <IconTrash className='h-4 w-4 mr-1' />
+                    )}
+                    {isDeleting ? 'Borrando...' : 'Borrar Seleccionados'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Barra de herramientas */}
+            <div className='flex flex-col space-y-4 xl:flex-row xl:items-center xl:justify-between xl:space-y-0'>
+              <div className='flex flex-col space-y-2 xl:flex-row xl:items-center xl:space-y-0 xl:space-x-2'>
+                {/* Búsqueda global */}
+                <div className='relative flex-1 lg:flex-none'>
+                  <IconSearch className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
+                  <Input
+                    placeholder='Buscar documentos...'
+                    value={globalFilter ?? ''}
+                    onChange={(event) => setGlobalFilter(String(event.target.value))}
+                    className='pl-8 w-full lg:max-w-sm'
+                  />
+                </div>
+
+                {/* Filtro de confianza */}
+                <Select
+                  value={(table.getColumn('confidence')?.getFilterValue() as string) || 'all'}
+                  onValueChange={(value) =>
+                    table.getColumn('confidence')?.setFilterValue(value === 'all' ? '' : value)
+                  }
+                >
+                  <SelectTrigger className='w-full xl:w-[180px]'>
+                    <SelectValue placeholder='Filtrar por confianza' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='all'>Todas las confianzas</SelectItem>
+                    <SelectItem value='empty'>
+                      <div className='flex items-center gap-2'>
+                        <ConfidenceBadge confidence='empty' showTooltip={false} size='sm' />
+                      </div>
+                    </SelectItem>
+                    <SelectItem value='needs_revision'>
+                      <div className='flex items-center gap-2'>
+                        <ConfidenceBadge
+                          confidence='needs_revision'
+                          showTooltip={false}
+                          size='sm'
+                        />
+                      </div>
+                    </SelectItem>
+                    <SelectItem value='trusted'>
+                      <div className='flex items-center gap-2'>
+                        <ConfidenceBadge confidence='trusted' showTooltip={false} size='sm' />
+                      </div>
+                    </SelectItem>
+                    <SelectItem value='verified'>
+                      <div className='flex items-center gap-2'>
+                        <ConfidenceBadge confidence='verified' showTooltip={false} size='sm' />
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Selector de columnas */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline' size='sm' className='self-end xl:self-auto'>
+                    <IconEye className='mr-2 h-4 w-4' />
+                    <span className='hidden sm:inline'>Ver</span>
+                    <span className='sm:hidden'>Columnas</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  {table
+                    .getAllColumns()
+                    .filter((column) => column.getCanHide())
+                    .map((column) => {
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          className='capitalize'
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                        >
+                          {column.id}
+                        </DropdownMenuCheckboxItem>
+                      )
+                    })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Información de selección */}
+            {Object.keys(rowSelection).length > 0 && (
+              <div className='text-sm text-muted-foreground'>
+                {Object.keys(rowSelection).length} de {table.getFilteredRowModel().rows.length} fila
+                {table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}
+                seleccionada{Object.keys(rowSelection).length !== 1 ? 's' : ''}.
+              </div>
+            )}
+
+            {/* Tabla */}
+            <div className='rounded-md border'>
+              <div className='overflow-x-auto px-2 sm:px-0'>
+                <Table className='min-w-[880px] sm:min-w-full'>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => {
+                          return (
+                            <TableHead
+                              key={header.id}
+                              className={`px-4 ${
+                                header.column.id === 'actions'
+                                  ? 'sticky right-0 bg-background z-10 shadow-[inset_1px_0_0_0_hsl(var(--border))]'
+                                  : ''
+                              }`}
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                          )
+                        })}
+                      </TableRow>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow
+                          key={row.id}
+                          data-state={row.getIsSelected() && 'selected'}
+                          className='hover:bg-muted/50'
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              className={`px-4 ${
+                                cell.column.id === 'actions'
+                                  ? 'sticky right-0 bg-background z-10 shadow-[inset_1px_0_0_0_hsl(var(--border))]'
+                                  : ''
+                              }`}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={columns.length} className='h-24 text-center'>
+                          No results found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+
+            {/* Paginación */}
+            <div className='flex flex-col space-y-4 px-2 xl:flex-row xl:items-center xl:justify-between xl:space-y-0'>
+              <div className='text-sm text-muted-foreground text-center lg:text-left'>
+                <span className='hidden sm:inline'>
+                  Mostrando{' '}
+                  {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}{' '}
+                  a{' '}
+                  {Math.min(
+                    (table.getState().pagination.pageIndex + 1) *
+                      table.getState().pagination.pageSize,
+                    table.getFilteredRowModel().rows.length,
+                  )}{' '}
+                  de {table.getFilteredRowModel().rows.length} entradas
+                </span>
+                <span className='sm:hidden'>{table.getFilteredRowModel().rows.length} total</span>
+              </div>
+              <div className='flex items-center justify-center space-x-2 lg:justify-end'>
                 <Button
                   variant='outline'
                   size='sm'
-                  onClick={() => setRowSelection({})}
-                  className='text-blue-700 border-blue-300 hover:bg-blue-100'
+                  onClick={() => table.setPageIndex(0)}
+                  disabled={!table.getCanPreviousPage()}
+                  className='hidden sm:flex'
                 >
-                  Limpiar Selección
+                  <IconChevronsLeft className='h-4 w-4' />
                 </Button>
                 <Button
-                  variant='destructive'
+                  variant='outline'
                   size='sm'
-                  onClick={handleBulkDeleteClick}
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  <IconChevronLeft className='h-4 w-4' />
+                  <span className='ml-1 hidden sm:inline'>Anterior</span>
+                </Button>
+                <span className='text-sm text-muted-foreground px-2'>
+                  <span className='hidden sm:inline'>Página </span>
+                  {table.getState().pagination.pageIndex + 1}
+                  <span className='hidden sm:inline'> de {table.getPageCount()}</span>
+                  <span className='sm:hidden'>/{table.getPageCount()}</span>
+                </span>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  <span className='mr-1 hidden sm:inline'>Siguiente</span>
+                  <IconChevronRight className='h-4 w-4' />
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                  disabled={!table.getCanNextPage()}
+                  className='hidden sm:flex'
+                >
+                  <IconChevronsRight className='h-4 w-4' />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+
+          {/* Diálogo de confirmación para borrado múltiple */}
+          <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Borrar múltiples documentos</AlertDialogTitle>
+                <AlertDialogDescription>
+                  ¿Estás seguro de que quieres borrar {selectedDocumentsInfo.ids.length} documento
+                  {selectedDocumentsInfo.ids.length !== 1 ? 's' : ''}?
+                </AlertDialogDescription>
+                <div className='my-4'>
+                  <strong className='text-sm'>Documentos seleccionados:</strong>
+                  <ul className='mt-2 space-y-1 max-h-32 overflow-y-auto'>
+                    {selectedDocumentsInfo.titles.slice(0, 5).map((title, index) => (
+                      <li key={index} className='text-sm'>
+                        • {title}
+                      </li>
+                    ))}
+                    {selectedDocumentsInfo.titles.length > 5 && (
+                      <li className='text-sm text-muted-foreground'>
+                        ... y {selectedDocumentsInfo.titles.length - 5} más
+                      </li>
+                    )}
+                  </ul>
+                </div>
+                <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={confirmBulkDelete}
                   disabled={isDeleting}
                   className='bg-red-600 hover:bg-red-700'
                 >
                   {isDeleting ? (
-                    <IconLoader2 className='h-4 w-4 mr-1 animate-spin' />
+                    <>
+                      <IconLoader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Borrando...
+                    </>
                   ) : (
-                    <IconTrash className='h-4 w-4 mr-1' />
+                    'Borrar documentos'
                   )}
-                  {isDeleting ? 'Borrando...' : 'Borrar Seleccionados'}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Barra de herramientas */}
-          <div className='flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0'>
-            <div className='flex flex-col space-y-2 lg:flex-row lg:items-center lg:space-y-0 lg:space-x-2'>
-              {/* Búsqueda global */}
-              <div className='relative flex-1 lg:flex-none'>
-                <IconSearch className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
-                <Input
-                  placeholder='Buscar documentos...'
-                  value={globalFilter ?? ''}
-                  onChange={(event) => setGlobalFilter(String(event.target.value))}
-                  className='pl-8 w-full lg:max-w-sm'
-                />
-              </div>
-
-              {/* Filtro de confianza */}
-              <Select
-                value={(table.getColumn('confidence')?.getFilterValue() as string) || 'all'}
-                onValueChange={(value) =>
-                  table.getColumn('confidence')?.setFilterValue(value === 'all' ? '' : value)
-                }
-              >
-                <SelectTrigger className='w-full lg:w-[180px]'>
-                  <SelectValue placeholder='Filtrar por confianza' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='all'>Todas las confianzas</SelectItem>
-                  <SelectItem value='empty'>
-                    <div className='flex items-center gap-2'>
-                      <ConfidenceBadge confidence='empty' showTooltip={false} size='sm' />
-                    </div>
-                  </SelectItem>
-                  <SelectItem value='needs_revision'>
-                    <div className='flex items-center gap-2'>
-                      <ConfidenceBadge confidence='needs_revision' showTooltip={false} size='sm' />
-                    </div>
-                  </SelectItem>
-                  <SelectItem value='trusted'>
-                    <div className='flex items-center gap-2'>
-                      <ConfidenceBadge confidence='trusted' showTooltip={false} size='sm' />
-                    </div>
-                  </SelectItem>
-                  <SelectItem value='verified'>
-                    <div className='flex items-center gap-2'>
-                      <ConfidenceBadge confidence='verified' showTooltip={false} size='sm' />
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Selector de columnas */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' className='self-end lg:self-auto'>
-                  <IconEye className='mr-2 h-4 w-4' />
-                  <span className='hidden sm:inline'>Ver</span>
-                  <span className='sm:hidden'>Columnas</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => {
-                    return (
-                      <DropdownMenuCheckboxItem
-                        key={column.id}
-                        className='capitalize'
-                        checked={column.getIsVisible()}
-                        onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                      >
-                        {column.id}
-                      </DropdownMenuCheckboxItem>
-                    )
-                  })}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Información de selección */}
-          {Object.keys(rowSelection).length > 0 && (
-            <div className='text-sm text-muted-foreground'>
-              {Object.keys(rowSelection).length} de {table.getFilteredRowModel().rows.length} fila
-              {table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}
-              seleccionada{Object.keys(rowSelection).length !== 1 ? 's' : ''}.
-            </div>
-          )}
-
-          {/* Tabla */}
-          <div className='rounded-md border overflow-hidden'>
-            <div className='overflow-x-auto'>
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        return (
-                          <TableHead key={header.id} className='px-4'>
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(header.column.columnDef.header, header.getContext())}
-                          </TableHead>
-                        )
-                      })}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && 'selected'}
-                        className='hover:bg-muted/50'
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id} className='px-4'>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={columns.length} className='h-24 text-center'>
-                        No results found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-
-          {/* Paginación */}
-          <div className='flex flex-col space-y-4 px-2 lg:flex-row lg:items-center lg:justify-between lg:space-y-0'>
-            <div className='text-sm text-muted-foreground text-center lg:text-left'>
-              <span className='hidden sm:inline'>
-                Mostrando{' '}
-                {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} a{' '}
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
-                  table.getFilteredRowModel().rows.length,
-                )}{' '}
-                de {table.getFilteredRowModel().rows.length} entradas
-              </span>
-              <span className='sm:hidden'>{table.getFilteredRowModel().rows.length} total</span>
-            </div>
-            <div className='flex items-center justify-center space-x-2 lg:justify-end'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-                className='hidden sm:flex'
-              >
-                <IconChevronsLeft className='h-4 w-4' />
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                <IconChevronLeft className='h-4 w-4' />
-                <span className='ml-1 hidden sm:inline'>Anterior</span>
-              </Button>
-              <span className='text-sm text-muted-foreground px-2'>
-                <span className='hidden sm:inline'>Página </span>
-                {table.getState().pagination.pageIndex + 1}
-                <span className='hidden sm:inline'> de {table.getPageCount()}</span>
-                <span className='sm:hidden'>/{table.getPageCount()}</span>
-              </span>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                <span className='mr-1 hidden sm:inline'>Siguiente</span>
-                <IconChevronRight className='h-4 w-4' />
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-                className='hidden sm:flex'
-              >
-                <IconChevronsRight className='h-4 w-4' />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-
-        {/* Diálogo de confirmación para borrado múltiple */}
-        <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Borrar múltiples documentos</AlertDialogTitle>
-              <AlertDialogDescription>
-                ¿Estás seguro de que quieres borrar {selectedDocumentsInfo.ids.length} documento
-                {selectedDocumentsInfo.ids.length !== 1 ? 's' : ''}?
-              </AlertDialogDescription>
-              <div className='my-4'>
-                <strong className='text-sm'>Documentos seleccionados:</strong>
-                <ul className='mt-2 space-y-1 max-h-32 overflow-y-auto'>
-                  {selectedDocumentsInfo.titles.slice(0, 5).map((title, index) => (
-                    <li key={index} className='text-sm'>
-                      • {title}
-                    </li>
-                  ))}
-                  {selectedDocumentsInfo.titles.length > 5 && (
-                    <li className='text-sm text-muted-foreground'>
-                      ... y {selectedDocumentsInfo.titles.length - 5} más
-                    </li>
-                  )}
-                </ul>
-              </div>
-              <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={confirmBulkDelete}
-                disabled={isDeleting}
-                className='bg-red-600 hover:bg-red-700'
-              >
-                {isDeleting ? (
-                  <>
-                    <IconLoader2 className='h-4 w-4 mr-2 animate-spin' />
-                    Borrando...
-                  </>
-                ) : (
-                  'Borrar documentos'
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </Card>
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </Card>
+      </div>
     )
   },
 )
