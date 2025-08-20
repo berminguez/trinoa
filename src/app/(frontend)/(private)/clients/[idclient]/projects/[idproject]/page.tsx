@@ -4,6 +4,9 @@ import { requireAdminAccess } from '@/actions/auth/getUser'
 import { ClientProjectDetailContent } from './components/ClientProjectDetailContent'
 import { ClientProjectDetailSkeleton } from './components/ClientProjectDetailSkeleton'
 
+// Asegurar que la página se regenere en cada request para que revalidatePath funcione
+export const dynamic = 'force-dynamic'
+
 interface ClientProjectDetailPageProps {
   params: Promise<{ idclient: string; idproject: string }>
 }

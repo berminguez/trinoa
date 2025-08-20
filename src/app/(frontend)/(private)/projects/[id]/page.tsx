@@ -5,6 +5,9 @@ import { notFound } from 'next/navigation'
 import { ProjectDetailContent } from './components/ProjectDetailContent'
 import { ProjectDetailSkeleton } from './components/ProjectDetailSkeleton'
 
+// Asegurar que la página se regenere en cada request para que revalidatePath funcione
+export const dynamic = 'force-dynamic'
+
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>
 }

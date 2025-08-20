@@ -488,6 +488,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // PASO 4: Respuesta exitosa con documento completo
+    // Nota: La revalidación se maneja en el cliente mediante server actions
     console.log('[UPLOAD] Upload process completed successfully')
 
     return NextResponse.json(

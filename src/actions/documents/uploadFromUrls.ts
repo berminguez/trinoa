@@ -218,8 +218,44 @@ export async function uploadFromUrls(data: UploadFromUrlsData): Promise<UploadFr
       }
     }
 
-    // Revalidar la página del proyecto
-    revalidatePath(`/projects/${data.projectId}`)
+    // Revalidar páginas del proyecto para actualizar la tabla de documentos
+    try {
+      console.log(`📱 [URL-UPLOAD] Revalidating project pages for: ${data.projectId}`)
+
+      // Revalidar página de proyecto normal
+      revalidatePath(`/projects/${data.projectId}`)
+
+      // Obtener información del proyecto para revalidar también las rutas de cliente
+      try {
+        const projectInfo = await payload.findByID({
+          collection: 'projects',
+          id: data.projectId,
+          depth: 1,
+        })
+
+        if (projectInfo) {
+          const clientId =
+            typeof projectInfo.createdBy === 'object'
+              ? projectInfo.createdBy.id
+              : projectInfo.createdBy
+
+          // Revalidar también la ruta del cliente específico
+          revalidatePath(`/clients/${clientId}/projects/${data.projectId}`)
+          console.log(`📱 [URL-UPLOAD] Client page revalidated for client: ${clientId}`)
+        }
+      } catch (projectError) {
+        console.error(
+          `⚠️ [URL-UPLOAD] Could not get project info for client revalidation:`,
+          projectError,
+        )
+        // No fallar por esto - el upload fue exitoso y la ruta principal se revalidó
+      }
+
+      console.log(`✅ [URL-UPLOAD] Project pages revalidated successfully`)
+    } catch (revalidationError) {
+      console.error(`❌ [URL-UPLOAD] Failed to revalidate paths:`, revalidationError)
+      // No fallar por esto - el upload fue exitoso
+    }
 
     const successCount = results.filter((r) => r.success).length
     console.log(`📊 [URL-UPLOAD] Completed: ${successCount}/${results.length} files`)

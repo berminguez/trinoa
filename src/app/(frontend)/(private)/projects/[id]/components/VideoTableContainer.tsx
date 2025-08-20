@@ -1,9 +1,17 @@
 'use client'
 
-import { useState, useCallback, forwardRef } from 'react'
+import { useState, useCallback, forwardRef, useImperativeHandle, useRef } from 'react'
 import { DocumentTable, type DocumentTableRef } from './VideoTable'
 import type { Resource } from '@/payload-types'
 import { toast } from 'sonner'
+
+// Interface para métodos expuestos del DocumentTableContainer
+export interface DocumentTableContainerRef extends DocumentTableRef {
+  addResource: (resource: any) => void
+  updateResource: (resourceId: string, updates: Partial<Resource>) => void
+  removeResource: (resourceId: string) => void
+  resetResources: () => Promise<void>
+}
 
 interface DocumentTableContainerProps {
   initialResources: Resource[]
@@ -16,7 +24,10 @@ interface DocumentTableContainerProps {
   ) => Promise<{ success: boolean; data?: Resource[]; error?: string }>
 }
 
-export const DocumentTableContainer = forwardRef<DocumentTableRef, DocumentTableContainerProps>(
+export const DocumentTableContainer = forwardRef<
+  DocumentTableContainerRef,
+  DocumentTableContainerProps
+>(
   (
     {
       initialResources,
@@ -30,6 +41,9 @@ export const DocumentTableContainer = forwardRef<DocumentTableRef, DocumentTable
   ) => {
     // Estado local para manejar los recursos con optimistic updates
     const [resources, setResources] = useState<Resource[]>(initialResources)
+
+    // Ref interna para el DocumentTable
+    const tableRef = useRef<DocumentTableRef>(null)
 
     // Función para añadir un nuevo recurso (optimistic update)
     const addResource = useCallback(
@@ -121,9 +135,26 @@ export const DocumentTableContainer = forwardRef<DocumentTableRef, DocumentTable
       window.dispatchEvent(new CustomEvent('refreshPreResources', { detail: { projectId } }))
     }, [projectId, onPreResourceRefreshNeeded])
 
+    // Exponer métodos al componente padre via ref
+    useImperativeHandle(
+      ref,
+      () => ({
+        // Métodos propios del container
+        addResource,
+        updateResource,
+        removeResource,
+        resetResources,
+        // Métodos del DocumentTable delegados
+        addPreResource: (preResource: any) => {
+          return tableRef.current?.addPreResource(preResource)
+        },
+      }),
+      [addResource, updateResource, removeResource, resetResources],
+    )
+
     return (
       <DocumentTable
-        ref={ref}
+        ref={tableRef}
         resources={resources}
         projectId={projectId}
         onAddResource={addResource}

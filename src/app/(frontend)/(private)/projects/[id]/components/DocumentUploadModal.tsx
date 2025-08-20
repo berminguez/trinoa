@@ -28,9 +28,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { useProjectUpload, type UploadFile } from '@/hooks/useProjectUpload'
 import { uploadFromUrls } from '@/actions/documents/uploadFromUrls'
+import { revalidateProjectPages } from '@/actions/projects/revalidateProjectPages'
 import type { Project } from '@/payload-types'
 import { DocumentUploader } from '@/components'
-import type { DocumentTableRef } from './VideoTable'
+import type { DocumentTableContainerRef } from './VideoTableContainer'
 
 interface DocumentUploadModalProps {
   project: Project
@@ -39,7 +40,7 @@ interface DocumentUploadModalProps {
   onResourceUploaded?: (resource: any) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
   onMultiInvoiceUploadStarted?: (fileName: string) => void
-  documentTableRef?: React.RefObject<DocumentTableRef | null>
+  documentTableRef?: React.RefObject<DocumentTableContainerRef | null>
 }
 
 export function DocumentUploadModal({
@@ -168,10 +169,15 @@ export function DocumentUploadModal({
       if (result.success && result.data) {
         setUrlResults(result.data)
 
-        // Notificar recursos subidos exitosamente
+        // Notificar recursos subidos exitosamente - agregar inmediatamente a la tabla
         const successfulResources = result.data
           .filter((r) => r.success && r.resource)
           .map((r) => r.resource)
+
+        console.log(
+          '🎯 [MODAL] Resources created from URLs, adding to table immediately:',
+          successfulResources,
+        )
 
         successfulResources.forEach((resource) => {
           if (onResourceUploaded) {
@@ -180,6 +186,20 @@ export function DocumentUploadModal({
         })
 
         if (successfulResources.length > 0) {
+          // Revalidar páginas del proyecto para actualizar la tabla
+          try {
+            console.log('[MODAL] Revalidating project pages after URL upload...')
+            const revalidationResult = await revalidateProjectPages(project.id)
+            if (revalidationResult.success) {
+              console.log('[MODAL] Project pages revalidated successfully')
+            } else {
+              console.error('[MODAL] Failed to revalidate project pages:', revalidationResult.error)
+            }
+          } catch (revalidationError) {
+            console.error('[MODAL] Error during revalidation:', revalidationError)
+            // No fallar por esto - los uploads fueron exitosos
+          }
+
           if (onUploadComplete) {
             onUploadComplete()
           }

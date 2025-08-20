@@ -5,8 +5,7 @@ import type { Project, Resource, User } from '@/payload-types'
 import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
 
 import { ProjectDetailHeader } from './ProjectDetailHeader'
-import { DocumentTableContainer } from './VideoTableContainer'
-import type { DocumentTableRef } from './VideoTable'
+import { DocumentTableContainer, type DocumentTableContainerRef } from './VideoTableContainer'
 
 interface ProjectDetailClientWrapperProps {
   project: Project
@@ -25,8 +24,18 @@ export function ProjectDetailClientWrapper({
   projectId,
   getProjectResourcesAction,
 }: ProjectDetailClientWrapperProps) {
-  // Ref para acceder a los métodos del DocumentTable desde el modal de upload
-  const documentTableRef = useRef<DocumentTableRef>(null)
+  // Ref para acceder a los métodos del DocumentTableContainer
+  const containerRef = useRef<DocumentTableContainerRef>(null)
+
+  // Función para agregar resource inmediatamente a la tabla
+  const handleResourceUploaded = useCallback((resource: any) => {
+    console.log('🎯 [PROJECT-WRAPPER] Resource uploaded, adding to table:', resource)
+
+    if (containerRef.current?.addResource) {
+      containerRef.current.addResource(resource)
+    }
+  }, [])
+
   // Función para crear pre-resource temporal optimista
   const handleMultiInvoiceUploadStarted = useCallback(
     (fileName: string) => {
@@ -90,11 +99,12 @@ export function ProjectDetailClientWrapper({
         project={project}
         user={user}
         onUploadComplete={handlePreResourceRefreshNeeded}
+        onResourceUploaded={handleResourceUploaded}
         onMultiInvoiceUploadStarted={handleMultiInvoiceUploadStarted}
-        documentTableRef={documentTableRef}
+        documentTableRef={containerRef}
       />
       <DocumentTableContainer
-        ref={documentTableRef}
+        ref={containerRef}
         initialResources={initialResources}
         projectId={projectId}
         onPreResourceRefreshNeeded={handlePreResourceRefreshNeeded}

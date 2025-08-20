@@ -1249,6 +1249,287 @@ export const Resources: CollectionConfig = {
         }
       },
     },
+    {
+      path: '/webhook',
+      method: 'post',
+      handler: async (req) => {
+        try {
+          // Leer body JSON de n8n
+          let body: any = {}
+          try {
+            body = await (req as any).json()
+          } catch {
+            return Response.json({ success: false, error: 'Invalid JSON body' }, { status: 400 })
+          }
+
+          // Validar que el executionId esté presente
+          const executionId = body?.executionId
+          if (!executionId) {
+            return Response.json(
+              { success: false, error: 'executionId is required in body' },
+              { status: 400 },
+            )
+          }
+
+          console.log('[RESOURCES_WEBHOOK] Processing webhook for executionId:', executionId)
+          console.log('[RESOURCES_WEBHOOK] Body meta:', {
+            executionId,
+            modelId: body?.modelId,
+            modelo: body?.modelo,
+            status: body?.status,
+            caso: body?.caso,
+            tipo: body?.tipo,
+            error: body?.error,
+            errorMessage: body?.errorMessage,
+          })
+
+          // Buscar resource por executionId
+          const resourceResult = await req.payload.find({
+            collection: 'resources',
+            where: {
+              executionId: { equals: String(executionId) },
+            },
+            limit: 1,
+            overrideAccess: true,
+          })
+
+          if (resourceResult.docs.length === 0) {
+            console.warn(`[RESOURCES_WEBHOOK] No resource found with executionId: ${executionId}`)
+            return Response.json(
+              {
+                success: false,
+                error: `No se encontró resource con executionId: ${executionId}`,
+                executionId,
+              },
+              { status: 404 },
+            )
+          }
+
+          const resource = resourceResult.docs[0]
+          const resourceId = resource.id
+          console.log(
+            `[RESOURCES_WEBHOOK] Found resource ${resourceId} for executionId: ${executionId}`,
+          )
+
+          // Verificar si es un error desde el backend
+          if (body?.status === 'failed' || body?.status === 'error') {
+            console.log('[RESOURCES_WEBHOOK] Processing error status from backend')
+
+            // Preparar logs de error
+            const errorLog = {
+              step: 'azure-analyze',
+              status: 'error' as const,
+              at: new Date().toISOString(),
+              details: body?.errorMessage || body?.error || 'Processing failed in external backend',
+              data: {
+                executionId,
+                modelId: body?.modelId,
+                modelo: body?.modelo,
+                jobStatus: body?.status,
+                caso: body?.caso,
+                tipo: body?.tipo,
+                errorDetails: body?.errorDetails || null,
+                errorCode: body?.errorCode || null,
+              },
+            }
+
+            // Actualizar resource con status failed y logs de error
+            await req.payload.update({
+              collection: 'resources',
+              id: resourceId,
+              data: {
+                status: 'failed',
+                logs: [errorLog],
+                // Preservar caso y tipo si vienen en el body
+                ...(typeof body?.caso === 'string' && body.caso.length > 0 && { caso: body.caso }),
+                ...(typeof body?.tipo === 'string' && body.tipo.length > 0 && { tipo: body.tipo }),
+              },
+              overrideAccess: true,
+            })
+
+            return Response.json({
+              success: true,
+              data: {
+                id: resourceId,
+                executionId,
+                status: 'failed',
+                message: 'Error status processed successfully',
+              },
+            })
+          }
+
+          // Para casos exitosos, validar analyzeResult
+          const analyzeResult = body?.analyzeResult
+          if (!analyzeResult) {
+            return Response.json(
+              { success: false, error: 'Missing analyzeResult in body for successful processing' },
+              { status: 400 },
+            )
+          }
+          console.log(
+            '[RESOURCES_WEBHOOK] Received analyzeResult keys:',
+            Object.keys(analyzeResult || {}),
+          )
+
+          // Fusionar analyzeResult recibido con el actual para preservar ediciones manuales
+          let mergedAnalyzeResult: any = analyzeResult
+          try {
+            let currentResource: any = null
+            try {
+              currentResource = await req.payload.findByID({
+                collection: 'resources',
+                id: resourceId,
+                depth: 0,
+                overrideAccess: true,
+              })
+            } catch {}
+
+            const currentAR = (currentResource as any)?.analyzeResult || {}
+            const currentFields =
+              currentAR?.fields && typeof currentAR.fields === 'object'
+                ? currentAR.fields
+                : undefined
+            const incomingFields =
+              analyzeResult?.fields && typeof analyzeResult.fields === 'object'
+                ? analyzeResult.fields
+                : undefined
+
+            if (incomingFields || currentFields) {
+              const mergedFields: Record<string, unknown> = {
+                ...(incomingFields || {}),
+              }
+              if (currentFields) {
+                for (const [k, v] of Object.entries(currentFields)) {
+                  // Si el campo fue marcado como manual por el usuario, preservar su valor
+                  if (v && typeof v === 'object' && (v as any).manual) {
+                    mergedFields[k] = v
+                  }
+                }
+              }
+              mergedAnalyzeResult = {
+                ...(analyzeResult || {}),
+                fields: mergedFields,
+              }
+            }
+          } catch (e) {
+            console.warn('[RESOURCES_WEBHOOK] Failed to merge analyzeResult with current edits:', e)
+          }
+
+          // Construir data de actualización incluyendo caso/tipo si vienen en el body
+          const updateData: any = {
+            status: 'completed',
+            analyzeResult: mergedAnalyzeResult,
+            logs: [
+              {
+                step: 'azure-analyze',
+                status: 'success',
+                at: new Date().toISOString(),
+                details: 'Analyze result received from Azure via n8n',
+                data: {
+                  executionId,
+                  modelId: body?.modelId,
+                  modelo: body?.modelo,
+                  jobStatus: body?.status,
+                  caso: body?.caso,
+                  tipo: body?.tipo,
+                },
+              },
+            ],
+          }
+
+          if (typeof body?.caso === 'string' && body.caso.length > 0) {
+            updateData.caso = body.caso
+          }
+          if (typeof body?.tipo === 'string' && body.tipo.length > 0) {
+            updateData.tipo = body.tipo
+          }
+
+          // Sin mapeo automático: ahora el JSON ya llega filtrado desde n8n y se edita desde Admin
+
+          // Auto-registro de nuevas keys en field-translations
+          try {
+            const fieldsObj = (mergedAnalyzeResult as any)?.fields
+            if (fieldsObj && typeof fieldsObj === 'object') {
+              const keys = Object.keys(fieldsObj)
+              for (const k of keys) {
+                try {
+                  await req.payload.create({
+                    collection: 'field-translations' as any,
+                    data: { key: k, label: k },
+                  })
+                } catch {}
+              }
+            }
+          } catch {}
+
+          // Actualizar el recurso: status -> completed y guardar analyzeResult, caso y tipo si aplica
+          const updated = await req.payload.update({
+            collection: 'resources',
+            id: resourceId,
+            data: updateData,
+            overrideAccess: true,
+          })
+
+          // Calcular automáticamente el campo confidence después de recibir analyzeResult
+          try {
+            const threshold = await getConfidenceThreshold(req.payload)
+            // Obtener campos obligatorios desde field-translations
+            let requiredFieldNames: string[] = []
+            try {
+              const translations = await req.payload.find({
+                collection: 'field-translations' as any,
+                limit: 1000,
+                depth: 0,
+              } as any)
+              const docs = Array.isArray((translations as any)?.docs)
+                ? (translations as any).docs
+                : []
+              requiredFieldNames = docs
+                .filter((d: any) => d?.isRequired)
+                .map((d: any) => String(d.key))
+                .filter(Boolean)
+            } catch (e) {
+              console.warn('[RESOURCES_WEBHOOK] No se pudieron cargar campos obligatorios', e)
+            }
+
+            const newConfidence = calculateResourceConfidence(updated, threshold, {
+              requiredFieldNames,
+            })
+
+            // Solo actualizar si el valor ha cambiado
+            if ((updated as any).confidence !== newConfidence) {
+              await req.payload.update({
+                collection: 'resources',
+                id: resourceId,
+                data: {
+                  confidence: newConfidence,
+                },
+                overrideAccess: true,
+              })
+              console.log(
+                `[RESOURCES_WEBHOOK] Confidence updated automatically: ${(updated as any).confidence} → ${newConfidence}`,
+              )
+            } else {
+              console.log(`[RESOURCES_WEBHOOK] Confidence remains: ${newConfidence}`)
+            }
+          } catch (confidenceError) {
+            // No interrumpir el flujo si hay error calculando confidence
+            console.warn('[RESOURCES_WEBHOOK] Error calculating confidence:', confidenceError)
+          }
+
+          return Response.json({
+            success: true,
+            data: {
+              id: updated.id,
+              executionId,
+            },
+          })
+        } catch (error) {
+          console.error('Error in resources webhook (executionId):', error)
+          return Response.json({ success: false, error: 'Internal error' }, { status: 500 })
+        }
+      },
+    },
   ],
   hooks: {
     beforeDelete: [

@@ -1,6 +1,7 @@
 'use server'
 
 import { getPayload } from 'payload'
+import { revalidatePath } from 'next/cache'
 import config from '@payload-config'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import type { Media, PreResource, Resource } from '@/payload-types'
@@ -139,6 +140,45 @@ export async function createDerivedResources(
       },
       overrideAccess: true,
     })
+
+    // Revalidar páginas del proyecto para actualizar la tabla de documentos
+    try {
+      console.log(`📱 [SPLITTER] Revalidating project pages for: ${projectId}`)
+
+      // Revalidar página de proyecto normal
+      revalidatePath(`/projects/${projectId}`)
+
+      // Obtener información del proyecto para revalidar también las rutas de cliente
+      try {
+        const projectInfo = await payload.findByID({
+          collection: 'projects',
+          id: projectId,
+          depth: 1,
+        })
+
+        if (projectInfo) {
+          const clientId =
+            typeof projectInfo.createdBy === 'object'
+              ? projectInfo.createdBy.id
+              : projectInfo.createdBy
+
+          // Revalidar también la ruta del cliente específico
+          revalidatePath(`/clients/${clientId}/projects/${projectId}`)
+          console.log(`📱 [SPLITTER] Client page revalidated for client: ${clientId}`)
+        }
+      } catch (projectError) {
+        console.error(
+          `⚠️ [SPLITTER] Could not get project info for client revalidation:`,
+          projectError,
+        )
+        // No fallar por esto - la creación de resources fue exitosa y la ruta principal se revalidó
+      }
+
+      console.log(`✅ [SPLITTER] Project pages revalidated successfully`)
+    } catch (revalidationError) {
+      console.error(`❌ [SPLITTER] Failed to revalidate paths:`, revalidationError)
+      // No fallar por esto - la creación de resources fue exitosa
+    }
 
     return { success: true, data: { resourceIds: createdResourceIds } }
   } catch (error) {

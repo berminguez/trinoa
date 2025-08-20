@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import axios, { type AxiosProgressEvent } from 'axios'
 import { runSplitterPipeline } from '@/actions/splitter/runPipeline'
+import { revalidateProjectPages } from '@/actions/projects/revalidateProjectPages'
 import { toast } from 'sonner'
 import { addFileId } from '@/lib/utils/fileUtils'
 import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
@@ -465,6 +466,11 @@ export function useProjectUpload({
           onResourceUploaded &&
           !file.isMultiInvoice
         ) {
+          console.log(
+            '🎯 [UPLOAD] Resource created successfully, adding to table immediately:',
+            response.data.data.resource,
+          )
+
           // Añadir marcador para indicar que es una actualización
           const realResource = {
             ...response.data.data.resource,
@@ -734,6 +740,23 @@ export function useProjectUpload({
               ? `${failed} file${failed !== 1 ? 's' : ''} failed`
               : 'All files processed successfully',
         })
+
+        // Revalidar páginas del proyecto para actualizar la tabla
+        try {
+          console.log('[UPLOAD MAIN] Revalidating project pages...')
+          const revalidationResult = await revalidateProjectPages(projectId)
+          if (revalidationResult.success) {
+            console.log('[UPLOAD MAIN] Project pages revalidated successfully')
+          } else {
+            console.error(
+              '[UPLOAD MAIN] Failed to revalidate project pages:',
+              revalidationResult.error,
+            )
+          }
+        } catch (revalidationError) {
+          console.error('[UPLOAD MAIN] Error during revalidation:', revalidationError)
+          // No fallar por esto - los uploads fueron exitosos
+        }
 
         // Llamar callback si se provee (para actualizar tabla de documentos)
         if (onUploadComplete) {
