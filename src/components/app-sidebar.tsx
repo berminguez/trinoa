@@ -42,13 +42,13 @@ const baseNavigation = [
     icon: IconHome,
   },
   {
-    title: 'Projects',
+    title: 'Projectos',
     url: '/projects',
     icon: IconFolder,
   },
   {
-    title: 'Analytics',
-    url: '#',
+    title: 'Analítica',
+    url: '/analytics',
     icon: IconChartBar,
   },
 ]
@@ -56,7 +56,7 @@ const baseNavigation = [
 // Navegación exclusiva para administradores
 const adminNavigation = [
   {
-    title: 'Clients',
+    title: 'Clientes',
     url: '/clients',
     icon: IconUserCog,
   },
