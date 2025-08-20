@@ -117,8 +117,7 @@ export function mapFacturaSuministrosAguaFromFields(
   // Caso/Tipo específicos y grupo `factura_suministros`
   updates.caso = 'factura_suministros'
   updates.tipo = 'agua'
-
-  updates.factura_suministros = {
+  ;(updates as any).factura_suministros = {
     ...(codigoSuministro ? { codigo_suministro: codigoSuministro } : {}),
     periodo_consumo: {
       ...(fechaInicio ? { fecha_inicio: fechaInicio } : {}),
@@ -171,8 +170,7 @@ export function mapFacturaSuministrosElectricidadFromFields(
 
   updates.caso = 'factura_suministros'
   updates.tipo = 'electricidad'
-
-  updates.factura_suministros = {
+  ;(updates as any).factura_suministros = {
     ...(codigoSuministro ? { codigo_suministro: codigoSuministro } : {}),
     periodo_consumo: {
       ...(fechaInicio ? { fecha_inicio: fechaInicio } : {}),
@@ -210,8 +208,7 @@ export function mapFacturaSuministrosGasFromFields(
 
   updates.caso = 'factura_suministros'
   updates.tipo = 'gas'
-
-  updates.factura_suministros = {
+  ;(updates as any).factura_suministros = {
     ...(codigoSuministro ? { codigo_suministro: codigoSuministro } : {}),
     periodo_consumo: {
       ...(fechaInicio ? { fecha_inicio: fechaInicio } : {}),
