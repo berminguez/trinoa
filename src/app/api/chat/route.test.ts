@@ -1,5 +1,5 @@
 // ============================================================================
-// EIDETIK MVP - TESTS DE INTEGRACIÓN PARA CHAT CON CONTEXTO
+// TRINOA MVP - TESTS DE INTEGRACIÓN PARA CHAT CON CONTEXTO
 // ============================================================================
 
 /**

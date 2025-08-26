@@ -101,7 +101,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
             <p>• Tu suscripción se renueva automáticamente cada mes</p>
             <p>• Puedes cancelar en cualquier momento desde tu cuenta</p>
             <p>• Recibirás un recibo por email en breve</p>
-            <p>• ¿Necesitas ayuda? Contáctanos en support@eidetik.com</p>
+            <p>• ¿Necesitas ayuda? Contáctanos en support@trinoa.es</p>
           </div>
         </div>
 

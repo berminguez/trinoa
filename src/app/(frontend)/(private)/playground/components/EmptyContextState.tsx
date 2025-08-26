@@ -48,7 +48,7 @@ export default function EmptyContextState({
       icon: IconAlertCircle,
       title: 'Sin contenido disponible',
       description:
-        'No tienes proyectos ni videos disponibles. Crea un proyecto y sube contenido para usar todas las funcionalidades de Eidetik.',
+        'No tienes proyectos ni videos disponibles. Crea un proyecto y sube contenido para usar todas las funcionalidades de TRINOA.',
       ctaText: 'Comenzar ahora',
       ctaHref: '/projects',
       badge: 'Sin contenido',

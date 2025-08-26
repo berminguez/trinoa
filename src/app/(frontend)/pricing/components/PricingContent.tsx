@@ -30,7 +30,7 @@ export default async function PricingContent() {
       <div className='text-center mb-12'>
         <h1 className='text-4xl font-bold mb-4'>Elige tu plan perfecto</h1>
         <p className='text-lg text-muted-foreground max-w-2xl mx-auto'>
-          Desbloquea todo el potencial de Eidetik con nuestros planes diseñados para cada necesidad
+          Desbloquea todo el potencial de TRINOA con nuestros planes diseñados para cada necesidad
         </p>
       </div>
 

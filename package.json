@@ -1,7 +1,7 @@
 {
-  "name": "eidetik",
+  "name": "trinoa",
   "version": "1.0.0",
-  "description": "Eidetik is a platform for creating and managing AI-powered content.",
+  "description": "Trinoa es una plataforma de IA para procesar facturas y recibos de gastos energéticos, calculando automáticamente la huella de carbono de las empresas clientes.",
   "license": "MIT",
   "type": "module",
   "scripts": {

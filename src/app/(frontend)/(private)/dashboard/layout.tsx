@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'Dashboard - Eidetik',
-  description: 'Panel de control principal de Eidetik',
+  title: 'Dashboard - TRINOA',
+  description: 'Panel de control principal de TRINOA',
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

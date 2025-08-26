@@ -85,13 +85,7 @@ export function ProjectGridItem({ project }: ProjectGridItemProps) {
   return (
     <Link href={`/projects/${project.id}`}>
       <Card className='hover:shadow-md transition-shadow cursor-pointer'>
-        <CardHeader className='p-0'>
-          {/* Thumbnail placeholder */}
-          <div className='h-48 w-full bg-muted rounded-t-lg flex items-center justify-center'>
-            <IconFolder className='h-12 w-12 text-muted-foreground' />
-          </div>
-        </CardHeader>
-        <CardContent className='p-4'>
+        <CardContent className='px-6 py-4'>
           <h3 className='font-semibold text-lg mb-2 truncate'>{project.title}</h3>
           <div className='flex justify-between items-center text-sm text-muted-foreground'>
             <div className='flex items-center gap-1'>

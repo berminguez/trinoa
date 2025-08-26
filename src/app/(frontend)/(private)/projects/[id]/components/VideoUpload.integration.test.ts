@@ -1,5 +1,5 @@
 // ============================================================================
-// EIDETIK MVP - TESTS DE INTEGRACIÓN PARA VIDEO UPLOAD
+// TRINOA MVP - TESTS DE INTEGRACIÓN PARA VIDEO UPLOAD
 // ============================================================================
 
 /**

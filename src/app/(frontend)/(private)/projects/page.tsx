@@ -5,7 +5,7 @@ import { ProjectsContent } from './components/ProjectsContent'
 import { ProjectsSkeleton } from './components/ProjectsSkeleton'
 
 export const metadata: Metadata = {
-  title: 'Projects - Eidetik Admin',
+  title: 'Projects - TRINOA Admin',
   description: 'Gestiona tus proyectos de video y recursos multimedia',
 }
 

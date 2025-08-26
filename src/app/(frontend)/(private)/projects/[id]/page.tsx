@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: ProjectDetailPageProps): Prom
   const { id } = await params
 
   return {
-    title: `Project Detail - Eidetik Admin`,
+    title: `Project Detail - TRINOA Admin`,
     description: `Gestiona los videos y recursos del proyecto`,
   }
 }

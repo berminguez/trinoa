@@ -4,7 +4,7 @@ import PlaygroundContent from './components/PlaygroundContent'
 import PlaygroundSkeleton from './components/PlaygroundSkeleton'
 
 export const metadata = {
-  title: 'Playground - Eidetik',
+  title: 'Playground - TRINOA',
   description: 'Chat inteligente con IA y sistema RAG',
 }
 

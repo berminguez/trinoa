@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 
 // ============================================================================
-// EIDETIK MVP - QUEUE MONITORING SCRIPT
+// TRINOA MVP - QUEUE MONITORING SCRIPT
 // ============================================================================
 
 import 'dotenv/config'

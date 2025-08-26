@@ -64,20 +64,6 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
 
       {/* Grid de proyectos */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-        {/* Tarjeta "Crear proyecto" */}
-        <CreateProjectModal
-          trigger={
-            <Card className='border-dashed border-2 border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors cursor-pointer'>
-              <CardHeader className='flex items-center justify-center py-8'>
-                <div className='h-auto flex-col gap-2 text-muted-foreground flex items-center'>
-                  <IconPlus className='h-8 w-8' />
-                  <span className='text-sm font-medium'>Crear proyecto</span>
-                </div>
-              </CardHeader>
-            </Card>
-          }
-        />
-
         {/* Tarjetas de proyectos */}
         {sortedProjects.map((project) => (
           <ProjectGridItem key={project.id} project={project} />

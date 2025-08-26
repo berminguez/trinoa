@@ -87,6 +87,18 @@ export default async function PageContent({
       </div>
 
       {/* Selector de cliente (solo admin) */}
+
+      {user.role === 'admin' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Cliente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AdminClientSelector clients={clients} value={clientId} />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Totales */}
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         <Card>
@@ -135,17 +147,6 @@ export default async function PageContent({
           </CardContent>
         </Card>
       </div>
-
-      {user.role === 'admin' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Cliente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <AdminClientSelector clients={clients} value={clientId} />
-          </CardContent>
-        </Card>
-      )}
 
       {/* Filtros */}
       <Card>

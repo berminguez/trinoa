@@ -1,7 +1,7 @@
 #!/usr/bin/env npx tsx
 
 // ============================================================================
-// EIDETIK MVP - CONFIDENCE FIELD MIGRATION SCRIPT
+// TRINOA MVP - CONFIDENCE FIELD MIGRATION SCRIPT
 // ============================================================================
 
 import 'dotenv/config'
@@ -42,10 +42,10 @@ class ConfidenceMigration {
 
   async run(): Promise<void> {
     console.log('🔄 Starting Confidence Field Migration')
-    console.log('=' .repeat(80))
+    console.log('='.repeat(80))
     console.log('📋 Mode:', this.dryRun ? 'DRY RUN (no changes will be made)' : 'LIVE MIGRATION')
     console.log('⏰ Started at:', new Date().toISOString())
-    console.log('=' .repeat(80))
+    console.log('='.repeat(80))
 
     try {
       const payload = await getPayload({ config })
@@ -58,7 +58,7 @@ class ConfidenceMigration {
       // Obtener todos los recursos
       console.log('🔍 Fetching all resources...')
       const allResources = await this.getAllResources(payload)
-      
+
       this.stats.total = allResources.length
       console.log(`📦 Found ${this.stats.total} resources to process`)
 
@@ -69,7 +69,7 @@ class ConfidenceMigration {
 
       // Procesar cada recurso
       console.log('\n🚀 Starting resource processing...')
-      console.log('-' .repeat(60))
+      console.log('-'.repeat(60))
 
       for (let i = 0; i < allResources.length; i++) {
         const resource = allResources[i]
@@ -78,7 +78,6 @@ class ConfidenceMigration {
 
       // Mostrar resumen final
       this.showFinalSummary()
-
     } catch (error) {
       console.error('❌ Migration failed:', error)
       process.exit(1)
@@ -117,7 +116,7 @@ class ConfidenceMigration {
     payload: any,
     resource: any,
     threshold: number,
-    index: number
+    index: number,
   ): Promise<void> {
     this.stats.processed++
 
@@ -142,7 +141,7 @@ class ConfidenceMigration {
 
         if (index % 10 === 0 || this.stats.total < 20) {
           console.log(
-            `[${index}/${this.stats.total}] ⏭️  ${resourceId} (${title.substring(0, 30)}) - Skipped (already ${currentConfidence})`
+            `[${index}/${this.stats.total}] ⏭️  ${resourceId} (${title.substring(0, 30)}) - Skipped (already ${currentConfidence})`,
           )
         }
         return
@@ -170,13 +169,12 @@ class ConfidenceMigration {
       })
 
       console.log(
-        `[${index}/${this.stats.total}] ✅ ${resourceId} (${title.substring(0, 30)}) - ${currentConfidence} → ${newConfidence}${this.dryRun ? ' (DRY RUN)' : ''}`
+        `[${index}/${this.stats.total}] ✅ ${resourceId} (${title.substring(0, 30)}) - ${currentConfidence} → ${newConfidence}${this.dryRun ? ' (DRY RUN)' : ''}`,
       )
-
     } catch (error) {
       this.stats.errors++
       const errorMessage = error instanceof Error ? error.message : String(error)
-      
+
       this.stats.results.push({
         id: resource.id,
         title: resource.title || 'Untitled',
@@ -184,22 +182,22 @@ class ConfidenceMigration {
         error: errorMessage,
       })
 
-      console.error(
-        `[${index}/${this.stats.total}] ❌ ${resource.id} - Error: ${errorMessage}`
-      )
+      console.error(`[${index}/${this.stats.total}] ❌ ${resource.id} - Error: ${errorMessage}`)
     }
   }
 
   private showFinalSummary(): void {
-    console.log('\n' + '=' .repeat(80))
+    console.log('\n' + '='.repeat(80))
     console.log('📊 MIGRATION SUMMARY')
-    console.log('=' .repeat(80))
+    console.log('='.repeat(80))
     console.log(`📦 Total resources: ${this.stats.total}`)
     console.log(`🔄 Processed: ${this.stats.processed}`)
     console.log(`✅ Updated: ${this.stats.updated}`)
     console.log(`⏭️  Skipped: ${this.stats.skipped}`)
     console.log(`❌ Errors: ${this.stats.errors}`)
-    console.log(`🎯 Success rate: ${this.stats.total > 0 ? ((this.stats.updated + this.stats.skipped) / this.stats.total * 100).toFixed(1) : 0}%`)
+    console.log(
+      `🎯 Success rate: ${this.stats.total > 0 ? (((this.stats.updated + this.stats.skipped) / this.stats.total) * 100).toFixed(1) : 0}%`,
+    )
     console.log(`⏰ Completed at: ${new Date().toISOString()}`)
 
     if (this.dryRun) {
@@ -215,13 +213,13 @@ class ConfidenceMigration {
       this.showErrors()
     }
 
-    console.log('=' .repeat(80))
+    console.log('='.repeat(80))
   }
 
   private showConfidenceDistribution(): void {
     const distribution: Record<string, number> = {}
-    
-    this.stats.results.forEach(result => {
+
+    this.stats.results.forEach((result) => {
       if (result.status === 'updated' || result.status === 'skipped') {
         const confidence = result.newConfidence || result.oldConfidence || 'unknown'
         distribution[confidence] = (distribution[confidence] || 0) + 1
@@ -240,8 +238,8 @@ class ConfidenceMigration {
   private showErrors(): void {
     console.log('\n❌ ERRORS ENCOUNTERED:')
     this.stats.results
-      .filter(r => r.status === 'error')
-      .forEach(result => {
+      .filter((r) => r.status === 'error')
+      .forEach((result) => {
         console.log(`   ${result.id} (${result.title}): ${result.error}`)
       })
   }

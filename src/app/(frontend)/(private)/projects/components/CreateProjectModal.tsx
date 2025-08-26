@@ -149,7 +149,7 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
         {trigger || (
           <Button className='gap-2'>
             <IconPlus className='h-4 w-4' />
-            New Project
+            Nuevo proyecto
           </Button>
         )}
       </DialogTrigger>
@@ -158,11 +158,9 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <IconPlus className='h-5 w-5' />
-            Create New Project
+            Crear nuevo proyecto
           </DialogTitle>
-          <DialogDescription>
-            Create a new project to organize your videos and resources.
-          </DialogDescription>
+          <DialogDescription>Crea un nuevo proyecto para organizar tus recursos.</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='space-y-4'>

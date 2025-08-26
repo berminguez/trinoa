@@ -1,5 +1,5 @@
 // ============================================================================
-// EIDETIK MVP - JOBS ACTIONS
+// TRINOA MVP - JOBS ACTIONS
 // ============================================================================
 
 // TODO: Implementar server actions para jobs en sub-tareas 3.4-3.7

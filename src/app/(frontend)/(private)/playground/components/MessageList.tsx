@@ -412,10 +412,10 @@ export default function MessageList({
               </button>
 
               <button
-                onClick={() => onSuggestedPrompt('Explícame qué es Eidetik y sus capacidades')}
+                onClick={() => onSuggestedPrompt('Explícame qué es TRINOA y sus capacidades')}
                 className='p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200'
               >
-                <div className='font-medium text-gray-900 mb-1'>Sobre Eidetik</div>
+                <div className='font-medium text-gray-900 mb-1'>Sobre TRINOA</div>
                 <div className='text-sm text-gray-600'>Conocer más sobre esta plataforma</div>
               </button>
 

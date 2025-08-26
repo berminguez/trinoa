@@ -1,5 +1,5 @@
 // ============================================================================
-// EIDETIK MVP - TESTS PARA PROJECTS GRID COMPONENT
+// TRINOA MVP - TESTS PARA PROJECTS GRID COMPONENT
 // ============================================================================
 
 /**
