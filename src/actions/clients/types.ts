@@ -70,3 +70,35 @@ export interface ClientProjectsFilters {
   dateFrom?: string
   dateTo?: string
 }
+
+/**
+ * Datos para actualizar un cliente
+ */
+export interface UpdateClientData {
+  name?: string
+  empresa?: string
+  email?: string
+  role?: 'user' | 'admin' | 'api'
+}
+
+/**
+ * Resultado de actualizar un cliente
+ */
+export interface UpdateClientResult {
+  success: boolean
+  data?: User
+  message: string
+}
+
+/**
+ * Resultado de eliminar un cliente
+ */
+export interface DeleteClientResult {
+  success: boolean
+  data?: {
+    deletedUser: User
+    deletedProjectsCount: number
+    deletedResourcesCount: number
+  }
+  message: string
+}
