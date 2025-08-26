@@ -14,6 +14,7 @@ import {
   IconCamera,
   IconFileAi,
   IconFileDescription,
+  IconUser,
 } from '@tabler/icons-react'
 import * as React from 'react'
 // import { useEffect, useState } from 'react'
@@ -21,7 +22,7 @@ import * as React from 'react'
 import { Logo } from '@/components/logo'
 // import { NavDocuments } from '@/components/nav-documents'
 import { NavMain } from '@/components/nav-main'
-import { NavSecondary } from '@/components/nav-secondary'
+// import { NavSecondary } from '@/components/nav-secondary'
 import { NavUser } from '@/components/nav-user'
 import { useUserRole } from '@/hooks/useUserRole'
 import {
@@ -50,6 +51,11 @@ const baseNavigation = [
     title: 'Analítica',
     url: '/analytics',
     icon: IconChartBar,
+  },
+  {
+    title: 'Mi Cuenta',
+    url: '/account',
+    icon: IconUser,
   },
 ]
 
@@ -185,7 +191,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* Solo renderizar navegación cuando no esté cargando */}
         {!isLoading && <NavMain items={navigationItems} />}
         {/*   <NavDocuments items={data.documents} /> */}
-        <NavSecondary items={data.navSecondary} className='mt-auto' />
+        {/*   <NavSecondary items={data.navSecondary} className='mt-auto' /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
