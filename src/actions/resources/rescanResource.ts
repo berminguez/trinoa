@@ -174,7 +174,46 @@ export async function rescanResourceAction(
     clearTimeout(timer)
 
     const ok = res.ok
-    // Añadir log según resultado
+    const status = res.status
+
+    // Leer respuesta y extraer executionId si existe
+    let responseText = ''
+    let executionId: string | null = null
+    let executionUrl: string | null = null
+
+    try {
+      responseText = await res.text()
+      console.log('[RESCAN] Webhook response text:', responseText)
+
+      // Intentar extraer executionId de la respuesta de n8n
+      if (ok && responseText) {
+        try {
+          const responseJson = JSON.parse(responseText)
+
+          executionId =
+            responseJson?.executionId ||
+            responseJson?.data?.executionId ||
+            responseJson?.execution?.id ||
+            null
+
+          executionUrl =
+            responseJson?.executionUrl ||
+            responseJson?.data?.executionUrl ||
+            responseJson?.execution?.url ||
+            null
+
+          if (executionId) {
+            console.log(`[RESCAN] Extracted executionId from n8n response: ${executionId}`)
+          }
+        } catch (parseError) {
+          console.warn('[RESCAN] Could not parse webhook response as JSON:', parseError)
+        }
+      }
+    } catch (responseError) {
+      console.warn('[RESCAN] Error reading response:', responseError)
+    }
+
+    // Añadir log según resultado y actualizar executionId si existe
     try {
       const current = (await payload.findByID({
         collection: 'resources',
@@ -185,13 +224,32 @@ export async function rescanResourceAction(
         step: 'rescan-webhook',
         status: ok ? ('success' as const) : ('error' as const),
         at: new Date().toISOString(),
-        details: ok ? 'Webhook re-scan enviado' : 'Error al enviar webhook re-scan',
-        data: { status: res.status },
+        details: ok
+          ? `Webhook re-scan enviado correctamente (status ${status})${executionId ? ` - ExecutionId: ${executionId}` : ''}`
+          : `Webhook re-scan falló (status ${status})`,
+        data: {
+          status,
+          responsePreview: responseText?.slice(0, 300),
+          executionId: executionId || null,
+          executionUrl: executionUrl || null,
+        },
       }
+
+      // Preparar datos de actualización
+      const updateData: any = {
+        logs: [...currentLogs, newLog],
+      }
+
+      // Si tenemos executionId, añadirlo al recurso
+      if (executionId) {
+        updateData.executionId = executionId
+        console.log(`[RESCAN] Adding executionId ${executionId} to resource ${updated.id}`)
+      }
+
       await payload.update({
         collection: 'resources',
         id: String(updated.id),
-        data: { logs: [...currentLogs, newLog] },
+        data: updateData,
         overrideAccess: true,
       })
     } catch {}
