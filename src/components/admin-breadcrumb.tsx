@@ -2,7 +2,14 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { IconChevronRight, IconUsers, IconFolder, IconFile, IconHome } from '@tabler/icons-react'
+import {
+  IconChevronRight,
+  IconUsers,
+  IconFolder,
+  IconFile,
+  IconHome,
+  IconClipboardList,
+} from '@tabler/icons-react'
 import {
   Breadcrumb,
   BreadcrumbEllipsis,
@@ -19,10 +26,29 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
+// Mapeo de strings a iconos para permitir serialización entre Server/Client Components
+const iconMap = {
+  home: IconHome,
+  users: IconUsers,
+  folder: IconFolder,
+  file: IconFile,
+  'clipboard-list': IconClipboardList,
+} as const
+
+type IconName = keyof typeof iconMap
+
+// Helper para resolver iconos desde strings o componentes
+function resolveIcon(icon: React.ComponentType<any> | IconName): React.ComponentType<any> {
+  if (typeof icon === 'string') {
+    return iconMap[icon] || IconHome
+  }
+  return icon
+}
+
 interface BreadcrumbSegment {
   label: string
   href?: string
-  icon?: React.ComponentType<any>
+  icon?: React.ComponentType<any> | IconName
   isActive?: boolean
 }
 
@@ -245,7 +271,7 @@ function CustomBreadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
                   <Link href={segment.href} className='flex items-center gap-2'>
                     {segment.icon &&
                       (() => {
-                        const IconComponent = segment.icon
+                        const IconComponent = resolveIcon(segment.icon)
                         return <IconComponent className='h-4 w-4' />
                       })()}
                     {segment.label}
@@ -255,7 +281,7 @@ function CustomBreadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
                 <BreadcrumbPage className='flex items-center gap-2'>
                   {segment.icon &&
                     (() => {
-                      const IconComponent = segment.icon
+                      const IconComponent = resolveIcon(segment.icon)
                       return <IconComponent className='h-4 w-4' />
                     })()}
                   {segment.label}
@@ -278,6 +304,15 @@ export const AdminBreadcrumbs = {
       customSegments={[
         { label: 'Dashboard', href: '/dashboard', icon: IconHome },
         { label: 'Clientes', icon: IconUsers, isActive: true },
+      ]}
+    />
+  ),
+
+  pendingTasks: () => (
+    <AdminBreadcrumb
+      customSegments={[
+        { label: 'Dashboard', href: '/dashboard', icon: IconHome },
+        { label: 'Tareas Pendientes', icon: IconClipboardList, isActive: true },
       ]}
     />
   ),

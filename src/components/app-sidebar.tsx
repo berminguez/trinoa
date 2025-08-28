@@ -15,6 +15,7 @@ import {
   IconFileAi,
   IconFileDescription,
   IconUser,
+  IconClipboardList,
 } from '@tabler/icons-react'
 import * as React from 'react'
 // import { useEffect, useState } from 'react'
@@ -65,6 +66,11 @@ const adminNavigation = [
     title: 'Clientes',
     url: '/clients',
     icon: IconUserCog,
+  },
+  {
+    title: 'Tareas Pendientes',
+    url: '/pending-tasks',
+    icon: IconClipboardList,
   },
 ]
 
