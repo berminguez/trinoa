@@ -4,8 +4,8 @@ import './styles.css'
 import { ActiveThemeProvider } from '@/components/active-theme'
 
 export const metadata = {
-  description: 'A blank template using Payload in a Next.js app.',
-  title: 'Payload Blank Template',
+  description: 'Trinoa',
+  title: 'Trinoa',
 }
 
 export default async function RootLayout(props: { children: React.ReactNode }) {

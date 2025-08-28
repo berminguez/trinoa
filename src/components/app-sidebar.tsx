@@ -67,11 +67,11 @@ const adminNavigation = [
     url: '/clients',
     icon: IconUserCog,
   },
-  {
+  /*  {
     title: 'Tareas Pendientes',
     url: '/pending-tasks',
     icon: IconClipboardList,
-  },
+  }, */
 ]
 
 const data = {

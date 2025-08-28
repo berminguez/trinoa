@@ -199,7 +199,7 @@ function CustomBreadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
               <Link href={segments[0].href} className='flex items-center gap-2'>
                 {segments[0].icon &&
                   (() => {
-                    const IconComponent = segments[0].icon
+                    const IconComponent = resolveIcon(segments[0].icon)
                     return <IconComponent className='h-4 w-4' />
                   })()}
                 {segments[0].label}
@@ -209,7 +209,7 @@ function CustomBreadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
             <BreadcrumbPage className='flex items-center gap-2'>
               {segments[0]?.icon &&
                 (() => {
-                  const IconComponent = segments[0].icon
+                  const IconComponent = resolveIcon(segments[0].icon)
                   return <IconComponent className='h-4 w-4' />
                 })()}
               {segments[0]?.label}
@@ -236,7 +236,7 @@ function CustomBreadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
                         <Link href={segment.href} className='flex items-center gap-2'>
                           {segment.icon &&
                             (() => {
-                              const IconComponent = segment.icon
+                              const IconComponent = resolveIcon(segment.icon)
                               return <IconComponent className='h-4 w-4' />
                             })()}
                           {segment.label}
@@ -245,7 +245,7 @@ function CustomBreadcrumb({ segments }: { segments: BreadcrumbSegment[] }) {
                         <span className='flex items-center gap-2'>
                           {segment.icon &&
                             (() => {
-                              const IconComponent = segment.icon
+                              const IconComponent = resolveIcon(segment.icon)
                               return <IconComponent className='h-4 w-4' />
                             })()}
                           {segment.label}
