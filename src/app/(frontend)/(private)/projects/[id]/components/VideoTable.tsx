@@ -757,7 +757,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             const confidence =
               (row.getValue('confidence') as 'empty' | 'needs_revision' | 'trusted' | 'verified') ||
               'empty'
-            const documentoErroneo = row.original.documentoErroneo
+            const documentoErroneo = Boolean(row.original.documentoErroneo)
             return (
               <ConfidenceBadge
                 confidence={documentoErroneo ? 'wrong_document' : confidence}
@@ -770,7 +770,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           enableGlobalFilter: true,
           filterFn: (row, columnId, filterValue) => {
             const confidence = row.getValue(columnId) as string
-            const documentoErroneo = row.original.documentoErroneo
+            const documentoErroneo = Boolean(row.original.documentoErroneo)
             if (!filterValue || filterValue === 'all') return true
             if (filterValue === 'wrong_document') return documentoErroneo
             return !documentoErroneo && confidence === filterValue
