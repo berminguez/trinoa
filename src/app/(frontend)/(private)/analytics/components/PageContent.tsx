@@ -30,6 +30,8 @@ export default async function PageContent({
 
   const dateFrom = searchParams?.from || ''
   const dateTo = searchParams?.to || ''
+  const invoiceDateFrom = searchParams?.invoiceFrom || ''
+  const invoiceDateTo = searchParams?.invoiceTo || ''
   const tipo = searchParams?.tipo || ''
   const caso = searchParams?.caso || ''
   const clientId = user.role === 'admin' ? searchParams?.clientId || '' : ''
@@ -41,6 +43,8 @@ export default async function PageContent({
   const data = await getAnalytics({
     dateFrom: dateFrom || undefined,
     dateTo: dateTo || undefined,
+    invoiceDateFrom: invoiceDateFrom || undefined,
+    invoiceDateTo: invoiceDateTo || undefined,
     tipo: tipo || undefined,
     caso: caso || undefined,
     clientId: clientId || undefined,
@@ -73,16 +77,26 @@ export default async function PageContent({
       <div className='flex items-center justify-between'>
         <h1 className='text-xl font-semibold'>Analíticas</h1>
         <div className='flex gap-2'>
-          <Link
-            href={`/api/analytics/export?from=${encodeURIComponent(dateFrom)}&to=${encodeURIComponent(dateTo)}&tipo=${encodeURIComponent(tipo)}&caso=${encodeURIComponent(caso)}&clientId=${encodeURIComponent(clientId)}&projectId=${encodeURIComponent(projectId)}&provider=${encodeURIComponent(provider)}&format=csv`}
-          >
-            <Button variant='outline'>Descargar CSV</Button>
-          </Link>
-          <Link
-            href={`/api/analytics/export?from=${encodeURIComponent(dateFrom)}&to=${encodeURIComponent(dateTo)}&tipo=${encodeURIComponent(tipo)}&caso=${encodeURIComponent(caso)}&clientId=${encodeURIComponent(clientId)}&projectId=${encodeURIComponent(projectId)}&provider=${encodeURIComponent(provider)}&format=xlsx`}
-          >
-            <Button>Descargar Excel</Button>
-          </Link>
+          <form action='/api/analytics/export' method='POST' className='inline'>
+            <input
+              type='hidden'
+              name='documentIds'
+              value={JSON.stringify(data.documents.map((d) => d.id))}
+            />
+            <input type='hidden' name='format' value='csv' />
+            <Button type='submit' variant='outline'>
+              Descargar CSV
+            </Button>
+          </form>
+          <form action='/api/analytics/export' method='POST' className='inline'>
+            <input
+              type='hidden'
+              name='documentIds'
+              value={JSON.stringify(data.documents.map((d) => d.id))}
+            />
+            <input type='hidden' name='format' value='xlsx' />
+            <Button type='submit'>Descargar Excel</Button>
+          </form>
         </div>
       </div>
 
@@ -157,6 +171,8 @@ export default async function PageContent({
           <Filters
             dateFrom={dateFrom}
             dateTo={dateTo}
+            invoiceDateFrom={invoiceDateFrom}
+            invoiceDateTo={invoiceDateTo}
             tipo={tipo}
             caso={caso}
             tiposOptions={tiposOptions}
@@ -339,6 +355,7 @@ export default async function PageContent({
                     needs_revision: 1,
                     trusted: 2,
                     verified: 3,
+                    wrong_document: 4,
                   }
                   docs.sort((a: any, b: any) => {
                     if (!key) return 0
@@ -377,13 +394,16 @@ export default async function PageContent({
                     <TableCell>
                       {new Date(d.createdAt as any).toLocaleDateString('es-ES')}
                     </TableCell>
+                    <TableCell>{d.invoiceDate || ''}</TableCell>
                     <TableCell>
-                      {d.invoiceDate
-                        ? new Date(d.invoiceDate as any).toLocaleDateString('es-ES')
-                        : ''}
-                    </TableCell>
-                    <TableCell>
-                      <ConfidenceBadgeSimple confidence={(d as any).confidence as any} size='sm' />
+                      <ConfidenceBadgeSimple
+                        confidence={
+                          (d as any).documentoErroneo
+                            ? 'wrong_document'
+                            : ((d as any).confidence as any)
+                        }
+                        size='sm'
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
