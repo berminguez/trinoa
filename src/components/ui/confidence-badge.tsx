@@ -5,6 +5,7 @@ import {
   IconAlertTriangle,
   IconShieldCheck,
   IconShieldCheckFilled,
+  IconX,
 } from '@tabler/icons-react'
 
 import { cn } from '@/lib/utils'
@@ -24,6 +25,8 @@ const confidenceBadgeVariants = cva(
           'bg-green-100 text-green-800 border-green-200 hover:bg-green-50 focus-visible:ring-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800',
         verified:
           'bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-50 focus-visible:ring-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
+        wrong_document:
+          'bg-red-100 text-red-800 border-red-200 hover:bg-red-50 focus-visible:ring-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
       },
       size: {
         sm: 'text-xs px-2 py-1 gap-1',
@@ -59,6 +62,11 @@ const confidenceConfig = {
     icon: IconShieldCheckFilled,
     label: 'Verificado',
     description: 'El documento ha sido revisado y corregido manualmente por un humano.',
+  },
+  wrong_document: {
+    icon: IconX,
+    label: 'Documento erróneo',
+    description: 'El documento ha sido marcado manualmente como erróneo y requiere atención.',
   },
 } as const
 
@@ -128,6 +136,8 @@ function ConfidenceBadge({
       'bg-green-50 text-green-900 border border-green-200 dark:bg-green-950 dark:text-green-100 dark:border-green-900',
     verified:
       'bg-blue-50 text-blue-900 border border-blue-200 dark:bg-blue-950 dark:text-blue-100 dark:border-blue-900',
+    wrong_document:
+      'bg-red-50 text-red-900 border border-red-200 dark:bg-red-950 dark:text-red-100 dark:border-red-900',
   }
 
   return (

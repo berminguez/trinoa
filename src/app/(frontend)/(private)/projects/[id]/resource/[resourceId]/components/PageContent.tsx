@@ -156,6 +156,8 @@ export default async function PageContent({ params }: PageContentProps) {
                       : undefined) || undefined,
                 }}
                 initialStatus={viewerProps.status as any}
+                initialConfidence={resourceRes.confidence}
+                initialDocumentoErroneo={resourceRes.documentoErroneo}
               />
             </div>
           }

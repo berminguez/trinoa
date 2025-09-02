@@ -413,6 +413,17 @@ export const Resources: CollectionConfig = {
         },
       ],
     },
+    // Campo manual para marcar documento como erróneo
+    {
+      name: 'documentoErroneo',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description:
+          'Marcar manualmente si el documento es erróneo. Este estado prevalece sobre otros estados de confianza.',
+        position: 'sidebar',
+      },
+    },
     // Editor visual de fields de analyzeResult
     {
       name: 'analyzeFieldsEditor',

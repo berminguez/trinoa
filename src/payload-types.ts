@@ -441,6 +441,10 @@ export interface Resource {
    */
   confidence?: ('empty' | 'needs_revision' | 'trusted' | 'verified') | null;
   /**
+   * Marcar manualmente si el documento es erróneo. Este estado prevalece sobre otros estados de confianza.
+   */
+  documentoErroneo?: boolean | null;
+  /**
    * Metadatos del procesamiento
    */
   processingMetadata?: {
@@ -1143,6 +1147,7 @@ export interface ResourcesSelect<T extends boolean = true> {
       };
   analyzeResult?: T;
   confidence?: T;
+  documentoErroneo?: T;
   processingMetadata?:
     | T
     | {

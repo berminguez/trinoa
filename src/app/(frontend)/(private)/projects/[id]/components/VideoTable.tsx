@@ -757,9 +757,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             const confidence =
               (row.getValue('confidence') as 'empty' | 'needs_revision' | 'trusted' | 'verified') ||
               'empty'
+            const documentoErroneo = row.original.documentoErroneo
             return (
               <ConfidenceBadge
-                confidence={confidence}
+                confidence={documentoErroneo ? 'wrong_document' : confidence}
                 showIcon={true}
                 showTooltip={true}
                 className='min-w-fit'
@@ -769,8 +770,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           enableGlobalFilter: true,
           filterFn: (row, columnId, filterValue) => {
             const confidence = row.getValue(columnId) as string
+            const documentoErroneo = row.original.documentoErroneo
             if (!filterValue || filterValue === 'all') return true
-            return confidence === filterValue
+            if (filterValue === 'wrong_document') return documentoErroneo
+            return !documentoErroneo && confidence === filterValue
           },
         },
         // Columna de fecha de subida (a la derecha de Confianza)
@@ -1184,6 +1187,15 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                     <SelectItem value='verified'>
                       <div className='flex items-center gap-2'>
                         <ConfidenceBadge confidence='verified' showTooltip={false} size='sm' />
+                      </div>
+                    </SelectItem>
+                    <SelectItem value='wrong_document'>
+                      <div className='flex items-center gap-2'>
+                        <ConfidenceBadge
+                          confidence='wrong_document'
+                          showTooltip={false}
+                          size='sm'
+                        />
                       </div>
                     </SelectItem>
                   </SelectContent>

@@ -101,6 +101,11 @@ export async function updateResourceAction(
       ;(updateData as any).analyzeResult = updates.analyzeResult
     }
 
+    // Campo de documento erróneo
+    if (typeof updates?.documentoErroneo === 'boolean') {
+      updateData.documentoErroneo = updates.documentoErroneo
+    }
+
     // Campos dinámicos del caso activo
     const activeCase = (updateData.caso ?? resource.caso) as Resource['caso']
     if (activeCase && typeof activeCase === 'string') {

@@ -29,6 +29,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { DocumentStatusControl } from '@/components/ui/document-status-control'
 
 export interface ResourceFormInitialValues {
   nombre_cliente: string
@@ -44,6 +45,8 @@ interface ResourceFormProps {
   resourceId: string
   initialValues: ResourceFormInitialValues
   initialStatus?: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'needs_review'
+  initialConfidence?: 'empty' | 'needs_revision' | 'trusted' | 'verified' | null
+  initialDocumentoErroneo?: boolean | null
 }
 
 export default function ResourceForm({
@@ -51,15 +54,37 @@ export default function ResourceForm({
   resourceId,
   initialValues,
   initialStatus,
+  initialConfidence,
+  initialDocumentoErroneo,
 }: ResourceFormProps) {
   const isProcessing = useVisualizadorStore((s) => s.isProcessing)
   const setIsProcessing = useVisualizadorStore((s) => s.setIsProcessing)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [documentoErroneo, setDocumentoErroneo] = useState(Boolean(initialDocumentoErroneo))
 
   // Establecer estado inicial
   useEffect(() => {
     if (initialStatus === 'processing') setIsProcessing(true)
   }, [initialStatus, setIsProcessing])
+
+  // Función para manejar el cambio del estado de documento erróneo
+  const handleDocumentoErroneoChange = async (checked: boolean) => {
+    try {
+      const result = await updateResourceAction(projectId, resourceId, {
+        documentoErroneo: checked,
+      })
+      if (result.success) {
+        setDocumentoErroneo(checked)
+        toast.success(
+          checked ? 'Documento marcado como erróneo' : 'Marca de documento erróneo removida',
+        )
+      } else {
+        toast.error(result.error || 'No se pudo actualizar el estado del documento')
+      }
+    } catch (error) {
+      toast.error('Error al actualizar el estado del documento')
+    }
+  }
 
   return (
     <Formik<ResourceFormInitialValues>
@@ -200,6 +225,18 @@ export default function ResourceForm({
             </div>
 
             {/* Sin campos antiguos; solo caso y tipo */}
+
+            {/* Control de estado del documento */}
+            <div className='border-t pt-4'>
+              <DocumentStatusControl
+                confidence={initialConfidence}
+                documentoErroneo={documentoErroneo}
+                onDocumentoErroneoChange={handleDocumentoErroneoChange}
+                showConfidenceBadge={false}
+                showTooltip={true}
+                disabled={isProcessing}
+              />
+            </div>
 
             {/* Editor simple de analyzeResult.fields */}
             <AnalyzeFieldsPanel
