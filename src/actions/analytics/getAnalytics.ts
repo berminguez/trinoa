@@ -35,6 +35,7 @@ export interface AnalyticsResult {
       documentoErroneo?: boolean | null
     }
   >
+  allDocumentIds: string[] // IDs de todos los documentos filtrados (sin paginar)
   projects: Array<{ id: string; title: string }>
   tipoOptions: string[]
   casoOptions: string[]
@@ -305,6 +306,7 @@ export async function getAnalytics(filters: AnalyticsFilters = {}): Promise<Anal
     totalsByCaso,
     totalsByUnit,
     documents: paginated,
+    allDocumentIds: filteredDocuments.map((d) => d.id), // Todos los IDs filtrados para exportación
     projects,
     tipoOptions: Array.from(tipoSet),
     casoOptions: Array.from(casoSet),

@@ -78,22 +78,14 @@ export default async function PageContent({
         <h1 className='text-xl font-semibold'>Analíticas</h1>
         <div className='flex gap-2'>
           <form action='/api/analytics/export' method='POST' className='inline'>
-            <input
-              type='hidden'
-              name='documentIds'
-              value={JSON.stringify(data.documents.map((d) => d.id))}
-            />
+            <input type='hidden' name='documentIds' value={JSON.stringify(data.allDocumentIds)} />
             <input type='hidden' name='format' value='csv' />
             <Button type='submit' variant='outline'>
               Descargar CSV
             </Button>
           </form>
           <form action='/api/analytics/export' method='POST' className='inline'>
-            <input
-              type='hidden'
-              name='documentIds'
-              value={JSON.stringify(data.documents.map((d) => d.id))}
-            />
+            <input type='hidden' name='documentIds' value={JSON.stringify(data.allDocumentIds)} />
             <input type='hidden' name='format' value='xlsx' />
             <Button type='submit'>Descargar Excel</Button>
           </form>

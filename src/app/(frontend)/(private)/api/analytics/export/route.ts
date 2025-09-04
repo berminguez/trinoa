@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/actions/auth/getUser'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { parseAndFormatDate } from '@/utils/dateParser'
+import { getSafeMediaUrl } from '@/lib/utils/fileUtils'
 
 // GET para compatibilidad legacy (enlaces antiguos)
 export async function GET(req: NextRequest) {
@@ -40,12 +41,12 @@ export async function POST(req: NextRequest) {
 async function handleOptimizedExport(documentIds: string[], format: string, _user: any) {
   const payload = await getPayload({ config })
 
-  // Obtener solo documentos específicos
+  // Obtener solo documentos específicos con relación a media
   const resourcesRes = await payload.find({
     collection: 'resources' as any,
     where: { id: { in: documentIds } },
     limit: 1000,
-    depth: 0,
+    depth: 1, // Incluir relación con media
     sort: '-createdAt',
   })
 
@@ -118,7 +119,7 @@ async function handleLegacyExport(req: NextRequest, user: any) {
     collection: 'resources' as any,
     where,
     limit: 1000,
-    depth: 0,
+    depth: 1, // Incluir relación con media
     sort: '-createdAt',
   })
 
@@ -172,9 +173,39 @@ async function handleLegacyExport(req: NextRequest, user: any) {
 async function generateExport(docs: any[], projectIdToTitle: Map<string, string>, format: string) {
   const payload = await getPayload({ config })
 
+  // Función para generar URL del documento
+  const generateDocumentUrl = async (resource: any): Promise<string> => {
+    if (!resource?.file) return ''
+
+    try {
+      // Si el file es un objeto (depth=1), usar directamente
+      const media = typeof resource.file === 'object' ? resource.file : null
+      if (!media) return ''
+
+      // Generar URL segura usando el helper de fileUtils
+      const documentUrl = await getSafeMediaUrl(media)
+      if (!documentUrl) return ''
+
+      // Si la URL es relativa, convertirla a absoluta
+      if (documentUrl.startsWith('/')) {
+        const baseUrl =
+          process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+          process.env.NEXT_PUBLIC_SERVER_URL ||
+          'https://trinoa.com'
+        return `${baseUrl}${documentUrl}`
+      }
+
+      return documentUrl
+    } catch (error) {
+      console.warn('Error generating document URL:', error)
+      return ''
+    }
+  }
+
   // Campos fijos + campos dinámicos desde analyzeResult.fields
   const fixedHeaders = [
     'Título',
+    'Enlace al Documento',
     'Cliente',
     'Proyecto',
     'Tipo',
@@ -211,6 +242,13 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
   const dynamicFieldKeys = Array.from(fieldSet)
   const dynamicFieldHeaders = dynamicFieldKeys.map((k) => translations[k] || k)
   const headers = [...fixedHeaders, ...dynamicFieldHeaders]
+
+  // Pre-generar URLs de documentos para todos los recursos
+  const documentUrls = new Map<string, string>()
+  for (const doc of docs) {
+    const url = await generateDocumentUrl(doc)
+    documentUrls.set(doc.id, url)
+  }
 
   // Función auxiliar para detectar si un valor parece una fecha
   const looksLikeDate = (value: string): boolean => {
@@ -268,6 +306,7 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
       for (const d of docs) {
         const base = [
           d.title || '',
+          documentUrls.get(d.id) || '',
           d.nombre_cliente || '',
           projectIdToTitle.get(typeof d.project === 'object' ? d.project?.id : String(d.project)) ||
             '',
@@ -283,6 +322,20 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
         aoa.push([...base, ...values])
       }
       const ws = XLSX.utils.aoa_to_sheet(aoa)
+
+      // Agregar hipervínculos para la columna de documentos
+      const documentColumnIndex = fixedHeaders.indexOf('Enlace al Documento')
+      for (let rowIndex = 1; rowIndex < aoa.length; rowIndex++) {
+        // Empezar desde 1 para omitir headers
+        const docUrl = aoa[rowIndex][documentColumnIndex]
+        if (docUrl && typeof docUrl === 'string' && docUrl.trim()) {
+          const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: documentColumnIndex })
+          if (!ws[cellAddress]) ws[cellAddress] = {}
+          ws[cellAddress].l = { Target: docUrl, Tooltip: 'Abrir documento' }
+          ws[cellAddress].v = 'Ver documento'
+        }
+      }
+
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Analytics')
       const buf: Buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
@@ -304,6 +357,7 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
       .map((d) => {
         const base = [
           d.title || '',
+          documentUrls.get(d.id) || '',
           d.nombre_cliente || '',
           projectIdToTitle.get(typeof d.project === 'object' ? d.project?.id : String(d.project)) ||
             '',
@@ -321,14 +375,23 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
           return s
         })
         const row = [...base, ...values]
-        return `<tr>${row
-          .map((cell) =>
-            String(cell ?? '')
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;'),
-          )
-          .map((s) => `<td>${s}</td>`)
-          .join('')}</tr>`
+
+        // Procesar cada celda, convirtiendo URLs en enlaces clickables
+        const processedCells = row.map((cell, index) => {
+          const cellStr = String(cell ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+
+          // Si es la columna de documento y hay URL, crear enlace
+          const documentColumnIndex = fixedHeaders.indexOf('Enlace al Documento')
+          if (index === documentColumnIndex && cellStr.trim()) {
+            return `<a href="${cellStr}" target="_blank" rel="noopener noreferrer">Ver documento</a>`
+          }
+
+          return cellStr
+        })
+
+        return `<tr>${processedCells.map((s) => `<td>${s}</td>`).join('')}</tr>`
       })
       .join('')
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8" /></head><body><table>${thead}${tbody}</table></body></html>`
@@ -344,6 +407,7 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
   const rows = docs.map((d) => {
     const base = [
       d.title || '',
+      documentUrls.get(d.id) || '',
       d.nombre_cliente || '',
       projectIdToTitle.get(typeof d.project === 'object' ? d.project?.id : String(d.project)) || '',
       d.tipo || '',
