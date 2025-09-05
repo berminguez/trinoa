@@ -39,7 +39,73 @@
     "uploadFirst": "Subir primer video",
     "noContent": "Sin contenido disponible",
     "noContentDescription": "No tienes proyectos ni videos disponibles. Crea un proyecto y sube contenido para usar todas las funcionalidades de TRINOA.",
-    "startNow": "Comenzar ahora"
+    "startNow": "Comenzar ahora",
+    "create": {
+      "newProject": "Nuevo proyecto",
+      "createProject": "Crear nuevo proyecto",
+      "description": "Crea un nuevo proyecto para organizar tus recursos.",
+      "title": "Título",
+      "titlePlaceholder": "Ingresa el título del proyecto...",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Ingresa la descripción del proyecto (opcional)...",
+      "characters": "caracteres",
+      "create": "Crear",
+      "cancel": "Cancelar",
+      "creating": "Creando...",
+      "errors": {
+        "titleRequired": "El título es requerido",
+        "titleMinLength": "El título debe tener al menos 3 caracteres",
+        "titleMaxLength": "El título no puede exceder 100 caracteres",
+        "titleExists": "Ya existe un proyecto con este título",
+        "descriptionMaxLength": "La descripción no puede exceder 500 caracteres"
+      },
+      "toast": {
+        "successTitle": "Proyecto creado exitosamente",
+        "successDescription": "El proyecto \"{title}\" se ha creado correctamente.",
+        "serverErrorTitle": "Error al crear proyecto",
+        "unexpectedTitle": "Error inesperado",
+        "unexpectedDescription": "Ocurrió un error inesperado al crear el proyecto."
+      }
+    },
+    "upload": {
+      "dragDrop": "Arrastra documentos o explora archivos",
+      "dropFiles": "Suelta para añadir documentos",
+      "chooseFiles": "Elige archivos o arrástralos aquí",
+      "fileSize": "Tamaño de archivo",
+      "pdfPages": "Páginas PDF",
+      "formats": "Formatos",
+      "validation": "Los archivos se validarán automáticamente después de la selección",
+      "rejectedFiles": "Algunos archivos fueron rechazados:",
+      "exploreFiles": "Explorar Archivos"
+    },
+    "grid": {
+      "searchPlaceholder": "Buscar proyectos...",
+      "sort": {
+        "placeholder": "Ordenar por",
+        "options": {
+          "recent": "Subida reciente",
+          "name": "Nombre",
+          "creation": "Fecha de creación"
+        }
+      },
+      "empty": {
+        "none": {
+          "title": "Aún no hay proyectos",
+          "description": "Crea tu primer proyecto para empezar"
+        },
+        "noResults": {
+          "title": "No se encontraron proyectos",
+          "description": "Ningún proyecto coincide con \"{term}\". Prueba con otro término de búsqueda.",
+          "clear": "Limpiar búsqueda"
+        }
+      }
+    },
+    "item": {
+      "documents": "{count, plural, one {# documento} other {# documentos}}"
+    },
+    "header": {
+      "subtitle": "Gestiona tus proyectos"
+    }
   },
   "documents": {
     "title": "Documentos",
@@ -144,6 +210,44 @@
           "description": "El documento ha sido marcado manualmente como erróneo y requiere atención."
         }
       }
+    },
+    "statusControl": {
+      "toggleWrongDocument": "Marcar como documento erróneo",
+      "wrongDocumentNote": "El estado de confianza se reemplaza por 'Documento erróneo' (manual)",
+      "toggleWrongDocumentNote": "El estado de confianza se reemplaza por 'Documento erróneo' (manual)"
+    },
+    "edit": {
+      "metadataEdit": "Edición de metadatos",
+      "rescan": "Reescanear",
+      "rescanConfirm": "¿Quieres reescanear el documento?",
+      "rescanStartError": "No se pudo lanzar el re-escaneo",
+      "rescanStarted": "Re-escaneo iniciado",
+      "case": "Caso",
+      "selectCase": "Selecciona un caso",
+      "type": "Tipo",
+      "selectType": "Selecciona un tipo",
+      "caseLabels": {
+        "factura_suministros": "Factura de suministros",
+        "desplazamientos": "Desplazamientos",
+        "materias_primas": "Materias primas",
+        "viajes_tipo_2": "Viajes tipo 2",
+        "variado_emails": "Variado (emails)",
+        "consumos_combustible_tipo_1": "Consumos de combustible (tipo 1)",
+        "residuos": "Residuos",
+        "viajes_tipo_1": "Viajes tipo 1",
+        "otros": "Otros"
+      },
+      "typeLabels": {
+        "prebuilt-invoice": "Factura (prebuilt)",
+        "prebuilt-receipt": "Recibo (prebuilt)",
+        "electricidad": "Electricidad",
+        "agua": "Agua",
+        "gas": "Gas",
+        "combustible": "Combustible",
+        "gasolinera": "Gasolinera",
+        "taxi_vtc": "Taxi / VTC",
+        "otros": "Otros"
+      }
     }
   },
   "analytics": {
@@ -186,6 +290,7 @@
     "yes": "Sí",
     "no": "No",
     "ok": "OK",
+    "confirm": "Confirmar",
     "cancel": "Cancelar",
     "close": "Cerrar",
     "save": "Guardar",
@@ -260,74 +365,6 @@
       "unit": "Unidad",
       "confirm": "Confirmar",
       "noFields": "No hay campos disponibles"
-    }
-  },
-  "projects": {
-    "create": {
-      "newProject": "Nuevo proyecto",
-      "createProject": "Crear nuevo proyecto",
-      "description": "Crea un nuevo proyecto para organizar tus recursos.",
-      "title": "Título",
-      "titlePlaceholder": "Ingresa el título del proyecto...",
-      "descriptionLabel": "Descripción",
-      "descriptionPlaceholder": "Ingresa la descripción del proyecto (opcional)...",
-      "characters": "caracteres",
-      "create": "Crear",
-      "cancel": "Cancelar",
-      "creating": "Creando...",
-      "errors": {
-        "titleRequired": "El título es requerido",
-        "titleMinLength": "El título debe tener al menos 3 caracteres",
-        "titleMaxLength": "El título no puede exceder 100 caracteres",
-        "titleExists": "Ya existe un proyecto con este título",
-        "descriptionMaxLength": "La descripción no puede exceder 500 caracteres"
-      },
-      "toast": {
-        "successTitle": "Proyecto creado exitosamente",
-        "successDescription": "El proyecto \"{title}\" se ha creado correctamente.",
-        "serverErrorTitle": "Error al crear proyecto",
-        "unexpectedTitle": "Error inesperado",
-        "unexpectedDescription": "Ocurrió un error inesperado al crear el proyecto."
-      }
-    },
-    "upload": {
-      "dragDrop": "Arrastra documentos o explora archivos",
-      "dropFiles": "Suelta para añadir documentos",
-      "chooseFiles": "Elige archivos o arrástralos aquí",
-      "fileSize": "Tamaño de archivo",
-      "pdfPages": "Páginas PDF",
-      "formats": "Formatos",
-      "validation": "Los archivos se validarán automáticamente después de la selección",
-      "rejectedFiles": "Algunos archivos fueron rechazados:",
-      "exploreFiles": "Explorar Archivos"
-    },
-    "grid": {
-      "searchPlaceholder": "Buscar proyectos...",
-      "sort": {
-        "placeholder": "Ordenar por",
-        "options": {
-          "recent": "Subida reciente",
-          "name": "Nombre",
-          "creation": "Fecha de creación"
-        }
-      },
-      "empty": {
-        "none": {
-          "title": "Aún no hay proyectos",
-          "description": "Crea tu primer proyecto para empezar"
-        },
-        "noResults": {
-          "title": "No se encontraron proyectos",
-          "description": "Ningún proyecto coincide con \"{term}\". Prueba con otro término de búsqueda.",
-          "clear": "Limpiar búsqueda"
-        }
-      }
-    },
-    "item": {
-      "documents": "{count, plural, one {# documento} other {# documentos}}"
-    },
-    "header": {
-      "subtitle": "Gestiona tus proyectos"
     }
   }
 }

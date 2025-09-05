@@ -39,7 +39,73 @@
     "uploadFirst": "Upload first video",
     "noContent": "No content available",
     "noContentDescription": "You have no projects or videos available. Create a project and upload content to use all TRINOA functionalities.",
-    "startNow": "Start now"
+    "startNow": "Start now",
+    "create": {
+      "newProject": "New project",
+      "createProject": "Create new project",
+      "description": "Create a new project to organize your resources.",
+      "title": "Title",
+      "titlePlaceholder": "Enter project title...",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Enter project description (optional)...",
+      "characters": "characters",
+      "create": "Create",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "errors": {
+        "titleRequired": "Title is required",
+        "titleMinLength": "Title must be at least 3 characters",
+        "titleMaxLength": "Title cannot exceed 100 characters",
+        "titleExists": "A project with this title already exists",
+        "descriptionMaxLength": "Description cannot exceed 500 characters"
+      },
+      "toast": {
+        "successTitle": "Project created successfully",
+        "successDescription": "The project \"{title}\" was created successfully.",
+        "serverErrorTitle": "Error creating project",
+        "unexpectedTitle": "Unexpected error",
+        "unexpectedDescription": "An unexpected error occurred while creating the project."
+      }
+    },
+    "upload": {
+      "dragDrop": "Drag documents or browse files",
+      "dropFiles": "Drop to add documents",
+      "chooseFiles": "Choose files or drag them here",
+      "fileSize": "File size",
+      "pdfPages": "PDF pages",
+      "formats": "Formats",
+      "validation": "Files will be automatically validated after selection",
+      "rejectedFiles": "Some files were rejected:",
+      "exploreFiles": "Browse Files"
+    },
+    "grid": {
+      "searchPlaceholder": "Search projects...",
+      "sort": {
+        "placeholder": "Sort by",
+        "options": {
+          "recent": "Recently uploaded",
+          "name": "Name",
+          "creation": "Creation date"
+        }
+      },
+      "empty": {
+        "none": {
+          "title": "No projects yet",
+          "description": "Create your first project to get started"
+        },
+        "noResults": {
+          "title": "No projects found",
+          "description": "No project matches \"{term}\". Try another search.",
+          "clear": "Clear search"
+        }
+      }
+    },
+    "item": {
+      "documents": "{count, plural, one {# document} other {# documents}}"
+    },
+    "header": {
+      "subtitle": "Manage your projects"
+    }
   },
   "documents": {
     "title": "Documents",
@@ -145,6 +211,44 @@
           "description": "The document was manually marked as wrong and requires attention."
         }
       }
+    },
+    "edit": {
+      "metadataEdit": "Metadata editing",
+      "rescan": "Rescan",
+      "rescanConfirm": "Do you want to start a rescan?",
+      "rescanStartError": "Could not launch re-scan",
+      "rescanStarted": "Re-scan started",
+      "case": "Case",
+      "selectCase": "Select a case",
+      "type": "Type",
+      "selectType": "Select a type",
+      "caseLabels": {
+        "factura_suministros": "Utilities invoice",
+        "desplazamientos": "Travel",
+        "materias_primas": "Raw materials",
+        "viajes_tipo_2": "Trips type 2",
+        "variado_emails": "Misc (emails)",
+        "consumos_combustible_tipo_1": "Fuel consumption (type 1)",
+        "residuos": "Waste",
+        "viajes_tipo_1": "Trips type 1",
+        "otros": "Other"
+      },
+      "typeLabels": {
+        "prebuilt-invoice": "Invoice (prebuilt)",
+        "prebuilt-receipt": "Receipt (prebuilt)",
+        "electricidad": "Electricity",
+        "agua": "Water",
+        "gas": "Gas",
+        "combustible": "Fuel",
+        "gasolinera": "Gas station",
+        "taxi_vtc": "Taxi / VTC",
+        "otros": "Other"
+      }
+    },
+    "statusControl": {
+      "toggleWrongDocument": "Mark as wrong document",
+      "wrongDocumentNote": "Confidence state is replaced by 'Wrong document' (manual)",
+      "toggleWrongDocumentNote": "Confidence state is replaced by 'Wrong document' (manual)"
     }
   },
   "analytics": {
@@ -187,6 +291,7 @@
     "yes": "Yes",
     "no": "No",
     "ok": "OK",
+    "confirm": "Confirm",
     "cancel": "Cancel",
     "close": "Close",
     "save": "Save",
@@ -261,74 +366,6 @@
       "unit": "Unit",
       "confirm": "Confirm",
       "noFields": "No fields available"
-    }
-  },
-  "projects": {
-    "create": {
-      "newProject": "New project",
-      "createProject": "Create new project",
-      "description": "Create a new project to organize your resources.",
-      "title": "Title",
-      "titlePlaceholder": "Enter project title...",
-      "descriptionLabel": "Description",
-      "descriptionPlaceholder": "Enter project description (optional)...",
-      "characters": "characters",
-      "create": "Create",
-      "cancel": "Cancel",
-      "creating": "Creating...",
-      "errors": {
-        "titleRequired": "Title is required",
-        "titleMinLength": "Title must be at least 3 characters",
-        "titleMaxLength": "Title cannot exceed 100 characters",
-        "titleExists": "A project with this title already exists",
-        "descriptionMaxLength": "Description cannot exceed 500 characters"
-      },
-      "toast": {
-        "successTitle": "Project created successfully",
-        "successDescription": "The project \"{title}\" was created successfully.",
-        "serverErrorTitle": "Error creating project",
-        "unexpectedTitle": "Unexpected error",
-        "unexpectedDescription": "An unexpected error occurred while creating the project."
-      }
-    },
-    "upload": {
-      "dragDrop": "Drag documents or browse files",
-      "dropFiles": "Drop to add documents",
-      "chooseFiles": "Choose files or drag them here",
-      "fileSize": "File size",
-      "pdfPages": "PDF pages",
-      "formats": "Formats",
-      "validation": "Files will be automatically validated after selection",
-      "rejectedFiles": "Some files were rejected:",
-      "exploreFiles": "Browse Files"
-    },
-    "grid": {
-      "searchPlaceholder": "Search projects...",
-      "sort": {
-        "placeholder": "Sort by",
-        "options": {
-          "recent": "Recently uploaded",
-          "name": "Name",
-          "creation": "Creation date"
-        }
-      },
-      "empty": {
-        "none": {
-          "title": "No projects yet",
-          "description": "Create your first project to get started"
-        },
-        "noResults": {
-          "title": "No projects found",
-          "description": "No project matches \"{term}\". Try another search.",
-          "clear": "Clear search"
-        }
-      }
-    },
-    "item": {
-      "documents": "{count, plural, one {# document} other {# documents}}"
-    },
-    "header": {
-      "subtitle": "Manage your projects"
     }
   }
 }
