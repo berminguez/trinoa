@@ -181,7 +181,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className='flex items-center justify-between w-full'>
+            <div className='flex items-top justify-between w-full'>
               <Link href='/dashboard'>
                 <div className='ml-2 w-[120px] h-[36px]'>
                   <Logo />

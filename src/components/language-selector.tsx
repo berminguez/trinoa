@@ -46,7 +46,7 @@ export function LanguageSelector() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant='ghost' size='sm' className='h-8 w-8 p-0' disabled={isPending}>
+        <Button variant='ghost' size='sm' className='h-7 w-7 p-0' disabled={isPending}>
           <span className='text-lg'>{currentLanguageInfo.flag}</span>
           <span className='sr-only'>Change language</span>
         </Button>
