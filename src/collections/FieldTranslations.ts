@@ -35,6 +35,13 @@ export const FieldTranslations: CollectionConfig = {
       required: true,
     },
     {
+      name: 'labelEn',
+      label: 'Etiqueta en inglés',
+      type: 'text',
+      required: true,
+      admin: { description: 'Etiqueta en inglés' },
+    },
+    {
       name: 'isRequired',
       label: 'Obligatorio',
       type: 'checkbox',

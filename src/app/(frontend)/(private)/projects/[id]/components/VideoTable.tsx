@@ -47,6 +47,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { ConfidenceBadge } from '@/components/ui/confidence-badge'
+import { useTranslations } from 'next-intl'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -125,6 +126,8 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
     },
     ref,
   ) => {
+    const t = useTranslations()
+    const tCommon = useTranslations('common')
     // Link con tooltip sólo si hay truncado visual
     const TruncatedTitleLink: React.FC<{ href: string; text: string }> = ({ href, text }) => {
       const ref = useRef<HTMLAnchorElement | null>(null)
@@ -213,25 +216,25 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             if (onRemoveResource) {
               onRemoveResource(resourceId)
             }
-            toast.success('¡Documento eliminado!', {
-              description: `"${title}" se ha borrado exitosamente`,
+            toast.success(t('documents.deleteSuccess', { default: 'Document deleted!' }), {
+              description: t('documents.deleteSuccessDesc', { title }),
             })
           } else {
             console.error('❌ [TABLE] Failed to delete document:', result.error)
-            toast.error('Error al borrar documento', {
+            toast.error(tCommon('error'), {
               description: result.error,
             })
           }
         } catch (error) {
           console.error('❌ [TABLE] Error in delete handler:', error)
-          toast.error('Error inesperado', {
-            description: 'No se pudo borrar el documento',
+          toast.error(tCommon('error'), {
+            description: t('documents.couldNotDelete'),
           })
         } finally {
           setDeletingResourceId(null)
         }
       },
-      [projectId, onRemoveResource],
+      [projectId, onRemoveResource, tCommon, t],
     )
 
     // Función para abrir el diálogo de confirmación de borrado múltiple
@@ -560,7 +563,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                   className='h-auto p-0 hover:bg-transparent'
                 >
-                  Nombre del archivo
+                  {t('documents.fileName')}
                   {column.getIsSorted() === 'asc' ? (
                     <IconArrowUp className='ml-2 h-4 w-4' />
                   ) : column.getIsSorted() === 'desc' ? (
@@ -593,7 +596,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 className='h-auto p-0 hover:bg-transparent'
               >
                 <IconFileText className='mr-2 h-4 w-4' />
-                Tipo
+                {tCommon('type')}
                 {column.getIsSorted() === 'asc' ? (
                   <IconArrowUp className='ml-2 h-4 w-4' />
                 ) : column.getIsSorted() === 'desc' ? (
@@ -617,10 +620,14 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 ) : isImage ? (
                   <>
                     <IconPhoto className='h-4 w-4 text-blue-500' />
-                    <span className='text-sm font-medium'>Image</span>
+                    <span className='text-sm font-medium'>
+                      {t('documents.image', { default: 'Image' })}
+                    </span>
                   </>
                 ) : (
-                  <span className='text-sm text-muted-foreground'>Unknown</span>
+                  <span className='text-sm text-muted-foreground'>
+                    {t('documents.unknownType')}
+                  </span>
                 )}
               </div>
             )
@@ -636,7 +643,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
               onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
               className='h-auto p-0 hover:bg-transparent'
             >
-              Caso
+              {t('documents.case', { default: 'Case' })}
               {column.getIsSorted() === 'asc' ? (
                 <IconArrowUp className='ml-2 h-4 w-4' />
               ) : column.getIsSorted() === 'desc' ? (
@@ -646,7 +653,9 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           ),
           cell: ({ row }) => {
             const value = (row.getValue('caso') as string) || '-'
-            return <span className='text-sm'>{value}</span>
+            const label =
+              value && value !== '-' ? t(`documents.caseLabels.${value}`, { default: value }) : '-'
+            return <span className='text-sm'>{label}</span>
           },
         },
         // Columna de Tipo (negocio)
@@ -658,7 +667,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
               onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
               className='h-auto p-0 hover:bg-transparent'
             >
-              Tipo (caso)
+              {t('documents.typeCase', { default: 'Type (case)' })}
               {column.getIsSorted() === 'asc' ? (
                 <IconArrowUp className='ml-2 h-4 w-4' />
               ) : column.getIsSorted() === 'desc' ? (
@@ -668,7 +677,9 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           ),
           cell: ({ row }) => {
             const value = (row.getValue('tipo') as string) || '-'
-            return <span className='text-sm'>{value}</span>
+            const label =
+              value && value !== '-' ? t(`documents.typeLabels.${value}`, { default: value }) : '-'
+            return <span className='text-sm'>{label}</span>
           },
         },
         // Columna de estado
@@ -681,7 +692,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 className='h-auto p-0 hover:bg-transparent'
               >
-                Estado
+                {tCommon('status')}
                 {column.getIsSorted() === 'asc' ? (
                   <IconArrowUp className='ml-2 h-4 w-4' />
                 ) : column.getIsSorted() === 'desc' ? (
@@ -697,35 +708,39 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 case 'completed':
                   return (
                     <Badge className='bg-green-100 text-green-800 hover:bg-green-100'>
-                      Completado
+                      {t('documents.status.completed', { default: 'Completed' })}
                     </Badge>
                   )
                 case 'uploading':
                   return (
                     <Badge className='bg-purple-100 text-purple-800 hover:bg-purple-100'>
-                      Subiendo
+                      {t('documents.status.uploading', { default: 'Uploading' })}
                     </Badge>
                   )
                 case 'processing':
                   return (
                     <Badge className='bg-blue-100 text-blue-800 hover:bg-blue-100 inline-flex items-center gap-1'>
                       <IconLoader2 className='h-3 w-3 animate-spin' />
-                      Procesando
+                      {t('documents.status.processing', { default: 'Processing' })}
                     </Badge>
                   )
                 case 'failed':
                 case 'error':
-                  return <Badge className='bg-red-100 text-red-800 hover:bg-red-100'>Fallido</Badge>
+                  return (
+                    <Badge className='bg-red-100 text-red-800 hover:bg-red-100'>
+                      {t('documents.failed')}
+                    </Badge>
+                  )
                 case 'needs_review':
                   return (
                     <Badge className='bg-orange-100 text-orange-800 hover:bg-orange-100'>
-                      Requiere revisión
+                      {t('documents.status.needs_review', { default: 'Needs review' })}
                     </Badge>
                   )
                 default:
                   return (
                     <Badge className='bg-yellow-100 text-yellow-800 hover:bg-yellow-100'>
-                      Pendiente
+                      {t('documents.status.pending', { default: 'Pending' })}
                     </Badge>
                   )
               }
@@ -744,7 +759,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 className='h-auto p-0 hover:bg-transparent'
               >
-                Confianza
+                {t('documents.confidence')}
                 {column.getIsSorted() === 'asc' ? (
                   <IconArrowUp className='ml-2 h-4 w-4' />
                 ) : column.getIsSorted() === 'desc' ? (
@@ -787,7 +802,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 className='h-auto p-0 hover:bg-transparent'
               >
                 <IconCalendar className='mr-2 h-4 w-4' />
-                Subido
+                {t('documents.uploaded', { default: 'Uploaded' })}
                 {column.getIsSorted() === 'asc' ? (
                   <IconArrowUp className='ml-2 h-4 w-4' />
                 ) : column.getIsSorted() === 'desc' ? (
@@ -805,7 +820,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
         // Columna de acciones (ver y borrar documento)
         {
           id: 'actions',
-          header: 'Acciones',
+          header: tCommon('actions'),
           cell: ({ row }) => {
             const resource = row.original
             const mediaFile = resource.file
@@ -822,7 +837,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   size='sm'
                   asChild
                   className='h-8 w-8 p-0'
-                  title='Ver recurso'
+                  title={t('documents.viewResource')}
                 >
                   <Link href={getResourceUrl(resource.id)}>
                     <IconPlayerPlay className='h-4 w-4' />
@@ -836,7 +851,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                       size='sm'
                       asChild
                       className='h-8 w-8 p-0'
-                      title='Ver documento'
+                      title={t('documents.viewDocument')}
                     >
                       <a href={documentUrl} target='_blank' rel='noopener noreferrer'>
                         <IconExternalLink className='h-4 w-4' />
@@ -844,7 +859,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                     </Button>
                   </>
                 ) : (
-                  <span className='text-xs text-muted-foreground'>Sin archivo</span>
+                  <span className='text-xs text-muted-foreground'>{t('documents.noFile')}</span>
                 )}
 
                 {/* Botón de borrar con confirmación */}
@@ -854,7 +869,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                       variant='ghost'
                       size='sm'
                       className='h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
-                      title='Borrar documento'
+                      title={t('documents.delete')}
                       disabled={deletingResourceId === resource.id}
                     >
                       {deletingResourceId === resource.id ? (
@@ -866,15 +881,15 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Borrar Documento</AlertDialogTitle>
+                      <AlertDialogTitle>{t('documents.delete')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        ¿Estás seguro de que quieres borrar &quot;{resource.title}&quot;? Esta
-                        acción no se puede deshacer.
+                        {t('documents.deleteConfirm')} &quot;{resource.title}&quot;?{' '}
+                        {t('documents.deleteMultipleDescription')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel disabled={deletingResourceId === resource.id}>
-                        Cancelar
+                        {tCommon('cancel')}
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDeleteDocument(resource.id, resource.title)}
@@ -884,10 +899,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                         {deletingResourceId === resource.id ? (
                           <>
                             <IconLoader2 className='h-4 w-4 mr-2 animate-spin' />
-                            Borrando...
+                            {t('documents.deleting', { default: 'Deleting...' })}
                           </>
                         ) : (
-                          'Borrar'
+                          tCommon('delete')
                         )}
                       </AlertDialogAction>
                     </AlertDialogFooter>
@@ -900,7 +915,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           enableGlobalFilter: false,
         },
       ],
-      [handleDeleteDocument, deletingResourceId, projectId, getResourceUrl], // Include getResourceUrl so links stay in sync
+      [handleDeleteDocument, deletingResourceId, projectId, getResourceUrl, t, tCommon], // Include getResourceUrl so links stay in sync
     )
 
     // Crear instancia de tabla
@@ -1029,15 +1044,13 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
       return (
         <Card>
           <CardHeader>
-            <CardTitle>Documentos</CardTitle>
+            <CardTitle>{t('documents.title')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='text-center py-12'>
               <IconFileText className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
-              <h3 className='text-lg font-semibold mb-2'>Aún no hay documentos</h3>
-              <p className='text-muted-foreground'>
-                Sube documentos para empezar a construir tu proyecto
-              </p>
+              <h3 className='text-lg font-semibold mb-2'>{t('documents.noDocuments')}</h3>
+              <p className='text-muted-foreground'>{t('documents.uploadToStart')}</p>
             </div>
           </CardContent>
         </Card>
@@ -1049,10 +1062,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
         <Card>
           <CardHeader>
             <div className='flex items-center justify-between'>
-              <CardTitle>Documentos</CardTitle>
+              <CardTitle>{t('documents.title')}</CardTitle>
               <div className='flex items-center gap-2'>
                 <span className='text-sm text-muted-foreground'>
-                  {resources.length} documento{resources.length !== 1 ? 's' : ''}
+                  {t('documents.count', { count: resources.length })}
                 </span>
                 {Object.keys(rowSelection).length > 0 && (
                   <Badge variant='secondary' className='text-xs'>
@@ -1107,9 +1120,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
               <div className='flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-lg'>
                 <div className='flex items-center gap-2'>
                   <span className='text-sm font-medium text-blue-800'>
-                    {Object.keys(rowSelection).length} documento
-                    {Object.keys(rowSelection).length !== 1 ? 's' : ''} seleccionado
-                    {Object.keys(rowSelection).length !== 1 ? 's' : ''}
+                    {t('documents.selectedCountLong', { count: Object.keys(rowSelection).length })}
                   </span>
                 </div>
                 <div className='flex items-center gap-2'>
@@ -1119,7 +1130,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                     onClick={() => setRowSelection({})}
                     className='text-blue-700 border-blue-300 hover:bg-blue-100'
                   >
-                    Limpiar Selección
+                    {t('documents.clearSelection')}
                   </Button>
                   <Button
                     variant='destructive'
@@ -1133,7 +1144,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                     ) : (
                       <IconTrash className='h-4 w-4 mr-1' />
                     )}
-                    {isDeleting ? 'Borrando...' : 'Borrar Seleccionados'}
+                    {isDeleting ? t('documents.deleting') : t('documents.deleteSelected')}
                   </Button>
                 </div>
               </div>
@@ -1146,7 +1157,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 <div className='relative flex-1 lg:flex-none'>
                   <IconSearch className='absolute left-2 top-2.5 h-4 w-4 text-muted-foreground' />
                   <Input
-                    placeholder='Buscar documentos...'
+                    placeholder={t('documents.searchPlaceholder')}
                     value={globalFilter ?? ''}
                     onChange={(event) => setGlobalFilter(String(event.target.value))}
                     className='pl-8 w-full lg:max-w-sm'
@@ -1161,10 +1172,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   }
                 >
                   <SelectTrigger className='w-full xl:w-[180px]'>
-                    <SelectValue placeholder='Filtrar por confianza' />
+                    <SelectValue placeholder={t('documents.filterByConfidence')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='all'>Todas las confianzas</SelectItem>
+                    <SelectItem value='all'>{t('documents.allConfidences')}</SelectItem>
                     <SelectItem value='empty'>
                       <div className='flex items-center gap-2'>
                         <ConfidenceBadge confidence='empty' showTooltip={false} size='sm' />
@@ -1207,8 +1218,8 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                 <DropdownMenuTrigger asChild>
                   <Button variant='outline' size='sm' className='self-end xl:self-auto'>
                     <IconEye className='mr-2 h-4 w-4' />
-                    <span className='hidden sm:inline'>Ver</span>
-                    <span className='sm:hidden'>Columnas</span>
+                    <span className='hidden sm:inline'>{t('documents.view')}</span>
+                    <span className='sm:hidden'>{t('documents.columns')}</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end'>
@@ -1234,9 +1245,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             {/* Información de selección */}
             {Object.keys(rowSelection).length > 0 && (
               <div className='text-sm text-muted-foreground'>
-                {Object.keys(rowSelection).length} de {table.getFilteredRowModel().rows.length} fila
-                {table.getFilteredRowModel().rows.length !== 1 ? 's' : ''}
-                seleccionada{Object.keys(rowSelection).length !== 1 ? 's' : ''}.
+                {t('documents.selectionSummary', {
+                  selected: Object.keys(rowSelection).length,
+                  total: table.getFilteredRowModel().rows.length,
+                })}
               </div>
             )}
 
@@ -1291,7 +1303,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                     ) : (
                       <TableRow>
                         <TableCell colSpan={columns.length} className='h-24 text-center'>
-                          No results found.
+                          {t('documents.noResults')}
                         </TableCell>
                       </TableRow>
                     )}
@@ -1304,17 +1316,20 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
             <div className='flex flex-col space-y-4 px-2 xl:flex-row xl:items-center xl:justify-between xl:space-y-0'>
               <div className='text-sm text-muted-foreground text-center lg:text-left'>
                 <span className='hidden sm:inline'>
-                  Mostrando{' '}
+                  {t('documents.showing')}{' '}
                   {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}{' '}
-                  a{' '}
+                  {t('documents.to')}{' '}
                   {Math.min(
                     (table.getState().pagination.pageIndex + 1) *
                       table.getState().pagination.pageSize,
                     table.getFilteredRowModel().rows.length,
                   )}{' '}
-                  de {table.getFilteredRowModel().rows.length} entradas
+                  {t('documents.of')} {table.getFilteredRowModel().rows.length}{' '}
+                  {t('documents.entries')}
                 </span>
-                <span className='sm:hidden'>{table.getFilteredRowModel().rows.length} total</span>
+                <span className='sm:hidden'>
+                  {table.getFilteredRowModel().rows.length} {t('documents.total')}
+                </span>
               </div>
               <div className='flex items-center justify-center space-x-2 lg:justify-end'>
                 <Button
@@ -1333,12 +1348,15 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   disabled={!table.getCanPreviousPage()}
                 >
                   <IconChevronLeft className='h-4 w-4' />
-                  <span className='ml-1 hidden sm:inline'>Anterior</span>
+                  <span className='ml-1 hidden sm:inline'>{t('documents.previous')}</span>
                 </Button>
                 <span className='text-sm text-muted-foreground px-2'>
-                  <span className='hidden sm:inline'>Página </span>
+                  <span className='hidden sm:inline'>{t('documents.page')} </span>
                   {table.getState().pagination.pageIndex + 1}
-                  <span className='hidden sm:inline'> de {table.getPageCount()}</span>
+                  <span className='hidden sm:inline'>
+                    {' '}
+                    {t('documents.of')} {table.getPageCount()}
+                  </span>
                   <span className='sm:hidden'>/{table.getPageCount()}</span>
                 </span>
                 <Button
@@ -1347,7 +1365,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
                 >
-                  <span className='mr-1 hidden sm:inline'>Siguiente</span>
+                  <span className='mr-1 hidden sm:inline'>{t('documents.next')}</span>
                   <IconChevronRight className='h-4 w-4' />
                 </Button>
                 <Button
@@ -1367,13 +1385,13 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Borrar múltiples documentos</AlertDialogTitle>
+                <AlertDialogTitle>{t('documents.deleteMultiple')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  ¿Estás seguro de que quieres borrar {selectedDocumentsInfo.ids.length} documento
-                  {selectedDocumentsInfo.ids.length !== 1 ? 's' : ''}?
+                  {t('documents.deleteConfirm')}{' '}
+                  {t('documents.count', { count: selectedDocumentsInfo.ids.length })}?
                 </AlertDialogDescription>
                 <div className='my-4'>
-                  <strong className='text-sm'>Documentos seleccionados:</strong>
+                  <strong className='text-sm'>{t('documents.selectedDocuments')}</strong>
                   <ul className='mt-2 space-y-1 max-h-32 overflow-y-auto'>
                     {selectedDocumentsInfo.titles.slice(0, 5).map((title, index) => (
                       <li key={index} className='text-sm'>
@@ -1382,15 +1400,18 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                     ))}
                     {selectedDocumentsInfo.titles.length > 5 && (
                       <li className='text-sm text-muted-foreground'>
-                        ... y {selectedDocumentsInfo.titles.length - 5} más
+                        ... {t('documents.of')} {selectedDocumentsInfo.titles.length - 5}{' '}
+                        {t('documents.more', { default: 'more' })}
                       </li>
                     )}
                   </ul>
                 </div>
-                <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  {t('documents.deleteMultipleDescription')}
+                </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogCancel disabled={isDeleting}>{tCommon('cancel')}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={confirmBulkDelete}
                   disabled={isDeleting}
@@ -1399,10 +1420,10 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   {isDeleting ? (
                     <>
                       <IconLoader2 className='h-4 w-4 mr-2 animate-spin' />
-                      Borrando...
+                      {t('documents.deleting')}
                     </>
                   ) : (
-                    'Borrar documentos'
+                    t('documents.deleteSelected')
                   )}
                 </AlertDialogAction>
               </AlertDialogFooter>

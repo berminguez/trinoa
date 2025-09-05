@@ -1,6 +1,7 @@
 import { getAnalytics } from '@/actions/analytics/getAnalytics'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 // import { Input } from '@/components/ui/input'
@@ -27,6 +28,8 @@ export default async function PageContent({
 }) {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
+
+  const t = await getTranslations('analytics')
 
   const dateFrom = searchParams?.from || ''
   const dateTo = searchParams?.to || ''
@@ -75,7 +78,7 @@ export default async function PageContent({
   return (
     <div className='p-4 space-y-6'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-xl font-semibold'>Analíticas</h1>
+        <h1 className='text-xl font-semibold'>{t('title')}</h1>
         <div className='flex gap-2'>
           <form action='/api/analytics/export' method='POST' className='inline'>
             <input type='hidden' name='documentIds' value={JSON.stringify(data.allDocumentIds)} />
@@ -87,7 +90,7 @@ export default async function PageContent({
           <form action='/api/analytics/export' method='POST' className='inline'>
             <input type='hidden' name='documentIds' value={JSON.stringify(data.allDocumentIds)} />
             <input type='hidden' name='format' value='xlsx' />
-            <Button type='submit'>Descargar Excel</Button>
+            <Button type='submit'>{t('download')}</Button>
           </form>
         </div>
       </div>
@@ -97,7 +100,7 @@ export default async function PageContent({
       {user.role === 'admin' && (
         <Card>
           <CardHeader>
-            <CardTitle>Cliente</CardTitle>
+            <CardTitle>{t('client')}</CardTitle>
           </CardHeader>
           <CardContent>
             <AdminClientSelector clients={clients} value={clientId} />
@@ -109,7 +112,7 @@ export default async function PageContent({
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         <Card>
           <CardHeader>
-            <CardTitle>Acumulado por Tipo</CardTitle>
+            <CardTitle>{t('accumulatedByType')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className='space-y-1'>
@@ -124,7 +127,7 @@ export default async function PageContent({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Acumulado por Caso</CardTitle>
+            <CardTitle>{t('accumulatedByCase')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className='space-y-1'>
@@ -139,7 +142,7 @@ export default async function PageContent({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Acumulado por Unidad</CardTitle>
+            <CardTitle>{t('accumulatedByUnit')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className='space-y-1'>
@@ -157,7 +160,7 @@ export default async function PageContent({
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>Filtros</CardTitle>
+          <CardTitle>{t('filters')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Filters
@@ -180,7 +183,7 @@ export default async function PageContent({
       {/* Tabla de documentos */}
       <Card>
         <CardHeader>
-          <CardTitle>Documentos</CardTitle>
+          <CardTitle>{t('title')} - Documentos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className='overflow-x-auto'>

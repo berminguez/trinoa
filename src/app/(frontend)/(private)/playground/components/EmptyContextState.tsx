@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { useTranslations } from 'next-intl'
 
 interface EmptyContextStateProps {
   type?: 'no_projects' | 'no_videos' | 'no_content'
@@ -22,36 +23,35 @@ export default function EmptyContextState({
   className = '',
   compact = false,
 }: EmptyContextStateProps) {
+  const t = useTranslations('playground.emptyState')
+
   // Configuración por tipo de estado vacío
   const config = {
     no_projects: {
       icon: IconFolderPlus,
-      title: 'Sin proyectos disponibles',
-      description:
-        'Aún no tienes proyectos creados. Crea tu primer proyecto para comenzar a usar el sistema de búsqueda contextual.',
-      ctaText: 'Crear primer proyecto',
+      title: t('noProjects.title'),
+      description: t('noProjects.description'),
+      ctaText: t('noProjects.ctaText'),
       ctaHref: '/projects',
-      badge: 'Proyectos',
+      badge: t('noProjects.badge'),
       color: 'blue',
     },
     no_videos: {
       icon: IconUpload,
-      title: 'Sin videos en este proyecto',
-      description:
-        'Este proyecto no tiene videos cargados. Sube tu primer video para comenzar a hacer preguntas sobre su contenido.',
-      ctaText: 'Subir primer video',
+      title: t('noVideos.title'),
+      description: t('noVideos.description'),
+      ctaText: t('noVideos.ctaText'),
       ctaHref: '/projects',
-      badge: 'Videos',
+      badge: t('noVideos.badge'),
       color: 'green',
     },
     no_content: {
       icon: IconAlertCircle,
-      title: 'Sin contenido disponible',
-      description:
-        'No tienes proyectos ni videos disponibles. Crea un proyecto y sube contenido para usar todas las funcionalidades de TRINOA.',
-      ctaText: 'Comenzar ahora',
+      title: t('noContent.title'),
+      description: t('noContent.description'),
+      ctaText: t('noContent.ctaText'),
       ctaHref: '/projects',
-      badge: 'Sin contenido',
+      badge: t('noContent.badge'),
       color: 'gray',
     },
   }

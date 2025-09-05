@@ -1,8 +1,10 @@
+'use client'
 import * as React from 'react'
 import { Switch } from './switch'
 import { ConfidenceBadge } from './confidence-badge'
 import { Label } from './label'
 import { cn } from '@/lib/utils'
+import { useTranslations } from 'next-intl'
 
 export interface DocumentStatusControlProps {
   confidence: 'empty' | 'needs_revision' | 'trusted' | 'verified' | null | undefined
@@ -23,6 +25,7 @@ export function DocumentStatusControl({
   className,
   disabled = false,
 }: DocumentStatusControlProps) {
+  const t = useTranslations('documents.statusControl')
   const isWrongDocument = Boolean(documentoErroneo)
 
   // Si está marcado como documento erróneo, mostrar ese estado en lugar del confidence
@@ -58,16 +61,11 @@ export function DocumentStatusControl({
             disabled && 'cursor-not-allowed opacity-50',
           )}
         >
-          Marcar como documento erróneo
+          {t('toggleWrongDocument')}
         </Label>
       </div>
 
-      {isWrongDocument && (
-        <p className='text-xs text-muted-foreground'>
-          Este documento ha sido marcado manualmente como erróneo. Este estado prevalece sobre otros
-          estados de verificación.
-        </p>
-      )}
+      {isWrongDocument && <p className='text-xs text-muted-foreground'>{t('wrongDocumentNote')}</p>}
     </div>
   )
 }

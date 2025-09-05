@@ -12,12 +12,14 @@ import ImageViewer from './ImageViewer'
 import ResourceForm from './ResourceForm'
 import InlineTitleEditor from './InlineTitleEditor'
 import { ConfidenceBadge } from '@/components/ui/confidence-badge'
+import { getTranslations } from 'next-intl/server'
 
 interface PageContentProps {
   params: Promise<{ id: string; resourceId: string }>
 }
 
 export default async function PageContent({ params }: PageContentProps) {
+  const t = await getTranslations('documents')
   // 1) Autenticación básica
   const user = await getCurrentUser()
   if (!user) {
@@ -133,7 +135,7 @@ export default async function PageContent({ params }: PageContentProps) {
                     size='default'
                   />
                   <span className='text-xs text-muted-foreground'>
-                    Estado de confianza del documento
+                    {t('confidenceDescription')}
                   </span>
                 </div>
 

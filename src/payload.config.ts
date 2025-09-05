@@ -28,6 +28,14 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      providers: [
+        {
+          path: '@/payload-admin/AdminProviders',
+          exportName: 'default',
+        },
+      ],
+    },
   },
   collections: [
     Users,

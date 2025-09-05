@@ -17,9 +17,11 @@ import {
   IconUser,
 } from '@tabler/icons-react'
 import * as React from 'react'
+import { useTranslations } from 'next-intl'
 // import { useEffect, useState } from 'react'
 
 import { Logo } from '@/components/logo'
+import { LanguageSelector } from '@/components/language-selector'
 // import { NavDocuments } from '@/components/nav-documents'
 import { NavMain } from '@/components/nav-main'
 // import { NavSecondary } from '@/components/nav-secondary'
@@ -35,38 +37,7 @@ import {
 } from '@/components/ui/sidebar'
 import Link from 'next/link'
 
-// Navegación base disponible para todos los usuarios
-const baseNavigation = [
-  {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: IconHome,
-  },
-  {
-    title: 'Projectos',
-    url: '/projects',
-    icon: IconFolder,
-  },
-  {
-    title: 'Analítica',
-    url: '/analytics',
-    icon: IconChartBar,
-  },
-  {
-    title: 'Mi Cuenta',
-    url: '/account',
-    icon: IconUser,
-  },
-]
-
-// Navegación exclusiva para administradores
-const adminNavigation = [
-  {
-    title: 'Clientes',
-    url: '/clients',
-    icon: IconUserCog,
-  },
-]
+// Navigation items will be created dynamically using translations
 
 const data = {
   user: {
@@ -160,30 +131,66 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isAdmin, isLoading } = useUserRole()
+  const t = useTranslations('navigation')
 
   // Construir navegación dinámicamente basado en el rol del usuario
   const navigationItems = React.useMemo(() => {
+    const baseNavigation = [
+      {
+        title: t('dashboard'),
+        url: '/dashboard',
+        icon: IconHome,
+      },
+      {
+        title: t('projects'),
+        url: '/projects',
+        icon: IconFolder,
+      },
+      {
+        title: t('analytics'),
+        url: '/analytics',
+        icon: IconChartBar,
+      },
+      {
+        title: t('account'),
+        url: '/account',
+        icon: IconUser,
+      },
+    ]
+
     const items = [...baseNavigation]
 
     // Añadir navegación de admin si el usuario es administrador
     if (isAdmin) {
+      const adminNavigation = [
+        {
+          title: t('clients'),
+          url: '/clients',
+          icon: IconUserCog,
+        },
+      ]
       // Insertar "Clients" después de "Projects" (posición 2)
       items.splice(2, 0, ...adminNavigation)
     }
 
     return items
-  }, [isAdmin])
+  }, [isAdmin, t])
 
   return (
     <Sidebar collapsible='offcanvas' {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link href='/dashboard'>
-              <div className='ml-2 w-[120px] h-[36px]'>
-                <Logo />
+            <div className='flex items-center justify-between w-full'>
+              <Link href='/dashboard'>
+                <div className='ml-2 w-[120px] h-[36px]'>
+                  <Logo />
+                </div>
+              </Link>
+              <div className='mr-2'>
+                <LanguageSelector />
               </div>
-            </Link>
+            </div>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

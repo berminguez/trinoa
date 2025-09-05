@@ -563,6 +563,10 @@ export interface FieldTranslation {
   order?: number | null;
   label: string;
   /**
+   * Etiqueta en inglés
+   */
+  labelEn: string;
+  /**
    * Indica si el campo es obligatorio
    */
   isRequired?: boolean | null;
@@ -1179,6 +1183,7 @@ export interface FieldTranslationsSelect<T extends boolean = true> {
   key?: T;
   order?: T;
   label?: T;
+  labelEn?: T;
   isRequired?: T;
   updatedAt?: T;
   createdAt?: T;

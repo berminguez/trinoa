@@ -140,7 +140,7 @@ export const Resources: CollectionConfig = {
         { label: 'Electricidad', value: 'electricidad' },
         { label: 'Agua', value: 'agua' },
         { label: 'Gas', value: 'gas' },
-        { label: 'Combustible para calefacción', value: 'combustible' },
+        { label: 'Combustible', value: 'combustible' },
         { label: 'Gasolinera', value: 'gasolinera' },
         { label: 'Taxi / VTC', value: 'taxi_vtc' },
         { label: 'Factura (prebuilt)', value: 'prebuilt-invoice' },

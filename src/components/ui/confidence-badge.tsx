@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useTranslations } from 'next-intl'
 import { cva, type VariantProps } from 'class-variance-authority'
 import {
   IconCircle,
@@ -44,29 +45,18 @@ const confidenceBadgeVariants = cva(
 const confidenceConfig = {
   empty: {
     icon: IconCircle,
-    label: 'Vacío o no aplica',
-    description: 'El documento está en procesamiento o no tiene campos analizados todavía.',
   },
   needs_revision: {
     icon: IconAlertTriangle,
-    label: 'Necesita revisión',
-    description:
-      'El documento tiene campos obligatorios con confianza menor al umbral establecido.',
   },
   trusted: {
     icon: IconShieldCheck,
-    label: 'Confiable',
-    description: 'Todos los campos del documento tienen alta confianza automática.',
   },
   verified: {
     icon: IconShieldCheckFilled,
-    label: 'Verificado',
-    description: 'El documento ha sido revisado y corregido manualmente por un humano.',
   },
   wrong_document: {
     icon: IconX,
-    label: 'Documento erróneo',
-    description: 'El documento ha sido marcado manualmente como erróneo y requiere atención.',
   },
 } as const
 
@@ -89,22 +79,23 @@ function ConfidenceBadge({
   size = 'default',
   ...props
 }: ConfidenceBadgeProps) {
+  const t = useTranslations('documents.confidenceBadge')
   // Handle null/undefined confidence
   const normalizedConfidence = confidence || 'empty'
   const config = confidenceConfig[normalizedConfidence]
   const Icon = config.icon
+  const label = t(`states.${normalizedConfidence}.label`)
+  const description = t(`states.${normalizedConfidence}.description`)
 
   // Generate unique ID for tooltip accessibility
   const tooltipId = React.useId()
-  const tooltipDescription = threshold
-    ? config.description.replace('umbral establecido', `umbral del ${threshold}%`)
-    : config.description
+  const tooltipDescription = description
 
   const badgeContent = (
     <Badge
       variant='outline'
       role='status'
-      aria-label={`Estado de confianza: ${config.label.toLowerCase()}`}
+      aria-label={t('aria.status', { label: label.toLowerCase() })}
       aria-describedby={showTooltip ? tooltipId : undefined}
       tabIndex={showTooltip ? 0 : undefined}
       className={cn(confidenceBadgeVariants({ confidence: normalizedConfidence, size }), className)}
@@ -119,7 +110,7 @@ function ConfidenceBadge({
           aria-hidden='true'
         />
       )}
-      <span className='truncate'>{config.label}</span>
+      <span className='truncate'>{label}</span>
     </Badge>
   )
 
@@ -152,11 +143,11 @@ function ConfidenceBadge({
           aria-live='polite'
         >
           <div className='space-y-1'>
-            <p className='font-medium text-sm'>{config.label}</p>
+            <p className='font-medium text-sm'>{label}</p>
             <p className='text-xs leading-relaxed opacity-90'>{tooltipDescription}</p>
             {threshold && (
               <p className='text-xs opacity-80 border-t border-current/20 pt-1 mt-2'>
-                Umbral actual: {threshold}%
+                {t('tooltip.currentThreshold', { threshold })}
               </p>
             )}
           </div>
@@ -197,11 +188,12 @@ function ConfidenceStats({
   className,
   showPercentages = true,
 }: ConfidenceStatsProps) {
+  const t = useTranslations('documents.confidenceBadge')
   if (!stats) {
     return (
       <div
         role='group'
-        aria-label='Estadísticas de confianza vacías'
+        aria-label={t('aria.groupEmpty')}
         className={cn('flex flex-wrap gap-2', className)}
       ></div>
     )
@@ -213,7 +205,7 @@ function ConfidenceStats({
     return (
       <div
         role='group'
-        aria-label='Sin estadísticas de confianza'
+        aria-label={t('aria.groupNone')}
         className={cn('flex flex-wrap gap-2', className)}
       ></div>
     )
@@ -230,19 +222,20 @@ function ConfidenceStats({
   return (
     <div
       role='group'
-      aria-label={`Estadísticas de confianza: ${totalCount} recursos en total`}
+      aria-label={t('aria.groupSummary', { total: totalCount })}
       className={cn('flex flex-wrap gap-1.5 sm:gap-2', className)}
     >
       {statsEntries.map(([confidence, count]) => {
         const percentage = totalCount > 0 ? (((count || 0) / totalCount) * 100).toFixed(0) : '0'
         const config = confidenceConfig[confidence]
+        const label = t(`states.${confidence}.label`)
 
         return (
           <div
             key={confidence}
             className='flex items-center gap-1 min-w-fit'
             role='listitem'
-            aria-label={`${config.label}: ${count} recursos${showPercentages ? `, ${percentage}%` : ''}`}
+            aria-label={`${label}: ${count} ${showPercentages ? `, ${percentage}%` : ''}`}
           >
             <ConfidenceBadge
               confidence={confidence}
@@ -255,7 +248,10 @@ function ConfidenceStats({
               {showPercentages && (
                 <span className='opacity-75'>
                   {' '}
-                  (<span className='sr-only'>{percentage} por ciento</span>
+                  (
+                  <span className='sr-only'>
+                    {percentage} {t('aria.percentWord')}
+                  </span>
                   <span aria-hidden='true'>{percentage}%</span>)
                 </span>
               )}

@@ -1,8 +1,8 @@
 'use client'
-import { IconPlus, IconFolder, IconSearch } from '@tabler/icons-react'
-import { Card, CardHeader } from '@/components/ui/card'
+import { IconFolder, IconSearch } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useTranslations } from 'next-intl'
 import {
   Select,
   SelectContent,
@@ -26,6 +26,8 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
 
   const { searchTerm, sortBy } = filters
 
+  const t = useTranslations('projects.grid')
+
   // Sincronizar proyectos con el store cuando cambie la prop
   useEffect(() => {
     setProjects(projects)
@@ -42,7 +44,7 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
         <div className='relative flex-1 max-w-sm'>
           <IconSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
           <Input
-            placeholder='Buscar proyectos...'
+            placeholder={t('searchPlaceholder')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className='pl-10'
@@ -52,12 +54,12 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
         {/* Selector de orden */}
         <Select value={sortBy} onValueChange={setSortBy}>
           <SelectTrigger className='w-48'>
-            <SelectValue placeholder='Ordenar por' />
+            <SelectValue placeholder={t('sort.placeholder')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='recent'>Subida reciente</SelectItem>
-            <SelectItem value='name'>Nombre</SelectItem>
-            <SelectItem value='creation'>Fecha de creación</SelectItem>
+            <SelectItem value='recent'>{t('sort.options.recent')}</SelectItem>
+            <SelectItem value='name'>{t('sort.options.name')}</SelectItem>
+            <SelectItem value='creation'>{t('sort.options.creation')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -74,8 +76,8 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
       {sortedProjects.length === 0 && projects.length === 0 && (
         <div className='text-center py-12'>
           <IconFolder className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
-          <h3 className='text-lg font-semibold mb-2'>Aún no hay proyectos</h3>
-          <p className='text-muted-foreground mb-4'>Crea tu primer proyecto para empezar</p>
+          <h3 className='text-lg font-semibold mb-2'>{t('empty.none.title')}</h3>
+          <p className='text-muted-foreground mb-4'>{t('empty.none.description')}</p>
           <CreateProjectModal />
         </div>
       )}
@@ -84,13 +86,12 @@ export function ProjectsGrid({ projects }: ProjectsGridProps) {
       {sortedProjects.length === 0 && projects.length > 0 && (
         <div className='text-center py-12'>
           <IconSearch className='h-12 w-12 text-muted-foreground mx-auto mb-4' />
-          <h3 className='text-lg font-semibold mb-2'>No se encontraron proyectos</h3>
+          <h3 className='text-lg font-semibold mb-2'>{t('empty.noResults.title')}</h3>
           <p className='text-muted-foreground mb-4'>
-            Ningún proyecto coincide con &quot;{searchTerm}&quot;. Prueba con otro término de
-            búsqueda.
+            {t('empty.noResults.description', { term: searchTerm })}
           </p>
           <Button variant='outline' onClick={() => setSearchTerm('')} className='gap-2'>
-            Limpiar búsqueda
+            {t('empty.noResults.clear')}
           </Button>
         </div>
       )}

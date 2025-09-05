@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { IconLoader2, IconPlus, IconX } from '@tabler/icons-react'
+import { useTranslations } from 'next-intl'
+import { IconLoader2, IconPlus } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -32,17 +33,19 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
 
   const { isCreating, setCreating, addProject, projects } = useProjectsStore()
 
+  const t = useTranslations('projects.create')
+
   const validateTitle = (value: string): string => {
     if (!value.trim()) {
-      return 'El título es requerido'
+      return t('errors.titleRequired')
     }
 
     if (value.trim().length < 3) {
-      return 'El título debe tener al menos 3 caracteres'
+      return t('errors.titleMinLength')
     }
 
     if (value.trim().length > 100) {
-      return 'El título no puede exceder 100 caracteres'
+      return t('errors.titleMaxLength')
     }
 
     // Verificar unicidad local (básica)
@@ -51,7 +54,7 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
     )
 
     if (titleExists) {
-      return 'Ya existe un proyecto con este título'
+      return t('errors.titleExists')
     }
 
     return ''
@@ -97,15 +100,15 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
         setOpen(false)
 
         // Toast de éxito
-        toast.success('Proyecto creado exitosamente', {
-          description: `El proyecto "${result.data.title}" se ha creado correctamente.`,
+        toast.success(t('toast.successTitle'), {
+          description: t('toast.successDescription', { title: result.data.title }),
         })
 
         // Callback opcional
         onSuccess?.()
       } else {
         // Manejar errores del servidor
-        const errorMessage = result.error || 'Error al crear el proyecto'
+        const errorMessage = result.error || t('toast.serverErrorTitle')
 
         // Si es error de título duplicado, mostrarlo en el campo
         if (
@@ -113,17 +116,17 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
           errorMessage.toLowerCase().includes('title') ||
           errorMessage.toLowerCase().includes('unique')
         ) {
-          setTitleError('Este título ya está en uso. Elige otro título.')
+          setTitleError(t('errors.titleExists'))
         } else {
-          toast.error('Error al crear proyecto', {
+          toast.error(t('toast.serverErrorTitle'), {
             description: errorMessage,
           })
         }
       }
     } catch (error) {
       console.error('Error creating project:', error)
-      toast.error('Error inesperado', {
-        description: 'Ocurrió un error inesperado al crear el proyecto.',
+      toast.error(t('toast.unexpectedTitle'), {
+        description: t('toast.unexpectedDescription'),
       })
     } finally {
       setCreating(false)
@@ -149,7 +152,7 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
         {trigger || (
           <Button className='gap-2'>
             <IconPlus className='h-4 w-4' />
-            Nuevo proyecto
+            {t('newProject')}
           </Button>
         )}
       </DialogTrigger>
@@ -158,17 +161,17 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <IconPlus className='h-5 w-5' />
-            Crear nuevo proyecto
+            {t('createProject')}
           </DialogTitle>
-          <DialogDescription>Crea un nuevo proyecto para organizar tus recursos.</DialogDescription>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='space-y-2'>
-            <Label htmlFor='title'>Title *</Label>
+            <Label htmlFor='title'>{t('title')} *</Label>
             <Input
               id='title'
-              placeholder='Enter project title...'
+              placeholder={t('titlePlaceholder')}
               value={title}
               onChange={handleTitleChange}
               className={titleError ? 'border-destructive' : ''}
@@ -176,14 +179,16 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
               maxLength={100}
             />
             {titleError && <p className='text-sm text-destructive'>{titleError}</p>}
-            <p className='text-xs text-muted-foreground'>{title.length}/100 characters</p>
+            <p className='text-xs text-muted-foreground'>
+              {title.length}/100 {t('characters')}
+            </p>
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='description'>Description</Label>
+            <Label htmlFor='description'>{t('descriptionLabel')}</Label>
             <Textarea
               id='description'
-              placeholder='Enter project description (optional)...'
+              placeholder={t('descriptionPlaceholder')}
               value={description}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                 setDescription(e.target.value)
@@ -192,7 +197,9 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
               rows={3}
               maxLength={500}
             />
-            <p className='text-xs text-muted-foreground'>{description.length}/500 characters</p>
+            <p className='text-xs text-muted-foreground'>
+              {description.length}/500 {t('characters')}
+            </p>
           </div>
 
           <DialogFooter className='gap-2'>
@@ -202,18 +209,18 @@ export function CreateProjectModal({ trigger, onSuccess }: CreateProjectModalPro
               onClick={() => setOpen(false)}
               disabled={isCreating}
             >
-              Cancel
+              {t('cancel')}
             </Button>
             <Button type='submit' disabled={!isFormValid} className='gap-2'>
               {isCreating ? (
                 <>
                   <IconLoader2 className='h-4 w-4 animate-spin' />
-                  Creating...
+                  {t('creating')}
                 </>
               ) : (
                 <>
                   <IconPlus className='h-4 w-4' />
-                  Create Project
+                  {t('create')}
                 </>
               )}
             </Button>

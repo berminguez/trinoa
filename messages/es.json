@@ -1,0 +1,333 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "projects": "Proyectos",
+    "analytics": "Analítica",
+    "account": "Mi Cuenta",
+    "clients": "Clientes"
+  },
+  "user": {
+    "admin": "Admin",
+    "administrator": "Administrador",
+    "account": "Cuenta",
+    "billing": "Facturación",
+    "notifications": "Notificaciones",
+    "adminPanel": "Panel de Administración",
+    "logout": "Cerrar sesión",
+    "loggingOut": "Cerrando sesión...",
+    "sessionClosed": "Sesión cerrada correctamente",
+    "logoutError": "Error al cerrar sesión. Por favor, intenta nuevamente.",
+    "userDataError": "No se pudieron cargar los datos del usuario",
+    "loadingError": "Error al cargar los datos del usuario"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "loading": "Cargando...",
+    "error": "Error"
+  },
+  "account": {
+    "title": "Mi Cuenta",
+    "description": "Gestiona tu información personal y configuración de cuenta"
+  },
+  "projects": {
+    "title": "Proyectos",
+    "noProjects": "Sin proyectos disponibles",
+    "noProjectsDescription": "Aún no tienes proyectos creados. Crea tu primer proyecto para comenzar a usar el sistema de búsqueda contextual.",
+    "createFirst": "Crear primer proyecto",
+    "noVideos": "Sin videos en este proyecto",
+    "noVideosDescription": "Este proyecto no tiene videos cargados. Sube tu primer video para comenzar a hacer preguntas sobre su contenido.",
+    "uploadFirst": "Subir primer video",
+    "noContent": "Sin contenido disponible",
+    "noContentDescription": "No tienes proyectos ni videos disponibles. Crea un proyecto y sube contenido para usar todas las funcionalidades de TRINOA.",
+    "startNow": "Comenzar ahora"
+  },
+  "documents": {
+    "title": "Documentos",
+    "noDocuments": "Aún no hay documentos",
+    "upload": "Subir",
+    "view": "Ver",
+    "columns": "Columnas",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página",
+    "of": "de",
+    "noResults": "No results found.",
+    "delete": "Borrar Documento",
+    "deleteConfirm": "¿Estás seguro de que quieres borrar",
+    "deleteMultiple": "Borrar múltiples documentos",
+    "deleteMultipleDescription": "Esta acción no se puede deshacer.",
+    "selectedDocuments": "Documentos seleccionados:",
+    "cancel": "Cancelar",
+    "state": "Estado",
+    "confidence": "Confianza",
+    "confidenceDescription": "Estado de confianza del documento",
+    "allConfidences": "Todas las confianzas",
+    "noFile": "Sin archivo",
+    "unknownType": "Unknown",
+    "failed": "Fallido",
+    "couldNotDelete": "No se pudo borrar el documento",
+    "couldNotDeleteMultiple": "No se pudieron borrar los documentos",
+    "editingMetadata": "Edición de metadatos",
+    "fileName": "Nombre del archivo",
+    "image": "Imagen",
+    "uploaded": "Subido",
+    "deleteSuccess": "¡Documento eliminado!",
+    "deleteSuccessDesc": "\"{title}\" se ha borrado exitosamente",
+    "deleteErrorTitle": "Error al borrar documento",
+    "deleting": "Borrando...",
+    "status": {
+      "completed": "Completado",
+      "uploading": "Subiendo",
+      "processing": "Procesando",
+      "needs_review": "Requiere revisión",
+      "pending": "Pendiente"
+    },
+    "viewResource": "Ver recurso",
+    "viewDocument": "Ver documento",
+    "uploadDocuments": "Subir documentos",
+    "uploadToStart": "Sube documentos para empezar a construir tu proyecto",
+    "count": "{count, plural, one {# documento} other {# documentos}}",
+    "selectedCount": "{count, plural, one {# seleccionado} other {# seleccionados}}",
+    "selectedCountLong": "{count, plural, one {# documento seleccionado} other {# documentos seleccionados}}",
+    "clearSelection": "Limpiar Selección",
+    "deleteSelected": "Borrar Seleccionados",
+    "searchPlaceholder": "Buscar documentos...",
+    "filterByConfidence": "Filtrar por confianza",
+    "entries": "entradas",
+    "showing": "Mostrando",
+    "to": "a",
+    "total": "total",
+    "typeCase": "Tipo (caso)",
+    "case": "Caso",
+    "caseLabels": {
+      "factura_suministros": "Factura de suministros"
+    },
+    "typeLabels": {
+      "electricidad": "Electricidad",
+      "agua": "Agua",
+      "gas": "Gas",
+      "combustible": "Combustible"
+    },
+    "selectResource": "Selecciona un recurso",
+    "selectionSummary": "{selected} de {total} filas seleccionadas.",
+    "more": "más",
+    "confidenceBadge": {
+      "aria": {
+        "status": "Estado de confianza: {label}",
+        "groupEmpty": "Estadísticas de confianza vacías",
+        "groupNone": "Sin estadísticas de confianza",
+        "groupSummary": "Estadísticas de confianza: {total} recursos en total",
+        "percentWord": "por ciento"
+      },
+      "tooltip": {
+        "currentThreshold": "Umbral actual: {threshold}%"
+      },
+      "states": {
+        "empty": {
+          "label": "Vacío o no aplica",
+          "description": "El documento está en procesamiento o no tiene campos analizados todavía."
+        },
+        "needs_revision": {
+          "label": "Necesita revisión",
+          "description": "El documento tiene campos obligatorios con confianza menor al umbral configurado."
+        },
+        "trusted": {
+          "label": "Confiable",
+          "description": "Todos los campos del documento tienen alta confianza automática."
+        },
+        "verified": {
+          "label": "Verificado",
+          "description": "El documento ha sido revisado y corregido manualmente por un humano."
+        },
+        "wrong_document": {
+          "label": "Documento erróneo",
+          "description": "El documento ha sido marcado manualmente como erróneo y requiere atención."
+        }
+      }
+    }
+  },
+  "analytics": {
+    "title": "Analíticas",
+    "download": "Descargar Excel",
+    "client": "Cliente",
+    "accumulatedByType": "Acumulado por Tipo",
+    "accumulatedByCase": "Acumulado por Caso",
+    "accumulatedByUnit": "Acumulado por Unidad",
+    "filters": "Filtros",
+    "from": "Desde",
+    "to": "Hasta",
+    "invoiceFrom": "Fecha factura desde",
+    "invoiceTo": "Fecha factura hasta",
+    "type": "Tipo",
+    "case": "Caso",
+    "project": "Proyecto",
+    "provider": "Proveedor"
+  },
+  "pricing": {
+    "title": "Elige tu plan perfecto",
+    "description": "Desbloquea todo el potencial de TRINOA con nuestros planes diseñados para cada necesidad",
+    "currentSubscription": "Tu suscripción actual"
+  },
+  "forms": {
+    "save": "Guardar",
+    "saving": "Guardando...",
+    "saved": "Guardado",
+    "error": "Error",
+    "couldNotSave": "No se pudieron guardar los cambios",
+    "couldNotUpdate": "No se pudo actualizar el estado del documento",
+    "couldNotRescan": "No se pudo lanzar el re-escaneo"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información",
+    "yes": "Sí",
+    "no": "No",
+    "ok": "OK",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "create": "Crear",
+    "update": "Actualizar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "date": "Fecha",
+    "type": "Tipo",
+    "name": "Nombre",
+    "status": "Estado",
+    "actions": "Acciones",
+    "language": {
+      "es": "Español",
+      "en": "English"
+    }
+  },
+  "playground": {
+    "startConversation": "Inicia una conversación",
+    "askQuestions": "Haz preguntas sobre tus documentos o inicia una conversación general. El sistema RAG te ayudará a encontrar información relevante.",
+    "initialGreeting": "Saludo inicial",
+    "startConversationDesc": "Comenzar una conversación",
+    "aboutTrinoa": "Sobre TRINOA",
+    "aboutTrinoaDesc": "Conocer más sobre esta plataforma",
+    "futurePlans": "Funcionalidades futuras",
+    "futurePlansDesc": "RAG, MCP y capacidades avanzadas",
+    "productiveAssistance": "Asistencia productiva",
+    "productiveAssistanceDesc": "Tareas de productividad y organización",
+    "you": "Tú",
+    "assistant": "Asistente IA",
+    "sending": "Enviando...",
+    "retrying": "Reintentando...",
+    "retrySend": "Reintentar envío",
+    "tool": "herramienta",
+    "emptyState": {
+      "noProjects": {
+        "title": "Sin proyectos disponibles",
+        "description": "Aún no tienes proyectos creados. Crea tu primer proyecto para comenzar a usar el sistema de búsqueda contextual.",
+        "ctaText": "Crear primer proyecto",
+        "badge": "Proyectos"
+      },
+      "noVideos": {
+        "title": "Sin videos en este proyecto",
+        "description": "Este proyecto no tiene videos cargados. Sube tu primer video para comenzar a hacer preguntas sobre su contenido.",
+        "ctaText": "Subir primer video",
+        "badge": "Videos"
+      },
+      "noContent": {
+        "title": "Sin contenido disponible",
+        "description": "No tienes proyectos ni videos disponibles. Crea un proyecto y sube contenido para usar todas las funcionalidades de TRINOA.",
+        "ctaText": "Comenzar ahora",
+        "badge": "Sin contenido"
+      }
+    }
+  },
+  "resources": {
+    "analysis": {
+      "companyService": "Empresa/Servicio",
+      "amount": "Importe",
+      "fuel": "Combustible",
+      "fuels": "Combustibles",
+      "addCompanyService": "Añadir Empresa/Servicio",
+      "addFuel": "Añadir Combustible",
+      "manual": "Manual",
+      "confidenceIndex": "IC",
+      "name": "Nombre",
+      "quantity": "Cantidad",
+      "unit": "Unidad",
+      "confirm": "Confirmar",
+      "noFields": "No hay campos disponibles"
+    }
+  },
+  "projects": {
+    "create": {
+      "newProject": "Nuevo proyecto",
+      "createProject": "Crear nuevo proyecto",
+      "description": "Crea un nuevo proyecto para organizar tus recursos.",
+      "title": "Título",
+      "titlePlaceholder": "Ingresa el título del proyecto...",
+      "descriptionLabel": "Descripción",
+      "descriptionPlaceholder": "Ingresa la descripción del proyecto (opcional)...",
+      "characters": "caracteres",
+      "create": "Crear",
+      "cancel": "Cancelar",
+      "creating": "Creando...",
+      "errors": {
+        "titleRequired": "El título es requerido",
+        "titleMinLength": "El título debe tener al menos 3 caracteres",
+        "titleMaxLength": "El título no puede exceder 100 caracteres",
+        "titleExists": "Ya existe un proyecto con este título",
+        "descriptionMaxLength": "La descripción no puede exceder 500 caracteres"
+      },
+      "toast": {
+        "successTitle": "Proyecto creado exitosamente",
+        "successDescription": "El proyecto \"{title}\" se ha creado correctamente.",
+        "serverErrorTitle": "Error al crear proyecto",
+        "unexpectedTitle": "Error inesperado",
+        "unexpectedDescription": "Ocurrió un error inesperado al crear el proyecto."
+      }
+    },
+    "upload": {
+      "dragDrop": "Arrastra documentos o explora archivos",
+      "dropFiles": "Suelta para añadir documentos",
+      "chooseFiles": "Elige archivos o arrástralos aquí",
+      "fileSize": "Tamaño de archivo",
+      "pdfPages": "Páginas PDF",
+      "formats": "Formatos",
+      "validation": "Los archivos se validarán automáticamente después de la selección",
+      "rejectedFiles": "Algunos archivos fueron rechazados:",
+      "exploreFiles": "Explorar Archivos"
+    },
+    "grid": {
+      "searchPlaceholder": "Buscar proyectos...",
+      "sort": {
+        "placeholder": "Ordenar por",
+        "options": {
+          "recent": "Subida reciente",
+          "name": "Nombre",
+          "creation": "Fecha de creación"
+        }
+      },
+      "empty": {
+        "none": {
+          "title": "Aún no hay proyectos",
+          "description": "Crea tu primer proyecto para empezar"
+        },
+        "noResults": {
+          "title": "No se encontraron proyectos",
+          "description": "Ningún proyecto coincide con \"{term}\". Prueba con otro término de búsqueda.",
+          "clear": "Limpiar búsqueda"
+        }
+      }
+    },
+    "item": {
+      "documents": "{count, plural, one {# documento} other {# documentos}}"
+    },
+    "header": {
+      "subtitle": "Gestiona tus proyectos"
+    }
+  }
+}

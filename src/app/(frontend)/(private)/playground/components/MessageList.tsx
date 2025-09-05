@@ -4,6 +4,7 @@ import { IconFileAi } from '@tabler/icons-react'
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { useTranslations, useLocale } from 'next-intl'
 
 // Tipos para los mensajes (compatible con Vercel AI SDK)
 interface Message {
@@ -37,6 +38,8 @@ function MessageItem({
   message: Message
   onRetry?: (messageId: string) => void
 }) {
+  const t = useTranslations('playground')
+  const locale = useLocale()
   const getStatusColor = () => {
     switch (message.status) {
       case 'sending':
@@ -73,14 +76,14 @@ function MessageItem({
           className={`text-xs text-gray-500 mb-2 flex items-center gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
         >
           <span>
-            {message.role === 'user' ? 'Tú' : 'Asistente IA'} •{' '}
-            {message.timestamp.toLocaleTimeString()}
+            {message.role === 'user' ? t('you') : t('assistant')} •{' '}
+            {message.timestamp.toLocaleTimeString(locale)}
           </span>
           {message.status && (
             <span className='flex items-center gap-1'>
               {getStatusIcon()}
-              {message.status === 'sending' && 'Enviando...'}
-              {message.status === 'retrying' && 'Reintentando...'}
+              {message.status === 'sending' && t('sending')}
+              {message.status === 'retrying' && t('retrying')}
             </span>
           )}
         </div>
@@ -100,7 +103,7 @@ function MessageItem({
           {message.toolsUsed && message.toolsUsed.length > 0 && (
             <div className='flex justify-end mt-2'>
               <span className='text-xs opacity-60 italic'>
-                tool: {message.toolsUsed.join(', ')}
+                {t('tool')}: {message.toolsUsed.join(', ')}
               </span>
             </div>
           )}
@@ -115,7 +118,7 @@ function MessageItem({
                 onClick={() => onRetry(message.id)}
                 className='text-red-600 hover:text-red-800 underline text-xs'
               >
-                🔄 Reintentar envío
+                🔄 {t('retrySend')}
               </button>
             )}
           </div>
@@ -145,47 +148,47 @@ function MarkdownContent({ children }: { children: string }) {
         remarkPlugins={[remarkGfm]}
         components={{
           // Encabezados - Tamaños más apropiados para chat
-          h1: ({ node, ...props }) => (
+          h1: ({ node: _node, ...props }) => (
             <h1
               className='text-lg font-bold text-gray-900 mb-3 mt-4 first:mt-0 leading-tight'
               {...props}
             />
           ),
-          h2: ({ node, ...props }) => (
+          h2: ({ node: _node, ...props }) => (
             <h2
               className='text-base font-semibold text-gray-900 mb-2 mt-3 first:mt-0 leading-tight'
               {...props}
             />
           ),
-          h3: ({ node, ...props }) => (
+          h3: ({ node: _node, ...props }) => (
             <h3
               className='text-sm font-medium text-gray-800 mb-2 mt-3 first:mt-0 leading-tight'
               {...props}
             />
           ),
-          h4: ({ node, ...props }) => (
+          h4: ({ node: _node, ...props }) => (
             <h4 className='text-sm font-medium text-gray-800 mb-1 mt-2 first:mt-0' {...props} />
           ),
 
           // Párrafos - Mejor espaciado y line-height
-          p: ({ node, ...props }) => (
+          p: ({ node: _node, ...props }) => (
             <p className='text-sm text-gray-900 leading-relaxed mb-3 last:mb-0' {...props} />
           ),
 
           // Listas - Estilo mejorado con viñetas nativas
-          ul: ({ node, ...props }) => (
+          ul: ({ node: _node, ...props }) => (
             <ul
               className='list-disc list-inside mb-3 space-y-1 text-sm text-gray-900 leading-relaxed pl-4'
               {...props}
             />
           ),
-          ol: ({ node, ...props }) => (
+          ol: ({ node: _node, ...props }) => (
             <ol
               className='list-decimal list-inside mb-3 space-y-1 text-sm text-gray-900 leading-relaxed pl-4'
               {...props}
             />
           ),
-          li: ({ node, ...props }) => (
+          li: ({ node: _node, ...props }) => (
             <li className='marker:text-blue-600 marker:text-sm' {...props} />
           ),
 
@@ -204,7 +207,7 @@ function MarkdownContent({ children }: { children: string }) {
               />
             )
           },
-          pre: ({ node, ...props }) => (
+          pre: ({ node: _node, ...props }) => (
             <pre
               className='bg-gray-50 text-gray-900 p-3 rounded-md text-xs font-mono whitespace-pre-wrap mb-3 overflow-x-auto border border-gray-200 leading-relaxed'
               {...props}
@@ -212,7 +215,7 @@ function MarkdownContent({ children }: { children: string }) {
           ),
 
           // Enlaces - Mejor estilo
-          a: ({ node, ...props }) => (
+          a: ({ node: _node, ...props }) => (
             <a
               className='text-blue-600 hover:text-blue-800 underline decoration-blue-200 hover:decoration-blue-400 transition-colors'
               target='_blank'
@@ -222,13 +225,13 @@ function MarkdownContent({ children }: { children: string }) {
           ),
 
           // Énfasis - Mejor contraste
-          strong: ({ node, ...props }) => (
+          strong: ({ node: _node, ...props }) => (
             <strong className='font-semibold text-gray-900' {...props} />
           ),
-          em: ({ node, ...props }) => <em className='italic text-gray-700' {...props} />,
+          em: ({ node: _node, ...props }) => <em className='italic text-gray-700' {...props} />,
 
           // Citas - Estilo más elegante
-          blockquote: ({ node, ...props }) => (
+          blockquote: ({ node: _node, ...props }) => (
             <blockquote
               className='border-l-4 border-blue-200 bg-blue-50 pl-4 pr-3 py-2 mb-3 italic text-gray-700 text-sm leading-relaxed rounded-r-md'
               {...props}
@@ -236,29 +239,31 @@ function MarkdownContent({ children }: { children: string }) {
           ),
 
           // Divisores
-          hr: ({ node, ...props }) => <hr className='border-gray-200 my-4 border-t-2' {...props} />,
+          hr: ({ node: _node, ...props }) => (
+            <hr className='border-gray-200 my-4 border-t-2' {...props} />
+          ),
 
           // Tablas - Mejor estilo
-          table: ({ node, ...props }) => (
+          table: ({ node: _node, ...props }) => (
             <div className='overflow-x-auto mb-3 rounded-md border border-gray-200'>
               <table className='min-w-full text-sm' {...props} />
             </div>
           ),
-          thead: ({ node, ...props }) => (
+          thead: ({ node: _node, ...props }) => (
             <thead className='bg-gray-50 border-b border-gray-200' {...props} />
           ),
-          th: ({ node, ...props }) => (
+          th: ({ node: _node, ...props }) => (
             <th
               className='px-3 py-2 text-left font-medium text-gray-900 text-xs uppercase tracking-wider'
               {...props}
             />
           ),
-          td: ({ node, ...props }) => (
+          td: ({ node: _node, ...props }) => (
             <td className='px-3 py-2 text-gray-900 text-sm border-t border-gray-100' {...props} />
           ),
 
           // Elementos adicionales
-          img: ({ node, ...props }) => (
+          img: ({ node: _node, ...props }) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               className='max-w-full h-auto rounded-md mb-3 border border-gray-200'
@@ -361,6 +366,7 @@ export default function MessageList({
   onRetryMessage,
   className = '',
 }: MessageListProps) {
+  const t = useTranslations('playground')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
@@ -393,11 +399,8 @@ export default function MessageList({
         <div className='flex flex-col items-center justify-center h-full text-center'>
           <div className='mb-6'>
             <IconFileAi className='h-16 w-16 text-gray-300 mx-auto mb-4' />
-            <h3 className='text-lg font-medium text-gray-900 mb-2'>Inicia una conversación</h3>
-            <p className='text-gray-600 max-w-md'>
-              Haz preguntas sobre tus documentos o inicia una conversación general. El sistema RAG
-              te ayudará a encontrar información relevante.
-            </p>
+            <h3 className='text-lg font-medium text-gray-900 mb-2'>{t('startConversation')}</h3>
+            <p className='text-gray-600 max-w-md'>{t('askQuestions')}</p>
           </div>
 
           {/* Suggested prompts */}
@@ -407,16 +410,16 @@ export default function MessageList({
                 onClick={() => onSuggestedPrompt('¡Hola! ¿Cómo puedes ayudarme hoy?')}
                 className='p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200'
               >
-                <div className='font-medium text-gray-900 mb-1'>Saludo inicial</div>
-                <div className='text-sm text-gray-600'>Comenzar una conversación</div>
+                <div className='font-medium text-gray-900 mb-1'>{t('initialGreeting')}</div>
+                <div className='text-sm text-gray-600'>{t('startConversationDesc')}</div>
               </button>
 
               <button
                 onClick={() => onSuggestedPrompt('Explícame qué es TRINOA y sus capacidades')}
                 className='p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200'
               >
-                <div className='font-medium text-gray-900 mb-1'>Sobre TRINOA</div>
-                <div className='text-sm text-gray-600'>Conocer más sobre esta plataforma</div>
+                <div className='font-medium text-gray-900 mb-1'>{t('aboutTrinoa')}</div>
+                <div className='text-sm text-gray-600'>{t('aboutTrinoaDesc')}</div>
               </button>
 
               <button
@@ -425,16 +428,16 @@ export default function MessageList({
                 }
                 className='p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200'
               >
-                <div className='font-medium text-gray-900 mb-1'>Funcionalidades futuras</div>
-                <div className='text-sm text-gray-600'>RAG, MCP y capacidades avanzadas</div>
+                <div className='font-medium text-gray-900 mb-1'>{t('futurePlans')}</div>
+                <div className='text-sm text-gray-600'>{t('futurePlansDesc')}</div>
               </button>
 
               <button
                 onClick={() => onSuggestedPrompt('Ayúdame a crear un plan de proyecto')}
                 className='p-4 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200'
               >
-                <div className='font-medium text-gray-900 mb-1'>Asistencia productiva</div>
-                <div className='text-sm text-gray-600'>Tareas de productividad y organización</div>
+                <div className='font-medium text-gray-900 mb-1'>{t('productiveAssistance')}</div>
+                <div className='text-sm text-gray-600'>{t('productiveAssistanceDesc')}</div>
               </button>
             </div>
           )}
