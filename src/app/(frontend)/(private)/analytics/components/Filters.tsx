@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useMemo, useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -43,6 +44,7 @@ export default function Filters({
   providerOptions = [],
   provider,
 }: FiltersProps) {
+  const t = useTranslations('analytics.filters')
   const router = useRouter()
   const searchParams = useSearchParams()
   const [fromValue, setFromValue] = useState<string>(dateFrom || '')
@@ -87,7 +89,7 @@ export default function Filters({
     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9 gap-3'>
       {/* Calendarios nativos */}
       <div className='flex flex-col gap-1'>
-        <Label htmlFor='from'>Desde</Label>
+        <Label htmlFor='from'>{t('from')}</Label>
         <Input
           id='from'
           type='date'
@@ -97,7 +99,7 @@ export default function Filters({
         />
       </div>
       <div className='flex flex-col gap-1'>
-        <Label htmlFor='to'>Hasta</Label>
+        <Label htmlFor='to'>{t('to')}</Label>
         <Input
           id='to'
           type='date'
@@ -109,7 +111,7 @@ export default function Filters({
 
       {/* Fechas de factura */}
       <div className='flex flex-col gap-1'>
-        <Label htmlFor='invoiceFrom'>Fecha factura desde</Label>
+        <Label htmlFor='invoiceFrom'>{t('invoiceFrom')}</Label>
         <Input
           id='invoiceFrom'
           type='date'
@@ -119,7 +121,7 @@ export default function Filters({
         />
       </div>
       <div className='flex flex-col gap-1'>
-        <Label htmlFor='invoiceTo'>Fecha factura hasta</Label>
+        <Label htmlFor='invoiceTo'>{t('invoiceTo')}</Label>
         <Input
           id='invoiceTo'
           type='date'
@@ -131,15 +133,15 @@ export default function Filters({
 
       {/* Select Tipo */}
       <div className='flex flex-col gap-1'>
-        <Label>Tipo</Label>
+        <Label>{t('type')}</Label>
         <Select value={tipoValue} onValueChange={(v) => setTipoValue(v)}>
           <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Tipo' />
+            <SelectValue placeholder={t('type')} />
           </SelectTrigger>
           <SelectContent>
-            {tipos.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t}
+            {tipos.map((tipo) => (
+              <SelectItem key={tipo} value={tipo}>
+                {tipo === 'todos' ? t('all') : tipo}
               </SelectItem>
             ))}
           </SelectContent>
@@ -148,15 +150,15 @@ export default function Filters({
 
       {/* Select Caso */}
       <div className='flex flex-col gap-1'>
-        <Label>Caso</Label>
+        <Label>{t('case')}</Label>
         <Select value={casoValue} onValueChange={(v) => setCasoValue(v)}>
           <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Caso' />
+            <SelectValue placeholder={t('case')} />
           </SelectTrigger>
           <SelectContent>
-            {casos.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
+            {casos.map((caso) => (
+              <SelectItem key={caso} value={caso}>
+                {caso === 'todos' ? t('all') : caso}
               </SelectItem>
             ))}
           </SelectContent>
@@ -166,13 +168,13 @@ export default function Filters({
       {/* Selector de cliente solo admin */}
       {/* Proyecto */}
       <div className='flex flex-col gap-1'>
-        <Label>Proyecto</Label>
+        <Label>{t('project')}</Label>
         <Select value={projectValue} onValueChange={(v) => setProjectValue(v)}>
           <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Proyecto' />
+            <SelectValue placeholder={t('project')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='todos'>todos</SelectItem>
+            <SelectItem value='todos'>{t('all')}</SelectItem>
             {projects.map((p) => (
               <SelectItem key={p.id} value={p.id}>
                 {p.title}
@@ -184,13 +186,13 @@ export default function Filters({
 
       {/* Proveedor */}
       <div className='flex flex-col gap-1'>
-        <Label>Proveedor</Label>
+        <Label>{t('provider')}</Label>
         <Select value={providerValue} onValueChange={(v) => setProviderValue(v)}>
           <SelectTrigger className='w-full'>
-            <SelectValue placeholder='Proveedor' />
+            <SelectValue placeholder={t('provider')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='todos'>todos</SelectItem>
+            <SelectItem value='todos'>{t('all')}</SelectItem>
             {Array.from(new Set(providerOptions)).map((p) => (
               <SelectItem key={p} value={p}>
                 {p}
@@ -217,9 +219,9 @@ export default function Filters({
           }
           className='hidden md:inline-flex'
         >
-          <IconFilter className='h-4 w-4 mr-2' /> Aplicar
+          <IconFilter className='h-4 w-4 mr-2' /> {t('apply')}
         </Button>
-        <Button variant='ghost' size='icon' onClick={clearAll} aria-label='Limpiar filtros'>
+        <Button variant='ghost' size='icon' onClick={clearAll} aria-label={t('clear')}>
           <IconX className='h-4 w-4' />
         </Button>
       </div>

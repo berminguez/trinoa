@@ -36,6 +36,7 @@ import { Badge } from '@/components/ui/badge'
 import { getUserDisplayData } from '@/actions/auth/getUser'
 import { logoutWithRedirect } from '@/actions/auth/logout'
 import { useUserRole } from '@/hooks/useUserRole'
+import Link from 'next/link'
 
 interface UserData {
   id: string
@@ -226,32 +227,22 @@ export function NavUser() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem disabled>
-                  <IconUserCircle />
-                  {t('account')}
-                </DropdownMenuItem>
-                <DropdownMenuItem disabled>
+                <Link href='/account'>
+                  <DropdownMenuItem>
+                    <IconUserCircle />
+                    {t('account')}
+                  </DropdownMenuItem>
+                </Link>
+                {/*        <DropdownMenuItem disabled>
                   <IconCreditCard />
                   {t('billing')}
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   <IconNotification />
                   {t('notifications')}
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </DropdownMenuGroup>
 
-              {/* Sección especial para administradores */}
-              {isAdmin && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem className='text-orange-700 focus:text-orange-700 focus:bg-orange-50'>
-                      <IconShield />
-                      {t('adminPanel')}
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </>
-              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleLogout}

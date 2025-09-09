@@ -84,6 +84,11 @@
       "updating": "Updating...",
       "emailWarning": "⚠️ Changing the email may affect your account access",
       "roleInfo": "Your user role cannot be modified from here. For role changes, contact an administrator.",
+      "roles": {
+        "admin": "Administrator",
+        "user": "User",
+        "api": "API"
+      },
       "errors": {
         "nameRequired": "Name is required",
         "nameMinLength": "Name must be at least 2 characters",
@@ -367,11 +372,12 @@
   "analytics": {
     "title": "Analytics",
     "download": "Download Excel",
+    "downloadCSV": "Download CSV",
     "client": "Client",
     "accumulatedByType": "Accumulated by Type",
     "accumulatedByCase": "Accumulated by Case",
     "accumulatedByUnit": "Accumulated by Unit",
-    "filters": "Filters",
+    "filtersTitle": "Filters",
     "from": "From",
     "to": "To",
     "invoiceFrom": "Invoice date from",
@@ -379,7 +385,38 @@
     "type": "Type",
     "case": "Case",
     "project": "Project",
-    "provider": "Provider"
+    "provider": "Provider",
+    "documents": "Documents",
+    "table": {
+      "title": "Title",
+      "type": "Type",
+      "case": "Case",
+      "provider": "Provider",
+      "uploadDate": "Upload date",
+      "invoiceDate": "Invoice date",
+      "confidence": "Confidence"
+    },
+    "pagination": {
+      "page": "Page",
+      "of": "of"
+    },
+    "filters": {
+      "from": "From",
+      "to": "To",
+      "invoiceFrom": "Invoice date from",
+      "invoiceTo": "Invoice date to",
+      "type": "Type",
+      "case": "Case",
+      "project": "Project",
+      "provider": "Provider",
+      "all": "all",
+      "apply": "Apply",
+      "clear": "Clear filters"
+    },
+    "adminClientSelector": {
+      "client": "Client",
+      "myDocuments": "My documents"
+    }
   },
   "pricing": {
     "title": "Choose your perfect plan",

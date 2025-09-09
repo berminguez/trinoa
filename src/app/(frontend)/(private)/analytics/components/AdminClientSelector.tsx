@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 interface AdminClientSelectorProps {
   clients: { id: string; name: string }[]
@@ -16,12 +17,13 @@ interface AdminClientSelectorProps {
 }
 
 export default function AdminClientSelector({ clients, value }: AdminClientSelectorProps) {
+  const t = useTranslations('analytics.adminClientSelector')
   const router = useRouter()
   const searchParams = useSearchParams()
 
   return (
     <div className='flex flex-col gap-1 max-w-sm'>
-      <Label>Cliente</Label>
+      <Label>{t('client')}</Label>
       <Select
         value={value || 'actual'}
         onValueChange={(v) => {
@@ -38,10 +40,10 @@ export default function AdminClientSelector({ clients, value }: AdminClientSelec
         }}
       >
         <SelectTrigger className='w-full'>
-          <SelectValue placeholder='Cliente' />
+          <SelectValue placeholder={t('client')} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value='actual'>Mis documentos</SelectItem>
+          <SelectItem value='actual'>{t('myDocuments')}</SelectItem>
           {clients.map((c) => (
             <SelectItem key={c.id} value={c.id}>
               {c.name}

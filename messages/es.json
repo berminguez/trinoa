@@ -84,6 +84,11 @@
       "updating": "Actualizando...",
       "emailWarning": "⚠️ Cambiar el email puede afectar tu acceso a la cuenta",
       "roleInfo": "Tu rol de usuario no puede ser modificado desde aquí. Para cambios de rol, contacta con un administrador.",
+      "roles": {
+        "admin": "Administrador",
+        "user": "Usuario",
+        "api": "API"
+      },
       "errors": {
         "nameRequired": "El nombre es requerido",
         "nameMinLength": "El nombre debe tener al menos 2 caracteres",
@@ -366,11 +371,12 @@
   "analytics": {
     "title": "Analíticas",
     "download": "Descargar Excel",
+    "downloadCSV": "Descargar CSV",
     "client": "Cliente",
     "accumulatedByType": "Acumulado por Tipo",
     "accumulatedByCase": "Acumulado por Caso",
     "accumulatedByUnit": "Acumulado por Unidad",
-    "filters": "Filtros",
+    "filtersTitle": "Filtros",
     "from": "Desde",
     "to": "Hasta",
     "invoiceFrom": "Fecha factura desde",
@@ -378,7 +384,38 @@
     "type": "Tipo",
     "case": "Caso",
     "project": "Proyecto",
-    "provider": "Proveedor"
+    "provider": "Proveedor",
+    "documents": "Documentos",
+    "table": {
+      "title": "Título",
+      "type": "Tipo",
+      "case": "Caso",
+      "provider": "Proveedor",
+      "uploadDate": "Fecha subida",
+      "invoiceDate": "Fecha factura",
+      "confidence": "Confianza"
+    },
+    "pagination": {
+      "page": "Página",
+      "of": "de"
+    },
+    "filters": {
+      "from": "Desde",
+      "to": "Hasta",
+      "invoiceFrom": "Fecha factura desde",
+      "invoiceTo": "Fecha factura hasta",
+      "type": "Tipo",
+      "case": "Caso",
+      "project": "Proyecto",
+      "provider": "Proveedor",
+      "all": "todos",
+      "apply": "Aplicar",
+      "clear": "Limpiar filtros"
+    },
+    "adminClientSelector": {
+      "client": "Cliente",
+      "myDocuments": "Mis documentos"
+    }
   },
   "pricing": {
     "title": "Elige tu plan perfecto",

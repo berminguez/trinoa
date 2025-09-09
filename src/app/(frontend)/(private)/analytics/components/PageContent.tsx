@@ -1,7 +1,9 @@
 import { getAnalytics } from '@/actions/analytics/getAnalytics'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getTranslations, getLocale } from 'next-intl/server'
+import { cookies } from 'next/headers'
+import { locales, defaultLocale } from '@/i18n'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 // import { Input } from '@/components/ui/input'
@@ -29,7 +31,70 @@ export default async function PageContent({
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
-  const t = await getTranslations('analytics')
+  // Try to use next-intl's getTranslations with explicit locale
+  let t: any
+  try {
+    // First try to get locale from cookie
+    const cookieStore = await cookies()
+    const localeCookie = cookieStore.get('NEXT_LOCALE')
+    const locale =
+      localeCookie?.value && locales.includes(localeCookie.value as any)
+        ? localeCookie.value
+        : defaultLocale
+
+    console.log('Analytics PageContent - Current locale:', locale)
+
+    // Try to use getTranslations with explicit locale
+    t = await getTranslations({ locale, namespace: 'analytics' })
+    console.log('Using getTranslations with locale:', locale)
+  } catch (error) {
+    console.warn('Error with getTranslations, falling back to manual approach:', error)
+
+    // Fallback: manual translation loading
+    let locale: string = defaultLocale
+    try {
+      const cookieStore = await cookies()
+      const localeCookie = cookieStore.get('NEXT_LOCALE')
+      if (localeCookie && locales.includes(localeCookie.value as any)) {
+        locale = localeCookie.value
+      }
+    } catch (cookieError) {
+      console.warn('Error getting locale from cookie:', cookieError)
+    }
+
+    // Load messages for the detected locale
+    let messages: any = {}
+    try {
+      messages = (await import(`../../../../../../messages/${locale}.json`)).default
+    } catch (error) {
+      console.warn('Error loading messages, falling back to default:', error)
+      try {
+        messages = (await import('../../../../../../messages/es.json')).default
+      } catch (importError) {
+        console.warn('Error importing fallback messages:', importError)
+        messages = {}
+      }
+    }
+
+    // Create manual translation function
+    t = (key: string) => {
+      const keys = key.split('.')
+      let value: any = messages
+
+      for (const k of keys) {
+        value = value?.[k]
+      }
+
+      if (typeof value === 'string') {
+        return value
+      }
+
+      return key
+    }
+  }
+
+  // Test translation
+  console.log('Test translation for title:', t('title'))
 
   const dateFrom = searchParams?.from || ''
   const dateTo = searchParams?.to || ''
@@ -84,7 +149,7 @@ export default async function PageContent({
             <input type='hidden' name='documentIds' value={JSON.stringify(data.allDocumentIds)} />
             <input type='hidden' name='format' value='csv' />
             <Button type='submit' variant='outline'>
-              Descargar CSV
+              {t('downloadCSV')}
             </Button>
           </form>
           <form action='/api/analytics/export' method='POST' className='inline'>
@@ -160,7 +225,7 @@ export default async function PageContent({
       {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('filters')}</CardTitle>
+          <CardTitle>{t('filtersTitle')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Filters
@@ -183,7 +248,9 @@ export default async function PageContent({
       {/* Tabla de documentos */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('title')} - Documentos</CardTitle>
+          <CardTitle>
+            {t('title')} - {t('documents')}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className='overflow-x-auto'>
@@ -203,7 +270,7 @@ export default async function PageContent({
                       })()}`}
                       className='inline-flex items-center gap-1'
                     >
-                      Título{' '}
+                      {t('table.title')}{' '}
                       {sort === 'title' ? (
                         <IconArrowUp className='h-3 w-3' />
                       ) : sort === '-title' ? (
@@ -224,7 +291,7 @@ export default async function PageContent({
                       })()}`}
                       className='inline-flex items-center gap-1'
                     >
-                      Tipo{' '}
+                      {t('table.type')}{' '}
                       {sort === 'tipo' ? (
                         <IconArrowUp className='h-3 w-3' />
                       ) : sort === '-tipo' ? (
@@ -245,7 +312,7 @@ export default async function PageContent({
                       })()}`}
                       className='inline-flex items-center gap-1'
                     >
-                      Caso{' '}
+                      {t('table.case')}{' '}
                       {sort === 'caso' ? (
                         <IconArrowUp className='h-3 w-3' />
                       ) : sort === '-caso' ? (
@@ -266,7 +333,7 @@ export default async function PageContent({
                       })()}`}
                       className='inline-flex items-center gap-1'
                     >
-                      Proveedor{' '}
+                      {t('table.provider')}{' '}
                       {sort === 'providerName' ? (
                         <IconArrowUp className='h-3 w-3' />
                       ) : sort === '-providerName' ? (
@@ -287,7 +354,7 @@ export default async function PageContent({
                       })()}`}
                       className='inline-flex items-center gap-1'
                     >
-                      Fecha subida{' '}
+                      {t('table.uploadDate')}{' '}
                       {sort === 'createdAt' ? (
                         <IconArrowUp className='h-3 w-3' />
                       ) : sort === '-createdAt' ? (
@@ -308,7 +375,7 @@ export default async function PageContent({
                       })()}`}
                       className='inline-flex items-center gap-1'
                     >
-                      Fecha factura{' '}
+                      {t('table.invoiceDate')}{' '}
                       {sort === 'invoiceDate' ? (
                         <IconArrowUp className='h-3 w-3' />
                       ) : sort === '-invoiceDate' ? (
@@ -329,7 +396,7 @@ export default async function PageContent({
                       })()}`}
                       className='inline-flex items-center gap-1'
                     >
-                      Confianza{' '}
+                      {t('table.confidence')}{' '}
                       {sort === 'confidence' ? (
                         <IconArrowUp className='h-3 w-3' />
                       ) : sort === '-confidence' ? (
@@ -424,7 +491,8 @@ export default async function PageContent({
               </Button>
             </Link>
             <span className='text-sm'>
-              Página {(data as any).page} de {(data as any).totalPages || 1}
+              {t('pagination.page')} {(data as any).page} {t('pagination.of')}{' '}
+              {(data as any).totalPages || 1}
             </span>
             <Link
               href={`/analytics?${(() => {
