@@ -21,21 +21,25 @@ import {
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb'
 
-// Mapeo de rutas a información user-friendly
-const routeMap: Record<string, { label: string; icon: React.ComponentType<any> }> = {
-  '/': { label: 'Inicio', icon: IconHome },
-  '/dashboard': { label: 'Dashboard', icon: IconHome },
-  '/playground': { label: 'Playground', icon: IconRobot },
-  '/login': { label: 'Iniciar Sesión', icon: IconLogin },
-  '/admin': { label: 'Admin', icon: IconSettings },
-  '/projects': { label: 'Projects', icon: IconFolder },
-}
+import { useTranslations } from 'next-intl'
 
 export function DynamicBreadcrumb() {
   const pathname = usePathname()
 
   // Dividir la ruta en segmentos
   const pathSegments = pathname.split('/').filter(Boolean)
+
+  const t = useTranslations('navigation')
+
+  // Mapeo de rutas a información user-friendly
+  const routeMap: Record<string, { label: string; icon: React.ComponentType<any> }> = {
+    '/': { label: t('home'), icon: IconHome },
+    '/dashboard': { label: 'Dashboard', icon: IconHome },
+    '/playground': { label: 'Playground', icon: IconRobot },
+    '/login': { label: 'Iniciar Sesión', icon: IconLogin },
+    '/admin': { label: 'Admin', icon: IconSettings },
+    '/projects': { label: 'Projects', icon: IconFolder },
+  }
 
   // Determinar si estamos en una ruta privada (que usa el layout privado)
   const isPrivateRoute =
@@ -48,7 +52,7 @@ export function DynamicBreadcrumb() {
 
   // Para rutas públicas o login, incluir "Inicio"
   if (!isPrivateRoute && pathname !== '/') {
-    breadcrumbs.push({ path: '/', label: 'Inicio', icon: IconHome })
+    breadcrumbs.push({ path: '/', label: t('home'), icon: IconHome })
   }
 
   // Agregar segmentos de la ruta actual
@@ -72,7 +76,7 @@ export function DynamicBreadcrumb() {
         // Es una ruta de proyecto específico: /projects/[id]
         breadcrumbs.push({
           path: currentPath,
-          label: 'Project Detail', // Por ahora genérico, se puede mejorar con el nombre real
+          label: t('projectDetail'), // Por ahora genérico, se puede mejorar con el nombre real
           icon: IconFolder,
         })
       } else if (
@@ -85,7 +89,7 @@ export function DynamicBreadcrumb() {
         breadcrumbs.push({
           path: currentPath,
           label: segment.charAt(0).toUpperCase() + segment.slice(1).replace('-', ' '),
-          icon: IconHome, // Icono por defecto
+          icon: IconFolder, // Icono por defecto
         })
       }
     }
@@ -100,7 +104,7 @@ export function DynamicBreadcrumb() {
           <BreadcrumbItem>
             <BreadcrumbPage className='flex items-center gap-2'>
               <HomeIcon className='h-4 w-4' />
-              Inicio
+              {t('home')}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

@@ -4,7 +4,9 @@
     "projects": "Projects",
     "analytics": "Analytics",
     "account": "My Account",
-    "clients": "Clients"
+    "clients": "Clients",
+    "home": "Home",
+    "projectDetail": "Project Detail"
   },
   "user": {
     "admin": "Admin",
