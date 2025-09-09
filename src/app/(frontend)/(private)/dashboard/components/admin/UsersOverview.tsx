@@ -73,7 +73,7 @@ export default async function UsersOverview() {
                     <p className='text-xs text-gray-500'>Activo hace {user.lastActivity}</p>
                   </div>
                   <Button variant='ghost' size='sm' asChild>
-                    <a href={`/clients/${user.id}`}>
+                    <a href={`/clients/${user.id}/projects`}>
                       <IconExternalLink className='h-3 w-3' />
                     </a>
                   </Button>

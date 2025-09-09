@@ -3,6 +3,7 @@
 import { Formik, Form } from 'formik'
 import * as Yup from 'yup'
 import { Button } from '@/components/ui/button'
+import { useLocale, useTranslations } from 'next-intl'
 import useVisualizadorStore from '@/stores/visualizador-store'
 import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
@@ -29,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { DocumentStatusControl } from '@/components/ui/document-status-control'
 
 export interface ResourceFormInitialValues {
   nombre_cliente: string
@@ -44,6 +46,8 @@ interface ResourceFormProps {
   resourceId: string
   initialValues: ResourceFormInitialValues
   initialStatus?: 'pending' | 'uploading' | 'processing' | 'completed' | 'failed' | 'needs_review'
+  initialConfidence?: 'empty' | 'needs_revision' | 'trusted' | 'verified' | null
+  initialDocumentoErroneo?: boolean | null
 }
 
 export default function ResourceForm({
@@ -51,15 +55,40 @@ export default function ResourceForm({
   resourceId,
   initialValues,
   initialStatus,
+  initialConfidence,
+  initialDocumentoErroneo,
 }: ResourceFormProps) {
+  const t = useTranslations('documents.edit')
+  const tCommon = useTranslations('common')
+  const locale = useLocale()
   const isProcessing = useVisualizadorStore((s) => s.isProcessing)
   const setIsProcessing = useVisualizadorStore((s) => s.setIsProcessing)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [documentoErroneo, setDocumentoErroneo] = useState(Boolean(initialDocumentoErroneo))
 
   // Establecer estado inicial
   useEffect(() => {
     if (initialStatus === 'processing') setIsProcessing(true)
   }, [initialStatus, setIsProcessing])
+
+  // Función para manejar el cambio del estado de documento erróneo
+  const handleDocumentoErroneoChange = async (checked: boolean) => {
+    try {
+      const result = await updateResourceAction(projectId, resourceId, {
+        documentoErroneo: checked,
+      })
+      if (result.success) {
+        setDocumentoErroneo(checked)
+        toast.success(
+          checked ? 'Documento marcado como erróneo' : 'Marca de documento erróneo removida',
+        )
+      } else {
+        toast.error(result.error || 'No se pudo actualizar el estado del documento')
+      }
+    } catch (error) {
+      toast.error('Error al actualizar el estado del documento')
+    }
+  }
 
   return (
     <Formik<ResourceFormInitialValues>
@@ -91,21 +120,19 @@ export default function ResourceForm({
       {({ isSubmitting, values, setFieldValue, dirty, setValues }) => (
         <Form className='flex h-full w-full flex-col gap-4'>
           <div className='flex items-center justify-between'>
-            <div className='text-xs text-muted-foreground'>Edición de metadatos</div>
+            <div className='text-xs text-muted-foreground'>{t('metadataEdit')}</div>
             <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
               <AlertDialogTrigger asChild>
                 <Button type='button' size='sm' variant='outline' disabled={isProcessing}>
-                  Escanear
+                  {t('rescan')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    ¿Seguro deseas volver a escanear el documento?
-                  </AlertDialogTitle>
+                  <AlertDialogTitle>{t('rescanConfirm')}</AlertDialogTitle>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={async () => {
                       try {
@@ -117,17 +144,17 @@ export default function ResourceForm({
                         })
                         if (!res.success) {
                           setIsProcessing(false)
-                          toast.error(res.error || 'No se pudo lanzar el re-escaneo')
+                          toast.error(res.error || t('rescanStartError'))
                         } else {
-                          toast.success('Re-escaneo iniciado')
+                          toast.success(t('rescanStarted'))
                         }
                       } catch (_e) {
                         setIsProcessing(false)
-                        toast.error('Error al iniciar re-escaneo')
+                        toast.error(t('rescanStartError'))
                       }
                     }}
                   >
-                    Confirmar
+                    {tCommon('confirm')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -138,7 +165,7 @@ export default function ResourceForm({
           <fieldset disabled={isProcessing} className='contents'>
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div className='space-y-1'>
-                <label className='text-xs text-muted-foreground'>Caso</label>
+                <label className='text-xs text-muted-foreground'>{t('case')}</label>
                 <Select
                   value={values.caso ?? ''}
                   onValueChange={async (v) => {
@@ -156,25 +183,31 @@ export default function ResourceForm({
                   }}
                 >
                   <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Selecciona un caso' />
+                    <SelectValue placeholder={t('selectCase')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='factura_suministros'>Factura de suministros</SelectItem>
-                    <SelectItem value='desplazamientos'>Desplazamientos</SelectItem>
-                    <SelectItem value='materias_primas'>Materias primas</SelectItem>
-                    <SelectItem value='viajes_tipo_2'>Viajes tipo 2</SelectItem>
-                    <SelectItem value='variado_emails'>Variado emails</SelectItem>
-                    <SelectItem value='consumos_combustible_tipo_1'>
-                      Consumos combustible tipo 1
+                    <SelectItem value='factura_suministros'>
+                      {t('caseLabels.factura_suministros')}
                     </SelectItem>
-                    <SelectItem value='residuos'>Residuos</SelectItem>
-                    <SelectItem value='viajes_tipo_1'>Viajes tipo 1</SelectItem>
-                    <SelectItem value='otros'>Otros</SelectItem>
+                    <SelectItem value='desplazamientos'>
+                      {t('caseLabels.desplazamientos')}
+                    </SelectItem>
+                    <SelectItem value='materias_primas'>
+                      {t('caseLabels.materias_primas')}
+                    </SelectItem>
+                    <SelectItem value='viajes_tipo_2'>{t('caseLabels.viajes_tipo_2')}</SelectItem>
+                    <SelectItem value='variado_emails'>{t('caseLabels.variado_emails')}</SelectItem>
+                    <SelectItem value='consumos_combustible_tipo_1'>
+                      {t('caseLabels.consumos_combustible_tipo_1')}
+                    </SelectItem>
+                    <SelectItem value='residuos'>{t('caseLabels.residuos')}</SelectItem>
+                    <SelectItem value='viajes_tipo_1'>{t('caseLabels.viajes_tipo_1')}</SelectItem>
+                    <SelectItem value='otros'>{t('caseLabels.otros')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className='space-y-1'>
-                <label className='text-xs text-muted-foreground'>Tipo</label>
+                <label className='text-xs text-muted-foreground'>{t('type')}</label>
                 <Select
                   value={values.tipo ?? ''}
                   onValueChange={async (v) => {
@@ -186,12 +219,12 @@ export default function ResourceForm({
                   }}
                 >
                   <SelectTrigger className='w-full'>
-                    <SelectValue placeholder='Selecciona un tipo' />
+                    <SelectValue placeholder={t('selectType')} />
                   </SelectTrigger>
                   <SelectContent>
                     {getTipoOptions(values.caso).map((opt) => (
                       <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
+                        {t(`typeLabels.${opt.value}`, { default: opt.label })}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -200,6 +233,18 @@ export default function ResourceForm({
             </div>
 
             {/* Sin campos antiguos; solo caso y tipo */}
+
+            {/* Control de estado del documento */}
+            <div className='border-t pt-4'>
+              <DocumentStatusControl
+                confidence={initialConfidence}
+                documentoErroneo={documentoErroneo}
+                onDocumentoErroneoChange={handleDocumentoErroneoChange}
+                showConfidenceBadge={false}
+                showTooltip={true}
+                disabled={isProcessing}
+              />
+            </div>
 
             {/* Editor simple de analyzeResult.fields */}
             <AnalyzeFieldsPanel
@@ -922,7 +967,7 @@ function getTipoOptions(caso: string | null): { label: string; value: string }[]
       { label: 'Electricidad', value: 'electricidad' },
       { label: 'Agua', value: 'agua' },
       { label: 'Gas', value: 'gas' },
-      { label: 'Combustible para calefacción', value: 'combustible' },
+      { label: 'Combustible', value: 'combustible' },
     ],
     desplazamientos: [
       { label: 'Gasolinera', value: 'gasolinera' },

@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { redirect, notFound } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 import { ProfileCard } from './ProfileCard'
 import { AccountSettings } from './AccountSettings'
 
@@ -11,6 +12,7 @@ import { AccountSettings } from './AccountSettings'
 export async function PageContent() {
   // Obtener usuario actual
   const user = await getCurrentUser()
+  const t = await getTranslations('account')
 
   // Verificar autenticación
   if (!user) {
@@ -28,10 +30,8 @@ export async function PageContent() {
     <div className='container mx-auto p-6 max-w-4xl'>
       {/* Header */}
       <div className='mb-8'>
-        <h1 className='text-3xl font-bold tracking-tight'>Mi Cuenta</h1>
-        <p className='text-muted-foreground mt-2'>
-          Gestiona tu información personal y configuración de cuenta
-        </p>
+        <h1 className='text-3xl font-bold tracking-tight'>{t('title')}</h1>
+        <p className='text-muted-foreground mt-2'>{t('description')}</p>
       </div>
 
       {/* Contenido principal */}

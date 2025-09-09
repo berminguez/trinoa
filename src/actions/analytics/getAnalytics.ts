@@ -2,10 +2,13 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import type { Resource, Project } from '@/payload-types'
+import { parseAndFormatDate } from '../../utils/dateParser'
 
 export interface AnalyticsFilters {
   dateFrom?: string
   dateTo?: string
+  invoiceDateFrom?: string
+  invoiceDateTo?: string
   tipo?: string
   caso?: string
   clientId?: string
@@ -29,8 +32,10 @@ export interface AnalyticsResult {
       providerName?: string | null
       invoiceDate?: string | null
       confidence?: Resource['confidence']
+      documentoErroneo?: boolean | null
     }
   >
+  allDocumentIds: string[] // IDs de todos los documentos filtrados (sin paginar)
   projects: Array<{ id: string; title: string }>
   tipoOptions: string[]
   casoOptions: string[]
@@ -108,35 +113,48 @@ function normalizeDateToISO(input: string | undefined | null): string | null {
 
 function extractInvoiceDate(res: any): string | null {
   const fields = (res?.analyzeResult as any)?.fields
-  // 1) Fecha de factura
-  const f = fields?.InvoiceDate || fields?.invoiceDate
-  const v = f?.valueDate || f?.content || f?.valueString
-  const vIso = normalizeDateToISO(v)
-  if (vIso) return vIso
-  // 2) Si no hay, usar FechaInicio (ServiceStartDate)
-  const fStart =
-    fields?.ServiceStartDate || fields?.serviceStartDate || fields?.StartDate || fields?.startDate
-  const vStart = fStart?.valueDate || fStart?.content || fStart?.valueString
-  const vStartIso = normalizeDateToISO(vStart)
-  if (vStartIso) return vStartIso
-  // 2b) Español: FechaInicio / fechaInicio
-  const fStartEs = fields?.FechaInicio || fields?.fechaInicio
-  const vStartEs = fStartEs?.valueDate || fStartEs?.content || fStartEs?.valueString
-  const vStartEsIso = normalizeDateToISO(vStartEs)
-  if (vStartEsIso) return vStartEsIso
-  // 3) Legacy: periodo de consumo - preferir fecha_inicio
-  const ini = normalizeDateToISO(res?.factura_suministros?.periodo_consumo?.fecha_inicio)
-  if (ini) return ini
-  // 4) Como último recurso, fecha_fin
-  const fin =
-    normalizeDateToISO(res?.factura_suministros?.periodo_consumo?.fecha_fin) ||
-    // Español: FechaFin / fechaFin en fields
-    normalizeDateToISO(
-      (fields?.FechaFin || fields?.fechaFin)?.valueDate ||
-        (fields?.FechaFin || fields?.fechaFin)?.content ||
-        (fields?.FechaFin || fields?.fechaFin)?.valueString,
-    )
-  if (fin) return fin
+
+  // Función auxiliar para extraer valores de campos
+  const getFieldValue = (field: any): string | null => {
+    if (!field) return null
+    return field?.valueDate || field?.content || field?.valueString || null
+  }
+
+  // Lista de campos a verificar en orden de prioridad
+  const fieldPriority = [
+    // 1) Fecha de factura directa
+    () => getFieldValue(fields?.InvoiceDate || fields?.invoiceDate),
+
+    // 2) Fecha de inicio de servicio
+    () =>
+      getFieldValue(
+        fields?.ServiceStartDate ||
+          fields?.serviceStartDate ||
+          fields?.StartDate ||
+          fields?.startDate,
+      ),
+
+    // 3) Campos en español
+    () => getFieldValue(fields?.FechaInicio || fields?.fechaInicio),
+
+    // 4) Legacy: periodo de consumo
+    () => res?.factura_suministros?.periodo_consumo?.fecha_inicio,
+
+    // 5) Como último recurso, fecha fin
+    () =>
+      res?.factura_suministros?.periodo_consumo?.fecha_fin ||
+      getFieldValue(fields?.FechaFin || fields?.fechaFin),
+  ]
+
+  // Intentar extraer fecha usando la nueva utilidad inteligente
+  for (const getFieldFn of fieldPriority) {
+    const value = getFieldFn()
+    if (value) {
+      const formattedDate = parseAndFormatDate(String(value))
+      if (formattedDate) return formattedDate
+    }
+  }
+
   return null
 }
 
@@ -240,22 +258,55 @@ export async function getAnalytics(filters: AnalyticsFilters = {}): Promise<Anal
       providerName: providerName || null,
       invoiceDate: extractInvoiceDate(r),
       confidence: (r as any).confidence,
+      documentoErroneo: (r as any).documentoErroneo,
+    })
+  }
+
+  // Filtrar por fecha de factura en memoria
+  let filteredDocuments = documents
+  if (filters.invoiceDateFrom || filters.invoiceDateTo) {
+    filteredDocuments = documents.filter((doc) => {
+      if (!doc.invoiceDate) return false
+
+      // Convertir dd/mm/yyyy a Date
+      const dateParts = doc.invoiceDate.split('/')
+      if (dateParts.length !== 3) return false
+
+      const invoiceDate = new Date(
+        parseInt(dateParts[2]),
+        parseInt(dateParts[1]) - 1,
+        parseInt(dateParts[0]),
+      )
+      if (isNaN(invoiceDate.getTime())) return false
+
+      if (filters.invoiceDateFrom) {
+        const fromDate = new Date(filters.invoiceDateFrom)
+        if (invoiceDate < fromDate) return false
+      }
+
+      if (filters.invoiceDateTo) {
+        const toDate = new Date(filters.invoiceDateTo)
+        if (invoiceDate > toDate) return false
+      }
+
+      return true
     })
   }
 
   // Paginación en memoria de documents
   const page = Math.max(1, Number(filters.page) || 1)
   const limit = Math.min(100, Math.max(5, Number(filters.limit) || 10))
-  const totalDocs = documents.length
+  const totalDocs = filteredDocuments.length
   const totalPages = Math.max(1, Math.ceil(totalDocs / limit))
   const start = (page - 1) * limit
-  const paginated = documents.slice(start, start + limit)
+  const paginated = filteredDocuments.slice(start, start + limit)
 
   return {
     totalsByTipo,
     totalsByCaso,
     totalsByUnit,
     documents: paginated,
+    allDocumentIds: filteredDocuments.map((d) => d.id), // Todos los IDs filtrados para exportación
     projects,
     tipoOptions: Array.from(tipoSet),
     casoOptions: Array.from(casoSet),

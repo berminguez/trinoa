@@ -12,12 +12,25 @@ import ImageViewer from './ImageViewer'
 import ResourceForm from './ResourceForm'
 import InlineTitleEditor from './InlineTitleEditor'
 import { ConfidenceBadge } from '@/components/ui/confidence-badge'
+import { getTranslations } from 'next-intl/server'
+import { cookies } from 'next/headers'
+import { locales, defaultLocale } from '@/i18n'
 
 interface PageContentProps {
   params: Promise<{ id: string; resourceId: string }>
 }
 
 export default async function PageContent({ params }: PageContentProps) {
+  // Resolver locale desde cookie para alinear con el provider
+  let locale: string = defaultLocale
+  try {
+    const cookieStore = await cookies()
+    const localeCookie = cookieStore.get('NEXT_LOCALE')
+    if (localeCookie && locales.includes(localeCookie.value as any)) {
+      locale = localeCookie.value
+    }
+  } catch {}
+  const t = await getTranslations({ locale, namespace: 'documents' })
   // 1) Autenticación básica
   const user = await getCurrentUser()
   if (!user) {
@@ -127,21 +140,21 @@ export default async function PageContent({ params }: PageContentProps) {
                 {/* Confidence Badge */}
                 <div className='flex items-center gap-2 mt-2 mb-2'>
                   <ConfidenceBadge
-                    confidence={resourceRes.confidence || 'empty'}
+                    confidence={
+                      resourceRes.documentoErroneo
+                        ? 'wrong_document'
+                        : resourceRes.confidence || 'empty'
+                    }
                     showIcon={true}
                     showTooltip={true}
                     size='default'
                   />
                   <span className='text-xs text-muted-foreground'>
-                    Estado de confianza del documento
+                    {t('confidenceDescription')}
                   </span>
                 </div>
 
-                {viewerProps.file.filename ? (
-                  <p className='text-xs text-muted-foreground break-all'>
-                    {viewerProps.file.filename}
-                  </p>
-                ) : null}
+                {/* Ocultar nombre de archivo bajo el badge según solicitud */}
               </div>
               <ResourceForm
                 projectId={String(projectRes.id)}
@@ -156,6 +169,8 @@ export default async function PageContent({ params }: PageContentProps) {
                       : undefined) || undefined,
                 }}
                 initialStatus={viewerProps.status as any}
+                initialConfidence={resourceRes.confidence}
+                initialDocumentoErroneo={resourceRes.documentoErroneo}
               />
             </div>
           }

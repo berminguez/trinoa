@@ -441,6 +441,10 @@ export interface Resource {
    */
   confidence?: ('empty' | 'needs_revision' | 'trusted' | 'verified') | null;
   /**
+   * Marcar manualmente si el documento es erróneo. Este estado prevalece sobre otros estados de confianza.
+   */
+  documentoErroneo?: boolean | null;
+  /**
    * Metadatos del procesamiento
    */
   processingMetadata?: {
@@ -558,6 +562,10 @@ export interface FieldTranslation {
    */
   order?: number | null;
   label: string;
+  /**
+   * Etiqueta en inglés
+   */
+  labelEn: string;
   /**
    * Indica si el campo es obligatorio
    */
@@ -1143,6 +1151,7 @@ export interface ResourcesSelect<T extends boolean = true> {
       };
   analyzeResult?: T;
   confidence?: T;
+  documentoErroneo?: T;
   processingMetadata?:
     | T
     | {
@@ -1174,6 +1183,7 @@ export interface FieldTranslationsSelect<T extends boolean = true> {
   key?: T;
   order?: T;
   label?: T;
+  labelEn?: T;
   isRequired?: T;
   updatedAt?: T;
   createdAt?: T;

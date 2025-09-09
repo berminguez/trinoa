@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table'
 import { IconCheck, IconPlus } from '@tabler/icons-react'
 import { toast } from 'sonner'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { updateResourceAction } from '@/actions/resources/updateResource'
 import { useRouter } from 'next/navigation'
@@ -90,6 +91,9 @@ export default function AnalyzeFieldsPanel({
   projectId: string
   resourceId: string
 }) {
+  const t = useTranslations('resources.analysis')
+  const tForms = useTranslations('forms')
+  const locale = useLocale()
   const router = useRouter()
   const [loading, setLoading] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
@@ -197,7 +201,7 @@ export default function AnalyzeFieldsPanel({
     }
   }, [])
 
-  type Translation = { label: string; order?: number }
+  type Translation = { label: string; labelEn?: string; order?: number }
   const [translations, setTranslations] = React.useState<Record<string, Translation>>({})
 
   React.useEffect(() => {
@@ -208,9 +212,10 @@ export default function AnalyzeFieldsPanel({
         const map: Record<string, Translation> = {}
         const docs = Array.isArray(data?.docs) ? data.docs : []
         for (const d of docs) {
-          if (d?.key && d?.label)
+          if (d?.key)
             map[d.key] = {
               label: d.label,
+              labelEn: d.labelEn,
               order: typeof d.order === 'number' ? d.order : undefined,
             }
         }
@@ -379,7 +384,7 @@ export default function AnalyzeFieldsPanel({
                 variant='ghost'
                 size='icon'
                 onClick={() => confirmField(fieldKey)}
-                aria-label={`Confirmar ${fieldKey}`}
+                aria-label={t('confirm')}
               >
                 <IconCheck className='h-4 w-4' />
               </Button>
@@ -387,9 +392,11 @@ export default function AnalyzeFieldsPanel({
           </div>
         </div>
         {isManual ? (
-          <div className='mt-1 text-[10px] text-green-600'>Manual</div>
+          <div className='mt-1 text-[10px] text-green-600'>{t('manual')}</div>
         ) : conf !== undefined && currentValue ? (
-          <div className={`mt-1 text-[10px] ${getColor(conf)}`}>IC: {Math.round(conf * 100)}%</div>
+          <div className={`mt-1 text-[10px] ${getColor(conf)}`}>
+            {t('confidenceIndex')}: {Math.round(conf * 100)}%
+          </div>
         ) : null}
       </div>
     )
@@ -408,8 +415,8 @@ export default function AnalyzeFieldsPanel({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className='w-2/3'>Empresa/Servicio</TableHead>
-                    <TableHead className='w-1/3'>Importe</TableHead>
+                    <TableHead className='w-2/3'>{t('companyService')}</TableHead>
+                    <TableHead className='w-1/3'>{t('amount')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -432,7 +439,7 @@ export default function AnalyzeFieldsPanel({
             ) : null}
             {hasEmpresaServicioBase ? (
               <Button variant='outline' size='sm' onClick={revealNext} disabled={!canRevealMore}>
-                <IconPlus className='h-4 w-4 mr-1' /> Añadir Empresa/ Servicio
+                <IconPlus className='h-4 w-4 mr-1' /> {t('addCompanyService')}
               </Button>
             ) : null}
           </div>
@@ -447,9 +454,9 @@ export default function AnalyzeFieldsPanel({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className='w-1/2'>Combustible</TableHead>
-                    <TableHead className='w-1/4'>Cantidad</TableHead>
-                    <TableHead className='w-1/4'>Unidad</TableHead>
+                    <TableHead className='w-1/2'>{t('fuel')}</TableHead>
+                    <TableHead className='w-1/4'>{t('quantity')}</TableHead>
+                    <TableHead className='w-1/4'>{t('unit')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -481,7 +488,7 @@ export default function AnalyzeFieldsPanel({
                 onClick={revealNextCombustible}
                 disabled={!combustibleCanRevealMore}
               >
-                <IconPlus className='h-4 w-4 mr-1' /> Añadir Combustible
+                <IconPlus className='h-4 w-4 mr-1' /> {t('addFuel')}
               </Button>
             ) : null}
           </div>
@@ -490,14 +497,16 @@ export default function AnalyzeFieldsPanel({
 
       <div className='mt-2 grid grid-cols-1 gap-3 md:grid-cols-2'>
         {!loading && entries.length === 0 ? (
-          <div className='text-xs text-muted-foreground'>No hay campos disponibles</div>
+          <div className='text-xs text-muted-foreground'>{t('noFields')}</div>
         ) : null}
-        {entries.map(([key, val]) => {
+        {entries.map(([key]) => {
           return (
             <div key={key} className='p-0'>
               <div className='mb-1 flex items-baseline justify-between'>
                 <label className='text-xs font-semibold text-muted-foreground flex items-center gap-1'>
-                  {translations[key]?.label || key}
+                  {locale?.startsWith('en')
+                    ? translations[key]?.labelEn || key || translations[key]?.label
+                    : translations[key]?.label || key}
                   {savedAt[key] ? <IconCheck size={12} className='text-green-600' /> : null}
                 </label>
               </div>
@@ -506,7 +515,7 @@ export default function AnalyzeFieldsPanel({
           )
         })}
       </div>
-      {saving && <div className='mt-1 text-[10px] text-muted-foreground'>Guardando…</div>}
+      {saving && <div className='mt-1 text-[10px] text-muted-foreground'>{tForms('saving')}</div>}
     </div>
   )
 }

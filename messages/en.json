@@ -1,0 +1,371 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "analytics": "Analytics",
+    "account": "My Account",
+    "clients": "Clients"
+  },
+  "user": {
+    "admin": "Admin",
+    "administrator": "Administrator",
+    "account": "Account",
+    "billing": "Billing",
+    "notifications": "Notifications",
+    "adminPanel": "Admin Panel",
+    "logout": "Sign out",
+    "loggingOut": "Signing out...",
+    "sessionClosed": "Session closed successfully",
+    "logoutError": "Error signing out. Please try again.",
+    "userDataError": "Could not load user data",
+    "loadingError": "Error loading user data"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "loading": "Loading...",
+    "error": "Error"
+  },
+  "account": {
+    "title": "My Account",
+    "description": "Manage your personal information and account settings"
+  },
+  "projects": {
+    "title": "Projects",
+    "noProjects": "No projects available",
+    "noProjectsDescription": "You don't have any projects created yet. Create your first project to start using the contextual search system.",
+    "createFirst": "Create first project",
+    "noVideos": "No videos in this project",
+    "noVideosDescription": "This project has no uploaded videos. Upload your first video to start asking questions about its content.",
+    "uploadFirst": "Upload first video",
+    "noContent": "No content available",
+    "noContentDescription": "You have no projects or videos available. Create a project and upload content to use all TRINOA functionalities.",
+    "startNow": "Start now",
+    "create": {
+      "newProject": "New project",
+      "createProject": "Create new project",
+      "description": "Create a new project to organize your resources.",
+      "title": "Title",
+      "titlePlaceholder": "Enter project title...",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Enter project description (optional)...",
+      "characters": "characters",
+      "create": "Create",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "errors": {
+        "titleRequired": "Title is required",
+        "titleMinLength": "Title must be at least 3 characters",
+        "titleMaxLength": "Title cannot exceed 100 characters",
+        "titleExists": "A project with this title already exists",
+        "descriptionMaxLength": "Description cannot exceed 500 characters"
+      },
+      "toast": {
+        "successTitle": "Project created successfully",
+        "successDescription": "The project \"{title}\" was created successfully.",
+        "serverErrorTitle": "Error creating project",
+        "unexpectedTitle": "Unexpected error",
+        "unexpectedDescription": "An unexpected error occurred while creating the project."
+      }
+    },
+    "upload": {
+      "dragDrop": "Drag documents or browse files",
+      "dropFiles": "Drop to add documents",
+      "chooseFiles": "Choose files or drag them here",
+      "fileSize": "File size",
+      "pdfPages": "PDF pages",
+      "formats": "Formats",
+      "validation": "Files will be automatically validated after selection",
+      "rejectedFiles": "Some files were rejected:",
+      "exploreFiles": "Browse Files"
+    },
+    "grid": {
+      "searchPlaceholder": "Search projects...",
+      "sort": {
+        "placeholder": "Sort by",
+        "options": {
+          "recent": "Recently uploaded",
+          "name": "Name",
+          "creation": "Creation date"
+        }
+      },
+      "empty": {
+        "none": {
+          "title": "No projects yet",
+          "description": "Create your first project to get started"
+        },
+        "noResults": {
+          "title": "No projects found",
+          "description": "No project matches \"{term}\". Try another search.",
+          "clear": "Clear search"
+        }
+      }
+    },
+    "item": {
+      "documents": "{count, plural, one {# document} other {# documents}}"
+    },
+    "header": {
+      "subtitle": "Manage your projects"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "noDocuments": "No documents yet",
+    "upload": "Upload",
+    "view": "View",
+    "columns": "Columns",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page",
+    "of": "of",
+    "noResults": "No results found.",
+    "delete": "Delete Document",
+    "deleteConfirm": "Are you sure you want to delete",
+    "deleteMultiple": "Delete multiple documents",
+    "deleteMultipleDescription": "This action cannot be undone.",
+    "selectedDocuments": "Selected documents:",
+    "cancel": "Cancel",
+    "state": "State",
+    "confidence": "Confidence",
+    "confidenceDescription": "Document confidence state",
+    "allConfidences": "All confidences",
+    "noFile": "No file",
+    "unknownType": "Unknown",
+    "failed": "Failed",
+    "couldNotDelete": "Could not delete document",
+    "couldNotDeleteMultiple": "Could not delete documents",
+    "editingMetadata": "Metadata editing",
+    "fileName": "File name",
+    "image": "Image",
+    "uploaded": "Uploaded",
+    "deleteSuccess": "Document deleted!",
+    "deleteSuccessDesc": "\"{title}\" was deleted successfully",
+    "deleteErrorTitle": "Error deleting document",
+    "deleting": "Deleting...",
+    "loading": "Loading...",
+    "status": {
+      "completed": "Completed",
+      "uploading": "Uploading",
+      "processing": "Processing",
+      "needs_review": "Needs review",
+      "pending": "Pending"
+    },
+    "viewResource": "View resource",
+    "viewDocument": "View document",
+    "uploadDocuments": "Upload documents",
+    "uploadToStart": "Upload documents to start building your project",
+    "count": "{count, plural, one {# document} other {# documents}}",
+    "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+    "selectedCountLong": "{count, plural, one {# selected document} other {# selected documents}}",
+    "clearSelection": "Clear selection",
+    "deleteSelected": "Delete selected",
+    "searchPlaceholder": "Search documents...",
+    "filterByConfidence": "Filter by confidence",
+    "entries": "entries",
+    "showing": "Showing",
+    "to": "to",
+    "total": "total",
+    "typeCase": "Type (case)",
+    "case": "Case",
+    "caseLabels": {
+      "factura_suministros": "Utilities invoice"
+    },
+    "typeLabels": {
+      "electricidad": "Electricity",
+      "agua": "Water",
+      "gas": "Gas",
+      "combustible": "Fuel"
+    },
+    "selectResource": "Select a resource",
+    "selectionSummary": "{selected} of {total} rows selected.",
+    "more": "more",
+    "confidenceBadge": {
+      "aria": {
+        "status": "Confidence status: {label}",
+        "groupEmpty": "Empty confidence statistics",
+        "groupNone": "No confidence statistics",
+        "groupSummary": "Confidence statistics: {total} resources in total",
+        "percentWord": "percent"
+      },
+      "tooltip": {
+        "currentThreshold": "Current threshold: {threshold}%"
+      },
+      "states": {
+        "empty": {
+          "label": "Empty or N/A",
+          "description": "The document is processing or has no analyzed fields yet."
+        },
+        "needs_revision": {
+          "label": "Needs review",
+          "description": "The document has required fields below the configured confidence threshold."
+        },
+        "trusted": {
+          "label": "Trusted",
+          "description": "All fields in the document have high automatic confidence."
+        },
+        "verified": {
+          "label": "Verified",
+          "description": "The document has been reviewed and corrected manually by a human."
+        },
+        "wrong_document": {
+          "label": "Wrong document",
+          "description": "The document was manually marked as wrong and requires attention."
+        }
+      }
+    },
+    "edit": {
+      "metadataEdit": "Metadata editing",
+      "rescan": "Rescan",
+      "rescanConfirm": "Do you want to start a rescan?",
+      "rescanStartError": "Could not launch re-scan",
+      "rescanStarted": "Re-scan started",
+      "case": "Case",
+      "selectCase": "Select a case",
+      "type": "Type",
+      "selectType": "Select a type",
+      "caseLabels": {
+        "factura_suministros": "Utilities invoice",
+        "desplazamientos": "Travel",
+        "materias_primas": "Raw materials",
+        "viajes_tipo_2": "Trips type 2",
+        "variado_emails": "Misc (emails)",
+        "consumos_combustible_tipo_1": "Fuel consumption (type 1)",
+        "residuos": "Waste",
+        "viajes_tipo_1": "Trips type 1",
+        "otros": "Other"
+      },
+      "typeLabels": {
+        "prebuilt-invoice": "Invoice (prebuilt)",
+        "prebuilt-receipt": "Receipt (prebuilt)",
+        "electricidad": "Electricity",
+        "agua": "Water",
+        "gas": "Gas",
+        "combustible": "Fuel",
+        "gasolinera": "Gas station",
+        "taxi_vtc": "Taxi / VTC",
+        "otros": "Other"
+      }
+    },
+    "statusControl": {
+      "toggleWrongDocument": "Mark as wrong document",
+      "wrongDocumentNote": "Confidence state is replaced by 'Wrong document' (manual)",
+      "toggleWrongDocumentNote": "Confidence state is replaced by 'Wrong document' (manual)"
+    }
+  },
+  "analytics": {
+    "title": "Analytics",
+    "download": "Download Excel",
+    "client": "Client",
+    "accumulatedByType": "Accumulated by Type",
+    "accumulatedByCase": "Accumulated by Case",
+    "accumulatedByUnit": "Accumulated by Unit",
+    "filters": "Filters",
+    "from": "From",
+    "to": "To",
+    "invoiceFrom": "Invoice date from",
+    "invoiceTo": "Invoice date to",
+    "type": "Type",
+    "case": "Case",
+    "project": "Project",
+    "provider": "Provider"
+  },
+  "pricing": {
+    "title": "Choose your perfect plan",
+    "description": "Unlock TRINOA's full potential with our plans designed for every need",
+    "currentSubscription": "Your current subscription"
+  },
+  "forms": {
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved",
+    "error": "Error",
+    "couldNotSave": "Could not save changes",
+    "couldNotUpdate": "Could not update document status",
+    "couldNotRescan": "Could not launch re-scan"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Information",
+    "yes": "Yes",
+    "no": "No",
+    "ok": "OK",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "create": "Create",
+    "update": "Update",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "date": "Date",
+    "type": "Type",
+    "name": "Name",
+    "status": "Status",
+    "actions": "Actions",
+    "language": {
+      "es": "Español",
+      "en": "English"
+    }
+  },
+  "playground": {
+    "startConversation": "Start a conversation",
+    "askQuestions": "Ask questions about your documents or start a general conversation. The RAG system will help you find relevant information.",
+    "initialGreeting": "Initial greeting",
+    "startConversationDesc": "Start a conversation",
+    "aboutTrinoa": "About TRINOA",
+    "aboutTrinoaDesc": "Learn more about this platform",
+    "futurePlans": "Future features",
+    "futurePlansDesc": "RAG, MCP and advanced capabilities",
+    "productiveAssistance": "Productive assistance",
+    "productiveAssistanceDesc": "Productivity and organization tasks",
+    "you": "You",
+    "assistant": "AI Assistant",
+    "sending": "Sending...",
+    "retrying": "Retrying...",
+    "retrySend": "Retry send",
+    "tool": "tool",
+    "emptyState": {
+      "noProjects": {
+        "title": "No projects available",
+        "description": "You haven't created any projects yet. Create your first project to start using the contextual search system.",
+        "ctaText": "Create first project",
+        "badge": "Projects"
+      },
+      "noVideos": {
+        "title": "No videos in this project",
+        "description": "This project has no uploaded videos. Upload your first video to start asking questions about its content.",
+        "ctaText": "Upload first video",
+        "badge": "Videos"
+      },
+      "noContent": {
+        "title": "No content available",
+        "description": "You have no projects or videos available. Create a project and upload content to use all TRINOA functionalities.",
+        "ctaText": "Get started",
+        "badge": "No content"
+      }
+    }
+  },
+  "resources": {
+    "analysis": {
+      "companyService": "Company/Service",
+      "amount": "Amount",
+      "fuel": "Fuel",
+      "fuels": "Fuels",
+      "addCompanyService": "Add Company/Service",
+      "addFuel": "Add Fuel",
+      "manual": "Manual",
+      "confidenceIndex": "CI",
+      "name": "Name",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "confirm": "Confirm",
+      "noFields": "No fields available"
+    }
+  }
+}

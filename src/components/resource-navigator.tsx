@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { getProjectResources } from '@/actions/resources/getProjectResources'
+import { useTranslations } from 'next-intl'
 
 interface ResourceOption {
   id: string
@@ -33,6 +34,7 @@ function extractProjectAndResourceIds(pathname: string): {
 }
 
 export function ResourceNavigator() {
+  const t = useTranslations('documents')
   const pathname = usePathname()
   const router = useRouter()
 
@@ -102,7 +104,7 @@ export function ResourceNavigator() {
         variant='outline'
         disabled={!hasPrev || isLoading}
         onClick={goPrev}
-        aria-label='Anterior recurso'
+        aria-label={t('previous')}
       >
         <IconChevronLeft className='h-4 w-4' />
       </Button>
@@ -112,7 +114,11 @@ export function ResourceNavigator() {
         disabled={isLoading || options.length === 0}
       >
         <SelectTrigger className='w-[260px]'>
-          <SelectValue placeholder={isLoading ? 'Cargando recursos…' : 'Selecciona un recurso'} />
+          <SelectValue
+            placeholder={
+              isLoading ? t('loading') : t('selectResource', { default: 'Select a resource' })
+            }
+          />
         </SelectTrigger>
         <SelectContent className='max-h-80 overflow-y-auto'>
           {options.map((opt) => (
@@ -127,7 +133,7 @@ export function ResourceNavigator() {
         variant='outline'
         disabled={!hasNext || isLoading}
         onClick={goNext}
-        aria-label='Siguiente recurso'
+        aria-label={t('next')}
       >
         <IconChevronRight className='h-4 w-4' />
       </Button>

@@ -12,6 +12,10 @@ import {
 const PROTECTED_ROUTES = [
   '/dashboard',
   '/playground',
+  '/projects',
+  '/analytics',
+  '/account',
+  '/api-keys',
   // Futuras rutas protegidas
   '/profile',
   '/settings',
@@ -31,7 +35,15 @@ const AUTH_ONLY_ROUTES = ['/login'] as const
 /**
  * Rutas que siempre son públicas (nunca requieren autenticación)
  */
-const PUBLIC_ROUTES = ['/', '/api', '/_next', '/favicon.ico', '/manifest.json'] as const
+const PUBLIC_ROUTES = [
+  '/',
+  '/pricing',
+  '/test-usage',
+  '/api',
+  '/_next',
+  '/favicon.ico',
+  '/manifest.json',
+] as const
 
 /**
  * Verifica si una ruta está protegida
@@ -290,11 +302,13 @@ export const config = {
      * - api (API routes - excepto /api/auth que podríamos proteger en el futuro)
      * - _next/static (static files)
      * - _next/image (image optimization files)
+     * - _vercel (Vercel internals)
      * - favicon.ico (favicon file)
      * - manifest.json (PWA manifest)
      * - robots.txt (SEO)
      * - sitemap.xml (SEO)
+     * - Files with extensions (e.g., .png, .jpg, .css, .js)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml).*)',
+    '/((?!api|_next/static|_next/image|_vercel|favicon.ico|manifest.json|robots.txt|sitemap.xml|.*\\..*).*)',
   ],
 }

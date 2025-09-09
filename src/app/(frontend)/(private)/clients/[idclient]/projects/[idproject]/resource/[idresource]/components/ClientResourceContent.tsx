@@ -7,7 +7,13 @@ import { Button } from '@/components/ui/button'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import Link from 'next/link'
-import { IconExternalLink, IconCalendar, IconUser, IconFileText, IconShield } from '@tabler/icons-react'
+import {
+  IconExternalLink,
+  IconCalendar,
+  IconUser,
+  IconFileText,
+  IconShield,
+} from '@tabler/icons-react'
 
 interface ClientResourceContentProps {
   adminUser: User
@@ -18,7 +24,7 @@ interface ClientResourceContentProps {
 
 /**
  * Contenido principal para detalle de recurso específico de proyecto de cliente
- * 
+ *
  * Vista administrativa completa del recurso incluyendo:
  * - ConfidenceBadge para mostrar estado de confianza
  * - Información detallada del recurso, proyecto y cliente
@@ -35,31 +41,32 @@ export async function ClientResourceContent({
     const payload = await getPayload({ config })
 
     // Obtener datos del recurso con relaciones
-    const resource = await payload.findByID({
+    const resource = (await payload.findByID({
       collection: 'resources',
       id: resourceId,
       depth: 2,
       overrideAccess: true,
-    }) as Resource
+    })) as Resource
 
     // Obtener datos del proyecto
-    const project = await payload.findByID({
+    const project = (await payload.findByID({
       collection: 'projects',
       id: projectId,
       depth: 1,
       overrideAccess: true,
-    }) as Project
+    })) as Project
 
     // Obtener datos del cliente
-    const client = await payload.findByID({
+    const client = (await payload.findByID({
       collection: 'users',
       id: clientId,
       depth: 0,
       overrideAccess: true,
-    }) as User
+    })) as User
 
     // Verificar que el recurso pertenece al proyecto
-    const resourceProjectId = typeof resource.project === 'object' ? resource.project.id : resource.project
+    const resourceProjectId =
+      typeof resource.project === 'object' ? resource.project.id : resource.project
     if (resourceProjectId !== projectId) {
       throw new Error('Resource does not belong to the specified project')
     }
@@ -172,7 +179,9 @@ export async function ClientResourceContent({
                     <p className='text-sm'>{resource.caso || 'No especificado'}</p>
                   </div>
                   <div>
-                    <label className='text-sm font-medium text-muted-foreground'>Tipo de negocio</label>
+                    <label className='text-sm font-medium text-muted-foreground'>
+                      Tipo de negocio
+                    </label>
                     <p className='text-sm'>{resource.tipo || 'No especificado'}</p>
                   </div>
                 </div>
@@ -296,7 +305,9 @@ export async function ClientResourceContent({
     return (
       <div className='flex-1 space-y-6 p-4 pt-6'>
         <div className='space-y-2'>
-          <h1 className='text-3xl font-bold tracking-tight text-red-600'>Error al cargar recurso</h1>
+          <h1 className='text-3xl font-bold tracking-tight text-red-600'>
+            Error al cargar recurso
+          </h1>
           <p className='text-muted-foreground'>
             No se pudo cargar la información del recurso. Verifica que existe y que tienes permisos.
           </p>

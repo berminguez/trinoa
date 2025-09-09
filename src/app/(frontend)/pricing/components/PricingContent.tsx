@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+import { getTranslations } from 'next-intl/server'
 
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { getUserSubscription } from '@/actions/subscriptions'
@@ -14,6 +15,8 @@ export default async function PricingContent() {
     redirect('/login')
   }
 
+  const t = await getTranslations('pricing')
+
   // Obtener suscripción actual del usuario y planes con precios dinámicos
   const [subscriptionResult, subscriptionPlans] = await Promise.all([
     getUserSubscription(),
@@ -28,16 +31,14 @@ export default async function PricingContent() {
     <div className='container mx-auto px-4 py-8'>
       {/* Header */}
       <div className='text-center mb-12'>
-        <h1 className='text-4xl font-bold mb-4'>Elige tu plan perfecto</h1>
-        <p className='text-lg text-muted-foreground max-w-2xl mx-auto'>
-          Desbloquea todo el potencial de TRINOA con nuestros planes diseñados para cada necesidad
-        </p>
+        <h1 className='text-4xl font-bold mb-4'>{t('title')}</h1>
+        <p className='text-lg text-muted-foreground max-w-2xl mx-auto'>{t('description')}</p>
       </div>
 
       {/* Current Subscription - Arriba si tiene plan de pago */}
       {showSubscriptionFirst && (
         <div className='max-w-2xl mx-auto mb-16'>
-          <h2 className='text-2xl font-semibold text-center mb-6'>Tu suscripción actual</h2>
+          <h2 className='text-2xl font-semibold text-center mb-6'>{t('currentSubscription')}</h2>
           <CurrentSubscriptionCard subscription={currentSubscription} />
         </div>
       )}
@@ -58,7 +59,7 @@ export default async function PricingContent() {
       {/* Current Subscription - Abajo si es plan gratuito */}
       {currentSubscription && !showSubscriptionFirst && (
         <div className='max-w-2xl mx-auto'>
-          <h2 className='text-2xl font-semibold text-center mb-6'>Tu suscripción actual</h2>
+          <h2 className='text-2xl font-semibold text-center mb-6'>{t('currentSubscription')}</h2>
           <CurrentSubscriptionCard subscription={currentSubscription} />
         </div>
       )}

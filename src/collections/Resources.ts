@@ -140,7 +140,7 @@ export const Resources: CollectionConfig = {
         { label: 'Electricidad', value: 'electricidad' },
         { label: 'Agua', value: 'agua' },
         { label: 'Gas', value: 'gas' },
-        { label: 'Combustible para calefacción', value: 'combustible' },
+        { label: 'Combustible', value: 'combustible' },
         { label: 'Gasolinera', value: 'gasolinera' },
         { label: 'Taxi / VTC', value: 'taxi_vtc' },
         { label: 'Factura (prebuilt)', value: 'prebuilt-invoice' },
@@ -412,6 +412,17 @@ export const Resources: CollectionConfig = {
           value: 'verified',
         },
       ],
+    },
+    // Campo manual para marcar documento como erróneo
+    {
+      name: 'documentoErroneo',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description:
+          'Marcar manualmente si el documento es erróneo. Este estado prevalece sobre otros estados de confianza.',
+        position: 'sidebar',
+      },
     },
     // Editor visual de fields de analyzeResult
     {

@@ -13,6 +13,7 @@ import {
   IconCrown,
 } from '@tabler/icons-react'
 import { toast } from 'sonner'
+import { useTranslations } from 'next-intl'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -50,6 +51,7 @@ export function NavUser() {
 
   const { isMobile } = useSidebar()
   const { isAdmin } = useUserRole() // Hook para verificar si es admin
+  const t = useTranslations('user')
 
   // Obtener datos del usuario al cargar el componente
   useEffect(() => {
@@ -63,11 +65,11 @@ export function NavUser() {
         if (userData) {
           setUser(userData)
         } else {
-          setError('No se pudieron cargar los datos del usuario')
+          setError(t('userDataError'))
         }
       } catch (err) {
         console.error('Error loading user data:', err)
-        setError('Error al cargar los datos del usuario')
+        setError(t('loadingError'))
       } finally {
         setIsLoading(false)
       }
@@ -81,16 +83,16 @@ export function NavUser() {
     try {
       setIsLoggingOut(true)
 
-      toast.info('Cerrando sesión...')
+      toast.info(t('loggingOut'))
 
       // Usar logoutWithRedirect que maneja la redirección automáticamente
       await logoutWithRedirect()
 
       // Si llegamos aquí, mostrar mensaje de éxito (aunque normalmente se redirige)
-      toast.success('Sesión cerrada correctamente')
+      toast.success(t('sessionClosed'))
     } catch (error) {
       console.error('Error durante logout:', error)
-      toast.error('Error al cerrar sesión. Por favor, intenta nuevamente.')
+      toast.error(t('logoutError'))
     } finally {
       setIsLoggingOut(false)
     }
@@ -179,7 +181,7 @@ export function NavUser() {
                     {isAdmin && (
                       <IconShield
                         className='h-3 w-3 text-orange-600 flex-shrink-0'
-                        title='Administrador'
+                        title={t('administrator')}
                       />
                     )}
                   </div>
@@ -214,7 +216,7 @@ export function NavUser() {
                           className='h-5 px-1.5 text-xs border-orange-200 text-orange-700 bg-orange-50'
                         >
                           <IconCrown className='h-3 w-3 mr-1' />
-                          Admin
+                          {t('admin')}
                         </Badge>
                       )}
                     </div>
@@ -226,15 +228,15 @@ export function NavUser() {
               <DropdownMenuGroup>
                 <DropdownMenuItem disabled>
                   <IconUserCircle />
-                  Cuenta
+                  {t('account')}
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   <IconCreditCard />
-                  Facturación
+                  {t('billing')}
                 </DropdownMenuItem>
                 <DropdownMenuItem disabled>
                   <IconNotification />
-                  Notificaciones
+                  {t('notifications')}
                 </DropdownMenuItem>
               </DropdownMenuGroup>
 
@@ -245,7 +247,7 @@ export function NavUser() {
                   <DropdownMenuGroup>
                     <DropdownMenuItem className='text-orange-700 focus:text-orange-700 focus:bg-orange-50'>
                       <IconShield />
-                      Panel de Administración
+                      {t('adminPanel')}
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </>
@@ -257,7 +259,7 @@ export function NavUser() {
                 className='text-red-600 focus:text-red-600'
               >
                 {isLoggingOut ? <IconLoader className='animate-spin' /> : <IconLogout />}
-                Cerrar sesión
+                {t('logout')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

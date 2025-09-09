@@ -17,6 +17,8 @@ import { IconX, IconFilter } from '@tabler/icons-react'
 interface FiltersProps {
   dateFrom?: string
   dateTo?: string
+  invoiceDateFrom?: string
+  invoiceDateTo?: string
   tipo?: string
   caso?: string
   tiposOptions?: string[]
@@ -30,6 +32,8 @@ interface FiltersProps {
 export default function Filters({
   dateFrom,
   dateTo,
+  invoiceDateFrom,
+  invoiceDateTo,
   tipo,
   caso,
   tiposOptions = [],
@@ -43,6 +47,8 @@ export default function Filters({
   const searchParams = useSearchParams()
   const [fromValue, setFromValue] = useState<string>(dateFrom || '')
   const [toValue, setToValue] = useState<string>(dateTo || '')
+  const [invoiceFromValue, setInvoiceFromValue] = useState<string>(invoiceDateFrom || '')
+  const [invoiceToValue, setInvoiceToValue] = useState<string>(invoiceDateTo || '')
   const [tipoValue, setTipoValue] = useState<string>(tipo || 'todos')
   const [casoValue, setCasoValue] = useState<string>(caso || 'todos')
   const [projectValue, setProjectValue] = useState<string>(projectId || 'todos')
@@ -50,6 +56,8 @@ export default function Filters({
 
   useEffect(() => setFromValue(dateFrom || ''), [dateFrom])
   useEffect(() => setToValue(dateTo || ''), [dateTo])
+  useEffect(() => setInvoiceFromValue(invoiceDateFrom || ''), [invoiceDateFrom])
+  useEffect(() => setInvoiceToValue(invoiceDateTo || ''), [invoiceDateTo])
   useEffect(() => setTipoValue(tipo || 'todos'), [tipo])
   useEffect(() => setCasoValue(caso || 'todos'), [caso])
   useEffect(() => setProjectValue(projectId || 'todos'), [projectId])
@@ -76,7 +84,7 @@ export default function Filters({
   const casos = useMemo(() => ['todos', ...Array.from(new Set(casosOptions))], [casosOptions])
 
   return (
-    <div className='grid grid-cols-1 md:grid-cols-7 gap-3'>
+    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-9 gap-3'>
       {/* Calendarios nativos */}
       <div className='flex flex-col gap-1'>
         <Label htmlFor='from'>Desde</Label>
@@ -95,6 +103,28 @@ export default function Filters({
           type='date'
           value={toValue}
           onChange={(e) => setToValue(e.target.value)}
+          className='w-full'
+        />
+      </div>
+
+      {/* Fechas de factura */}
+      <div className='flex flex-col gap-1'>
+        <Label htmlFor='invoiceFrom'>Fecha factura desde</Label>
+        <Input
+          id='invoiceFrom'
+          type='date'
+          value={invoiceFromValue}
+          onChange={(e) => setInvoiceFromValue(e.target.value)}
+          className='w-full'
+        />
+      </div>
+      <div className='flex flex-col gap-1'>
+        <Label htmlFor='invoiceTo'>Fecha factura hasta</Label>
+        <Input
+          id='invoiceTo'
+          type='date'
+          value={invoiceToValue}
+          onChange={(e) => setInvoiceToValue(e.target.value)}
           className='w-full'
         />
       </div>
@@ -177,6 +207,8 @@ export default function Filters({
             pushWith({
               from: fromValue || undefined,
               to: toValue || undefined,
+              invoiceFrom: invoiceFromValue || undefined,
+              invoiceTo: invoiceToValue || undefined,
               tipo: tipoValue === 'todos' ? undefined : tipoValue,
               caso: casoValue === 'todos' ? undefined : casoValue,
               projectId: projectValue === 'todos' ? undefined : projectValue,

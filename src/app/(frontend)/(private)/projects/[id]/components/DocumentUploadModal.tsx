@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useDropzone } from 'react-dropzone'
 import {
   IconUpload,
@@ -52,6 +53,7 @@ export function DocumentUploadModal({
   onMultiInvoiceUploadStarted,
   documentTableRef,
 }: DocumentUploadModalProps) {
+  const t = useTranslations('documents')
   const [isOpen, setIsOpen] = useState(false)
   const [uploadMethod, setUploadMethod] = useState<'files' | 'urls'>('files')
   const [urlsText, setUrlsText] = useState('')
@@ -228,7 +230,7 @@ export function DocumentUploadModal({
         {trigger || (
           <Button className='gap-2 w-full sm:w-auto'>
             <IconUpload className='h-4 w-4' />
-            Subir Documentos
+            {t('uploadDocuments', { default: t('upload') })}
           </Button>
         )}
       </DialogTrigger>

@@ -23,6 +23,7 @@ import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997e
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { RetryPreResourceButton as RetryPreResourceButton_d8a44b9e3fc5437fe14132035f25710a } from '@/payload-admin/RetryPreResourceButton'
+import { default as default_58914f8306e33707f8b779f3934a9473 } from '@/payload-admin/AdminProviders'
 import { S3ClientUploadHandler as S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24 } from '@payloadcms/storage-s3/client'
 
 export const importMap = {
@@ -51,5 +52,6 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/payload-admin/RetryPreResourceButton#RetryPreResourceButton": RetryPreResourceButton_d8a44b9e3fc5437fe14132035f25710a,
+  "@/payload-admin/AdminProviders#default": default_58914f8306e33707f8b779f3934a9473,
   "@payloadcms/storage-s3/client#S3ClientUploadHandler": S3ClientUploadHandler_f97aa6c64367fa259c5bc0567239ef24
 }
