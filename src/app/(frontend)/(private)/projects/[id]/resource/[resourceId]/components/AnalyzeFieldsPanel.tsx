@@ -201,8 +201,10 @@ export default function AnalyzeFieldsPanel({
     }
   }, [])
 
-  type Translation = { label: string; labelEn?: string; order?: number }
+  type Translation = { label: string; labelEn?: string; order?: number; isRequired?: boolean }
   const [translations, setTranslations] = React.useState<Record<string, Translation>>({})
+  const [requiredFields, setRequiredFields] = React.useState<Set<string>>(new Set())
+  const [confidenceThreshold, setConfidenceThreshold] = React.useState<number>(70)
 
   React.useEffect(() => {
     ;(async () => {
@@ -210,17 +212,38 @@ export default function AnalyzeFieldsPanel({
         const res = await fetch('/api/field-translations?limit=1000&sort=order')
         const data = await res.json()
         const map: Record<string, Translation> = {}
+        const requiredSet = new Set<string>()
         const docs = Array.isArray(data?.docs) ? data.docs : []
         for (const d of docs) {
-          if (d?.key)
+          if (d?.key) {
             map[d.key] = {
               label: d.label,
               labelEn: d.labelEn,
               order: typeof d.order === 'number' ? d.order : undefined,
+              isRequired: Boolean(d.isRequired),
             }
+            if (d.isRequired) {
+              requiredSet.add(d.key)
+            }
+          }
         }
         setTranslations(map)
+        setRequiredFields(requiredSet)
       } catch {}
+    })()
+  }, [])
+
+  // Cargar el umbral de confianza desde la configuración
+  React.useEffect(() => {
+    ;(async () => {
+      try {
+        const res = await fetch('/api/globals/configuracion')
+        const data = await res.json()
+        const threshold = data?.confidenceSettings?.confidenceThreshold ?? 70
+        setConfidenceThreshold(threshold)
+      } catch (e) {
+        console.warn('Error loading confidence threshold:', e)
+      }
     })()
   }, [])
 
@@ -342,6 +365,24 @@ export default function AnalyzeFieldsPanel({
     void persistPendingChanges()
   }
 
+  // Función para determinar si un campo obligatorio necesita revisión
+  const isRequiredFieldNeedsRevision = (fieldKey: string): boolean => {
+    if (!requiredFields.has(fieldKey)) return false
+
+    const field = (fields as any)[fieldKey]
+    if (!field) return false
+
+    const isManual = Boolean(field.manual)
+    const confidence = field.confidence
+    const thresholdDecimal = confidenceThreshold / 100
+
+    // Si es manual, no necesita revisión
+    if (isManual) return false
+
+    // Si no tiene confianza o está por debajo del umbral, necesita revisión
+    return typeof confidence !== 'number' || confidence < thresholdDecimal
+  }
+
   const ConfirmableInput = ({
     fieldKey,
     placeholder,
@@ -357,11 +398,14 @@ export default function AnalyzeFieldsPanel({
     const hasValue = Boolean(currentValue)
     const showConfirmButton = hasValue && !isManual && !(typeof conf === 'number' && conf >= 0.8)
 
+    const isRequired = requiredFields.has(fieldKey)
+    const needsRevision = isRequiredFieldNeedsRevision(fieldKey)
+
     return (
       <div>
         <div className='relative'>
           <Input
-            className='pr-10'
+            className={`pr-10 ${needsRevision ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
             defaultValue={currentValue}
             placeholder={placeholder}
             onChange={(e) => {
@@ -423,13 +467,29 @@ export default function AnalyzeFieldsPanel({
                   {visibleIndices.map((i) => {
                     const empresaKey = `EmpresaServicio${i}`
                     const importeKey = `Importe${i}`
+                    const empresaRequired = requiredFields.has(empresaKey)
+                    const importeRequired = requiredFields.has(importeKey)
                     return (
                       <TableRow key={i}>
                         <TableCell>
-                          <ConfirmableInput fieldKey={empresaKey} placeholder={empresaKey} />
+                          <div className='space-y-1'>
+                            {empresaRequired && (
+                              <div className='text-xs text-muted-foreground flex items-center gap-1'>
+                                {t('companyService')} <span className='text-red-500'>*</span>
+                              </div>
+                            )}
+                            <ConfirmableInput fieldKey={empresaKey} placeholder={empresaKey} />
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <ConfirmableInput fieldKey={importeKey} placeholder={importeKey} />
+                          <div className='space-y-1'>
+                            {importeRequired && (
+                              <div className='text-xs text-muted-foreground flex items-center gap-1'>
+                                {t('amount')} <span className='text-red-500'>*</span>
+                              </div>
+                            )}
+                            <ConfirmableInput fieldKey={importeKey} placeholder={importeKey} />
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -464,16 +524,40 @@ export default function AnalyzeFieldsPanel({
                     const nombreKey = `NombreCombustible${i}`
                     const cantidadKey = `CantidadCombustible${i}`
                     const unidadKey = `UnidadMedidaCombustible${i}`
+                    const nombreRequired = requiredFields.has(nombreKey)
+                    const cantidadRequired = requiredFields.has(cantidadKey)
+                    const unidadRequired = requiredFields.has(unidadKey)
                     return (
                       <TableRow key={`comb-${i}`}>
                         <TableCell>
-                          <ConfirmableInput fieldKey={nombreKey} placeholder={nombreKey} />
+                          <div className='space-y-1'>
+                            {nombreRequired && (
+                              <div className='text-xs text-muted-foreground flex items-center gap-1'>
+                                {t('fuel')} <span className='text-red-500'>*</span>
+                              </div>
+                            )}
+                            <ConfirmableInput fieldKey={nombreKey} placeholder={nombreKey} />
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <ConfirmableInput fieldKey={cantidadKey} placeholder={cantidadKey} />
+                          <div className='space-y-1'>
+                            {cantidadRequired && (
+                              <div className='text-xs text-muted-foreground flex items-center gap-1'>
+                                {t('quantity')} <span className='text-red-500'>*</span>
+                              </div>
+                            )}
+                            <ConfirmableInput fieldKey={cantidadKey} placeholder={cantidadKey} />
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <ConfirmableInput fieldKey={unidadKey} placeholder={unidadKey} />
+                          <div className='space-y-1'>
+                            {unidadRequired && (
+                              <div className='text-xs text-muted-foreground flex items-center gap-1'>
+                                {t('unit')} <span className='text-red-500'>*</span>
+                              </div>
+                            )}
+                            <ConfirmableInput fieldKey={unidadKey} placeholder={unidadKey} />
+                          </div>
                         </TableCell>
                       </TableRow>
                     )
@@ -500,6 +584,7 @@ export default function AnalyzeFieldsPanel({
           <div className='text-xs text-muted-foreground'>{t('noFields')}</div>
         ) : null}
         {entries.map(([key]) => {
+          const isRequired = requiredFields.has(key)
           return (
             <div key={key} className='p-0'>
               <div className='mb-1 flex items-baseline justify-between'>
@@ -507,6 +592,7 @@ export default function AnalyzeFieldsPanel({
                   {locale?.startsWith('en')
                     ? translations[key]?.labelEn || key || translations[key]?.label
                     : translations[key]?.label || key}
+                  {isRequired && <span className='text-red-500 text-sm'>*</span>}
                   {savedAt[key] ? <IconCheck size={12} className='text-green-600' /> : null}
                 </label>
               </div>
