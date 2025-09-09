@@ -29,7 +29,73 @@
   },
   "account": {
     "title": "Mi Cuenta",
-    "description": "Gestiona tu información personal y configuración de cuenta"
+    "description": "Gestiona tu información personal y configuración de cuenta",
+    "profileCard": {
+      "title": "Información Personal",
+      "edit": "Editar",
+      "name": "Nombre",
+      "company": "Empresa",
+      "email": "Email",
+      "role": "Rol",
+      "registered": "Registrado:",
+      "lastUpdate": "Última actualización:",
+      "noName": "Usuario sin nombre",
+      "notSpecified": "No especificado",
+      "notSpecifiedCompany": "No especificada",
+      "roles": {
+        "admin": "Administrador",
+        "user": "Usuario",
+        "api": "API"
+      }
+    },
+    "accountSettings": {
+      "title": "Configuración de Cuenta",
+      "security": "Seguridad",
+      "accountStatus": "Estado de la cuenta",
+      "active": "Activa",
+      "timeAsUser": "Tiempo como usuario",
+      "registeredToday": "Registrado hoy",
+      "days": "día",
+      "daysPlural": "días",
+      "accessLevel": "Nivel de acceso",
+      "systemAdmin": "Administrador del sistema",
+      "standardUser": "Usuario estándar",
+      "apiUser": "Usuario API",
+      "adminDescription": "Como administrador, tienes acceso completo al sistema y puedes gestionar otros usuarios.",
+      "settings": "Configuraciones",
+      "changePassword": "Cambiar contraseña",
+      "changePasswordDesc": "Actualiza tu contraseña de acceso",
+      "comingSoon": "Próximamente",
+      "apiKeysManagement": "Gestión de API Keys",
+      "apiKeysDesc": "Administra tus claves de acceso API",
+      "contactAdmin": "Para cambios en tu rol de usuario o configuraciones avanzadas de seguridad, contacta con un administrador del sistema."
+    },
+    "editProfile": {
+      "title": "Editar Perfil",
+      "description": "Actualiza tu información personal. Los campos marcados con * son obligatorios.",
+      "name": "Nombre",
+      "namePlaceholder": "Tu nombre completo",
+      "company": "Empresa",
+      "companyPlaceholder": "Nombre de tu empresa",
+      "email": "Email",
+      "emailPlaceholder": "tu.email@empresa.com",
+      "cancel": "Cancelar",
+      "update": "Actualizar Perfil",
+      "updating": "Actualizando...",
+      "emailWarning": "⚠️ Cambiar el email puede afectar tu acceso a la cuenta",
+      "roleInfo": "Tu rol de usuario no puede ser modificado desde aquí. Para cambios de rol, contacta con un administrador.",
+      "errors": {
+        "nameRequired": "El nombre es requerido",
+        "nameMinLength": "El nombre debe tener al menos 2 caracteres",
+        "nameMaxLength": "El nombre no puede exceder 100 caracteres",
+        "companyRequired": "La empresa es requerida",
+        "companyMinLength": "La empresa debe tener al menos 2 caracteres",
+        "companyMaxLength": "La empresa no puede exceder 100 caracteres",
+        "emailRequired": "El email es requerido",
+        "emailInvalid": "El email no tiene un formato válido",
+        "serverError": "Error interno del servidor. Intenta nuevamente."
+      }
+    }
   },
   "projects": {
     "title": "Proyectos",
@@ -249,6 +315,51 @@
         "gasolinera": "Gasolinera",
         "taxi_vtc": "Taxi / VTC",
         "otros": "Otros"
+      }
+    },
+    "uploadModal": {
+      "title": "Subir Documentos a {projectTitle}",
+      "titleDefault": "Subir Documentos",
+      "description": "Añade documentos e imágenes a tu proyecto. Formatos soportados: PDF, JPG, PNG, WebP",
+      "tabs": {
+        "uploadFiles": "Subir Archivos",
+        "fromUrls": "Desde URLs"
+      },
+      "dragDrop": {
+        "title": "Arrastra documentos o explora archivos",
+        "dropHere": "Suelta documentos aquí",
+        "invalidFileType": "Tipo de archivo inválido",
+        "subtitle": "Elige archivos o arrástralos aquí",
+        "dropToAdd": "Suelta para añadir documentos",
+        "fileSize": "Tamaño de archivo",
+        "pdfPages": "Páginas PDF",
+        "formats": "Formatos",
+        "validation": "Los archivos se validarán automáticamente después de la selección",
+        "rejectedFiles": "Algunos archivos fueron rechazados:",
+        "exploreFiles": "Explorar Archivos"
+      },
+      "fileList": {
+        "selectedFiles": "Archivos seleccionados ({count})",
+        "clearAll": "Limpiar todo",
+        "validating": "Validando {count} archivo{plural}...",
+        "uploading": "Subiendo {count} archivo{plural}...",
+        "completed": "{count} archivo{plural} subido{plural} correctamente",
+        "failed": "{count} archivo{plural} falló{plural}",
+        "readyToUpload": "Todos los archivos validados y listos para subir"
+      },
+      "urls": {
+        "title": "URLs de Documentos (una por línea)",
+        "placeholder": "https://example.com/document.pdf\nhttps://example.com/image.jpg\nhttps://example.com/another-doc.pdf",
+        "help": "Introduce una URL por línea. Formatos soportados: PDF, JPG, PNG, WebP (máximo 100MB por archivo)",
+        "tip": "💡 Consejo: Las URLs largas se procesarán automáticamente",
+        "results": "Resultados de Subida:",
+        "downloading": "Descargando...",
+        "retrieveAndUpload": "Recuperar y subir documentos"
+      },
+      "actions": {
+        "cancel": "Cancelar",
+        "uploadDocuments": "Subir Documentos",
+        "uploading": "Subiendo..."
       }
     }
   },

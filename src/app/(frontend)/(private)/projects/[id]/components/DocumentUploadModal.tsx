@@ -54,6 +54,7 @@ export function DocumentUploadModal({
   documentTableRef,
 }: DocumentUploadModalProps) {
   const t = useTranslations('documents')
+  const tModal = useTranslations('documents.uploadModal')
   const [isOpen, setIsOpen] = useState(false)
   const [uploadMethod, setUploadMethod] = useState<'files' | 'urls'>('files')
   const [urlsText, setUrlsText] = useState('')
@@ -246,11 +247,11 @@ export function DocumentUploadModal({
       >
         <DialogHeader>
           <DialogTitle>
-            {project?.title ? `Subir Documentos a ${project.title}` : 'Subir Documentos'}
+            {project?.title
+              ? tModal('title', { projectTitle: project.title })
+              : tModal('titleDefault')}
           </DialogTitle>
-          <DialogDescription>
-            Añade documentos e imágenes a tu proyecto. Formatos soportados: PDF, JPG, PNG, WebP
-          </DialogDescription>
+          <DialogDescription>{tModal('description')}</DialogDescription>
         </DialogHeader>
 
         <Tabs
@@ -260,11 +261,11 @@ export function DocumentUploadModal({
           <TabsList className='grid w-full grid-cols-2'>
             <TabsTrigger value='files' className='flex items-center gap-2'>
               <IconFile className='h-4 w-4' />
-              Subir Archivos
+              {tModal('tabs.uploadFiles')}
             </TabsTrigger>
             <TabsTrigger value='urls' className='flex items-center gap-2'>
               <IconLink className='h-4 w-4' />
-              Desde URLs
+              {tModal('tabs.fromUrls')}
             </TabsTrigger>
           </TabsList>
 
@@ -299,35 +300,33 @@ export function DocumentUploadModal({
               <h3 className='text-lg font-semibold mb-2'>
                 {isDragActive
                   ? isDragReject
-                    ? 'Tipo de archivo inválido'
-                    : 'Suelta documentos aquí'
-                  : 'Arrastra documentos o explora archivos'}
+                    ? tModal('dragDrop.invalidFileType')
+                    : tModal('dragDrop.dropHere')
+                  : tModal('dragDrop.title')}
               </h3>
 
               <p className='text-sm text-muted-foreground mb-4'>
                 {isDragActive && !isDragReject
-                  ? 'Suelta para añadir documentos'
-                  : 'Elige archivos o arrástralos aquí'}
+                  ? tModal('dragDrop.dropToAdd')
+                  : tModal('dragDrop.subtitle')}
               </p>
 
               {/* Información de límites */}
               <div className='text-xs text-muted-foreground space-y-1'>
                 <p>
-                  <strong>Tamaño de archivo:</strong> ≤100MB por documento |{' '}
-                  <strong>Páginas PDF:</strong> ≤500 páginas
+                  <strong>{tModal('dragDrop.fileSize')}:</strong> ≤100MB por documento |{' '}
+                  <strong>{tModal('dragDrop.pdfPages')}:</strong> ≤500 páginas
                 </p>
                 <p>
-                  <strong>Formatos:</strong> PDF, JPG, JPEG, PNG, WebP
+                  <strong>{tModal('dragDrop.formats')}:</strong> PDF, JPG, JPEG, PNG, WebP
                 </p>
-                <p className='text-orange-600'>
-                  Los archivos se validarán automáticamente después de la selección
-                </p>
+                <p className='text-orange-600'>{tModal('dragDrop.validation')}</p>
               </div>
 
               {/* Mostrar errores de archivos rechazados */}
               {fileRejections.length > 0 && (
                 <div className='mt-4 text-xs text-red-600'>
-                  <p>Algunos archivos fueron rechazados:</p>
+                  <p>{tModal('dragDrop.rejectedFiles')}</p>
                   {fileRejections.map(({ file, errors }) => (
                     <p key={file.name}>
                       {file.name}: {errors.map((e) => e.message).join(', ')}
@@ -338,7 +337,7 @@ export function DocumentUploadModal({
 
               {!isDragActive && (
                 <Button variant='outline' className='mt-4' disabled={isUploading} type='button'>
-                  Explorar Archivos
+                  {tModal('dragDrop.exploreFiles')}
                 </Button>
               )}
             </div>
@@ -347,7 +346,9 @@ export function DocumentUploadModal({
             {files.length > 0 && (
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
-                  <h4 className='text-sm font-medium'>Archivos seleccionados ({files.length})</h4>
+                  <h4 className='text-sm font-medium'>
+                    {tModal('fileList.selectedFiles', { count: files.length })}
+                  </h4>
                   {!isUploading && (
                     <Button
                       variant='ghost'
@@ -355,7 +356,7 @@ export function DocumentUploadModal({
                       onClick={clearFiles}
                       className='text-xs text-muted-foreground hover:text-foreground'
                     >
-                      Limpiar todo
+                      {tModal('fileList.clearAll')}
                     </Button>
                   )}
                 </div>
@@ -375,26 +376,37 @@ export function DocumentUploadModal({
                       {validatingCount > 0 && (
                         <p className='text-blue-600 flex items-center gap-1'>
                           <IconLoader2 className='h-3 w-3 animate-spin' />
-                          Validando {validatingCount} archivo{validatingCount !== 1 ? 's' : ''}...
+                          {tModal('fileList.validating', {
+                            count: validatingCount,
+                            plural: validatingCount !== 1 ? 's' : '',
+                          })}
                         </p>
                       )}
                       {uploadingCount > 0 && (
                         <p className='text-orange-600 flex items-center gap-1'>
                           <IconLoader2 className='h-3 w-3 animate-spin' />
-                          Subiendo {uploadingCount} archivo{uploadingCount !== 1 ? 's' : ''}...
+                          {tModal('fileList.uploading', {
+                            count: uploadingCount,
+                            plural: uploadingCount !== 1 ? 's' : '',
+                          })}
                         </p>
                       )}
                       {completedCount > 0 && (
                         <p className='text-green-600 flex items-center gap-1'>
                           <IconCheck className='h-3 w-3' />
-                          {completedCount} archivo{completedCount !== 1 ? 's' : ''} subido
-                          correctamente
+                          {tModal('fileList.completed', {
+                            count: completedCount,
+                            plural: completedCount !== 1 ? 's' : '',
+                          })}
                         </p>
                       )}
                       {errorCount > 0 && (
                         <p className='text-red-600 flex items-center gap-1'>
                           <IconAlertCircle className='h-3 w-3' />
-                          {errorCount} archivo{errorCount !== 1 ? 's' : ''} falló
+                          {tModal('fileList.failed', {
+                            count: errorCount,
+                            plural: errorCount !== 1 ? 's' : '',
+                          })}
                         </p>
                       )}
                       {validCount > 0 &&
@@ -404,7 +416,7 @@ export function DocumentUploadModal({
                         completedCount === 0 && (
                           <p className='text-green-600 flex items-center gap-1'>
                             <IconCheck className='h-3 w-3' />
-                            Todos los archivos validados y listos para subir
+                            {tModal('fileList.readyToUpload')}
                           </p>
                         )}
                     </div>
@@ -430,7 +442,7 @@ export function DocumentUploadModal({
                 onClick={handleClose}
                 disabled={isUploading || isUrlUploading}
               >
-                Cancelar
+                {tModal('actions.cancel')}
               </Button>
               <Button
                 disabled={
@@ -452,7 +464,7 @@ export function DocumentUploadModal({
                 ) : (
                   <IconUpload className='h-4 w-4' />
                 )}
-                {isUploading ? 'Subiendo...' : 'Subir Documentos'}
+                {isUploading ? tModal('actions.uploading') : tModal('actions.uploadDocuments')}
               </Button>
             </div>
           </TabsContent>
@@ -461,13 +473,9 @@ export function DocumentUploadModal({
             {/* Interfaz para URLs */}
             <div className='space-y-4'>
               <div>
-                <label className='text-sm font-medium mb-2 block'>
-                  URLs de Documentos (una por línea)
-                </label>
+                <label className='text-sm font-medium mb-2 block'>{tModal('urls.title')}</label>
                 <Textarea
-                  placeholder={`https://example.com/document.pdf
-https://example.com/image.jpg
-https://example.com/another-doc.pdf`}
+                  placeholder={tModal('urls.placeholder')}
                   value={urlsText}
                   onChange={(e) => setUrlsText(e.target.value)}
                   rows={6}
@@ -475,20 +483,15 @@ https://example.com/another-doc.pdf`}
                   disabled={isUrlUploading}
                 />
                 <div className='text-xs text-muted-foreground mt-2 space-y-1'>
-                  <p>
-                    Introduce una URL por línea. Formatos soportados: PDF, JPG, PNG, WebP (máximo
-                    100MB por archivo)
-                  </p>
-                  <p className='text-orange-600'>
-                    💡 Consejo: Las URLs largas se procesarán automáticamente
-                  </p>
+                  <p>{tModal('urls.help')}</p>
+                  <p className='text-orange-600'>{tModal('urls.tip')}</p>
                 </div>
               </div>
 
               {/* Resultados de URLs */}
               {urlResults && (
                 <div className='space-y-2'>
-                  <h4 className='text-sm font-medium'>Resultados de Subida:</h4>
+                  <h4 className='text-sm font-medium'>{tModal('urls.results')}</h4>
                   <div className='max-h-40 overflow-y-auto space-y-2'>
                     {urlResults.map((result, index) => (
                       <div
@@ -534,7 +537,7 @@ https://example.com/another-doc.pdf`}
             {/* Botones de acción para URLs */}
             <div className='flex justify-end gap-2'>
               <Button variant='outline' onClick={handleClose} disabled={isUrlUploading}>
-                Cancelar
+                {tModal('actions.cancel')}
               </Button>
               <Button
                 disabled={!urlsText.trim() || isUrlUploading}
@@ -544,12 +547,12 @@ https://example.com/another-doc.pdf`}
                 {isUrlUploading ? (
                   <>
                     <IconLoader2 className='h-4 w-4 animate-spin' />
-                    Descargando...
+                    {tModal('urls.downloading')}
                   </>
                 ) : (
                   <>
                     <IconLink className='h-4 w-4' />
-                    Recuperar y subir documentos
+                    {tModal('urls.retrieveAndUpload')}
                   </>
                 )}
               </Button>

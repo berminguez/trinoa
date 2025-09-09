@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ interface EditProfileModalProps {
  */
 export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfileModalProps) {
   const router = useRouter()
+  const t = useTranslations('account.editProfile')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,31 +56,31 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
     switch (name) {
       case 'name':
         if (!value.trim()) {
-          errors.name = 'El nombre es requerido'
+          errors.name = t('errors.nameRequired')
         } else if (value.trim().length < 2) {
-          errors.name = 'El nombre debe tener al menos 2 caracteres'
+          errors.name = t('errors.nameMinLength')
         } else if (value.trim().length > 100) {
-          errors.name = 'El nombre no puede exceder 100 caracteres'
+          errors.name = t('errors.nameMaxLength')
         }
         break
 
       case 'empresa':
         if (!value.trim()) {
-          errors.empresa = 'La empresa es requerida'
+          errors.empresa = t('errors.companyRequired')
         } else if (value.trim().length < 2) {
-          errors.empresa = 'La empresa debe tener al menos 2 caracteres'
+          errors.empresa = t('errors.companyMinLength')
         } else if (value.trim().length > 100) {
-          errors.empresa = 'La empresa no puede exceder 100 caracteres'
+          errors.empresa = t('errors.companyMaxLength')
         }
         break
 
       case 'email':
         if (!value.trim()) {
-          errors.email = 'El email es requerido'
+          errors.email = t('errors.emailRequired')
         } else {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
           if (!emailRegex.test(value.trim())) {
-            errors.email = 'El email no tiene un formato válido'
+            errors.email = t('errors.emailInvalid')
           }
         }
         break
@@ -168,7 +170,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
       }
     } catch (err) {
       console.error('Error actualizando perfil:', err)
-      setError('Error interno del servidor. Intenta nuevamente.')
+      setError(t('errors.serverError'))
     } finally {
       setIsLoading(false)
     }
@@ -193,11 +195,9 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <IconUser className='h-5 w-5' />
-            Editar Perfil
+            {t('title')}
           </DialogTitle>
-          <DialogDescription>
-            Actualiza tu información personal. Los campos marcados con * son obligatorios.
-          </DialogDescription>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
@@ -213,21 +213,21 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
               </div>
             </div>
             <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>
-              {user.role === 'admin' && 'Administrador'}
-              {user.role === 'user' && 'Usuario'}
-              {user.role === 'api' && 'API'}
-              {!user.role && 'Usuario'}
+              {user.role === 'admin' && t('roles.admin')}
+              {user.role === 'user' && t('roles.user')}
+              {user.role === 'api' && t('roles.api')}
+              {!user.role && t('roles.user')}
             </Badge>
           </div>
 
           {/* Nombre */}
           <div className='space-y-2'>
-            <Label htmlFor='name'>Nombre *</Label>
+            <Label htmlFor='name'>{t('name')} *</Label>
             <Input
               id='name'
               value={formData.name || ''}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder='Tu nombre completo'
+              placeholder={t('namePlaceholder')}
               className={fieldErrors.name ? 'border-red-500' : ''}
             />
             {fieldErrors.name && <p className='text-sm text-red-500'>{fieldErrors.name}</p>}
@@ -235,14 +235,14 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
 
           {/* Empresa */}
           <div className='space-y-2'>
-            <Label htmlFor='empresa'>Empresa *</Label>
+            <Label htmlFor='empresa'>{t('company')} *</Label>
             <div className='relative'>
               <IconBuilding className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
               <Input
                 id='empresa'
                 value={formData.empresa || ''}
                 onChange={(e) => handleInputChange('empresa', e.target.value)}
-                placeholder='Nombre de tu empresa'
+                placeholder={t('companyPlaceholder')}
                 className={`pl-10 ${fieldErrors.empresa ? 'border-red-500' : ''}`}
               />
             </div>
@@ -251,7 +251,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
 
           {/* Email */}
           <div className='space-y-2'>
-            <Label htmlFor='email'>Email *</Label>
+            <Label htmlFor='email'>{t('email')} *</Label>
             <div className='relative'>
               <IconMail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
               <Input
@@ -259,15 +259,13 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
                 type='email'
                 value={formData.email || ''}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder='tu.email@empresa.com'
+                placeholder={t('emailPlaceholder')}
                 className={`pl-10 ${fieldErrors.email ? 'border-red-500' : ''}`}
               />
             </div>
             {fieldErrors.email && <p className='text-sm text-red-500'>{fieldErrors.email}</p>}
             {formData.email !== user.email && (
-              <p className='text-xs text-amber-600'>
-                ⚠️ Cambiar el email puede afectar tu acceso a la cuenta
-              </p>
+              <p className='text-xs text-amber-600'>{t('emailWarning')}</p>
             )}
           </div>
 
@@ -282,25 +280,22 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
           {/* Información sobre el rol */}
           <Alert>
             <IconAlertCircle className='h-4 w-4' />
-            <AlertDescription>
-              Tu rol de usuario no puede ser modificado desde aquí. Para cambios de rol, contacta
-              con un administrador.
-            </AlertDescription>
+            <AlertDescription>{t('roleInfo')}</AlertDescription>
           </Alert>
 
           {/* Footer */}
           <DialogFooter className='gap-2'>
             <Button type='button' variant='outline' onClick={handleCancel} disabled={isLoading}>
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button type='submit' disabled={!isFormValid() || !hasChanges() || isLoading}>
               {isLoading ? (
                 <>
                   <IconLoader2 className='h-4 w-4 mr-2 animate-spin' />
-                  Actualizando...
+                  {t('updating')}
                 </>
               ) : (
-                'Actualizar Perfil'
+                t('update')
               )}
             </Button>
           </DialogFooter>

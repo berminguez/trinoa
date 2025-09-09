@@ -29,7 +29,73 @@
   },
   "account": {
     "title": "My Account",
-    "description": "Manage your personal information and account settings"
+    "description": "Manage your personal information and account settings",
+    "profileCard": {
+      "title": "Personal Information",
+      "edit": "Edit",
+      "name": "Name",
+      "company": "Company",
+      "email": "Email",
+      "role": "Role",
+      "registered": "Registered:",
+      "lastUpdate": "Last update:",
+      "noName": "User without name",
+      "notSpecified": "Not specified",
+      "notSpecifiedCompany": "Not specified",
+      "roles": {
+        "admin": "Administrator",
+        "user": "User",
+        "api": "API"
+      }
+    },
+    "accountSettings": {
+      "title": "Account Settings",
+      "security": "Security",
+      "accountStatus": "Account status",
+      "active": "Active",
+      "timeAsUser": "Time as user",
+      "registeredToday": "Registered today",
+      "days": "day",
+      "daysPlural": "days",
+      "accessLevel": "Access level",
+      "systemAdmin": "System administrator",
+      "standardUser": "Standard user",
+      "apiUser": "API user",
+      "adminDescription": "As an administrator, you have full access to the system and can manage other users.",
+      "settings": "Settings",
+      "changePassword": "Change password",
+      "changePasswordDesc": "Update your access password",
+      "comingSoon": "Coming soon",
+      "apiKeysManagement": "API Keys Management",
+      "apiKeysDesc": "Manage your API access keys",
+      "contactAdmin": "For changes to your user role or advanced security settings, contact a system administrator."
+    },
+    "editProfile": {
+      "title": "Edit Profile",
+      "description": "Update your personal information. Fields marked with * are required.",
+      "name": "Name",
+      "namePlaceholder": "Your full name",
+      "company": "Company",
+      "companyPlaceholder": "Your company name",
+      "email": "Email",
+      "emailPlaceholder": "your.email@company.com",
+      "cancel": "Cancel",
+      "update": "Update Profile",
+      "updating": "Updating...",
+      "emailWarning": "⚠️ Changing the email may affect your account access",
+      "roleInfo": "Your user role cannot be modified from here. For role changes, contact an administrator.",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must be at least 2 characters",
+        "nameMaxLength": "Name cannot exceed 100 characters",
+        "companyRequired": "Company is required",
+        "companyMinLength": "Company must be at least 2 characters",
+        "companyMaxLength": "Company cannot exceed 100 characters",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Email does not have a valid format",
+        "serverError": "Internal server error. Please try again."
+      }
+    }
   },
   "projects": {
     "title": "Projects",
@@ -245,6 +311,51 @@
         "gasolinera": "Gas station",
         "taxi_vtc": "Taxi / VTC",
         "otros": "Other"
+      }
+    },
+    "uploadModal": {
+      "title": "Upload Documents to {projectTitle}",
+      "titleDefault": "Upload Documents",
+      "description": "Add documents and images to your project. Supported formats: PDF, JPG, PNG, WebP",
+      "tabs": {
+        "uploadFiles": "Upload Files",
+        "fromUrls": "From URLs"
+      },
+      "dragDrop": {
+        "title": "Drag documents or browse files",
+        "dropHere": "Drop documents here",
+        "invalidFileType": "Invalid file type",
+        "subtitle": "Choose files or drag them here",
+        "dropToAdd": "Drop to add documents",
+        "fileSize": "File size",
+        "pdfPages": "PDF pages",
+        "formats": "Formats",
+        "validation": "Files will be automatically validated after selection",
+        "rejectedFiles": "Some files were rejected:",
+        "exploreFiles": "Browse Files"
+      },
+      "fileList": {
+        "selectedFiles": "Selected files ({count})",
+        "clearAll": "Clear all",
+        "validating": "Validating {count} file{plural}...",
+        "uploading": "Uploading {count} file{plural}...",
+        "completed": "{count} file{plural} uploaded successfully",
+        "failed": "{count} file{plural} failed",
+        "readyToUpload": "All files validated and ready to upload"
+      },
+      "urls": {
+        "title": "Document URLs (one per line)",
+        "placeholder": "https://example.com/document.pdf\nhttps://example.com/image.jpg\nhttps://example.com/another-doc.pdf",
+        "help": "Enter one URL per line. Supported formats: PDF, JPG, PNG, WebP (max 100MB per file)",
+        "tip": "💡 Tip: Long URLs will be processed automatically",
+        "results": "Upload Results:",
+        "downloading": "Downloading...",
+        "retrieveAndUpload": "Retrieve and upload documents"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "uploadDocuments": "Upload Documents",
+        "uploading": "Uploading..."
       }
     },
     "statusControl": {
