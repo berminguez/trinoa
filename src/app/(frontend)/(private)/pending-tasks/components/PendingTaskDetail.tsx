@@ -170,7 +170,7 @@ export function PendingTaskDetail({
 
             <div className='flex items-center gap-3'>
               <Select
-                value={confidence}
+                value={confidence || undefined}
                 onValueChange={handleConfidenceUpdate}
                 disabled={isSaving || isLoading}
               >

@@ -30,8 +30,9 @@ export async function ClientProjectsContent({
   clientId,
   searchParams = {},
 }: ClientProjectsContentProps) {
+  const t = await getTranslations('clientProjects.errorBoundary')
+
   try {
-    const t = await getTranslations('clientProjects.errorBoundary')
     // Construir filtros desde searchParams
     const filters: ClientProjectsFilters = {
       searchTerm: searchParams.search || '',
