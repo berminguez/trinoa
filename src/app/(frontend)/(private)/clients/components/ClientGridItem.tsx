@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -34,6 +35,7 @@ interface ClientGridItemProps {
  * Incluye botones de editar/eliminar para administradores.
  */
 export function ClientGridItem({ client }: ClientGridItemProps) {
+  const t = useTranslations('clients.clientCard')
   // Estados para modales
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -143,7 +145,9 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                 <div className='flex flex-col space-y-1'>
                   <div className='flex items-center space-x-2'>
                     <IconFolder className='h-4 w-4 text-primary' />
-                    <span className='text-sm font-medium text-muted-foreground'>Proyectos</span>
+                    <span className='text-sm font-medium text-muted-foreground'>
+                      {t('projects')}
+                    </span>
                   </div>
                   <span className='text-lg font-bold text-foreground pl-6'>{projectCount}</span>
                 </div>
@@ -152,7 +156,7 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                 <div className='flex flex-col space-y-1'>
                   <div className='flex items-center space-x-2'>
                     <IconCircleCheck className='h-4 w-4 text-primary' />
-                    <span className='text-sm font-medium text-muted-foreground'>Estado</span>
+                    <span className='text-sm font-medium text-muted-foreground'>{t('state')}</span>
                   </div>
                   <div className='pl-6'>
                     <span
@@ -165,12 +169,12 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                       {clientData.isActive ? (
                         <>
                           <IconCircleCheck className='h-3 w-3 mr-1' />
-                          Activo
+                          {t('active')}
                         </>
                       ) : (
                         <>
                           <IconClock12 className='h-3 w-3 mr-1' />
-                          Inactivo
+                          {t('inactive')}
                         </>
                       )}
                     </span>
@@ -183,7 +187,9 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                 {/* Fecha de registro */}
                 <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
                   <IconCalendar className='h-4 w-4' />
-                  <span>Registrado el {joinDate}</span>
+                  <span>
+                    {t('created')} {joinDate}
+                  </span>
                   <span className='text-xs opacity-70'>
                     (
                     {daysSinceJoin === 0
@@ -197,7 +203,7 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                 <div className='flex items-center space-x-2 text-sm text-muted-foreground'>
                   <IconClock className='h-4 w-4' />
                   <span>
-                    {lastActivity ? `Última actividad: ${lastActivity}` : 'Sin actividad reciente'}
+                    {lastActivity ? `${t('lastActivity')} ${lastActivity}` : t('noRecentActivity')}
                   </span>
                 </div>
               </div>
@@ -233,7 +239,7 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                   className='w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200'
                 >
                   <IconEye className='h-4 w-4 mr-2' />
-                  <span>Ver proyectos</span>
+                  <span>{t('viewProjects')}</span>
                   <IconChevronRight className='h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200' />
                 </Button>
               </Link>

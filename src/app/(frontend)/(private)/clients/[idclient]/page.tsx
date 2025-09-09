@@ -6,22 +6,22 @@ interface ClientRedirectPageProps {
 }
 
 /**
- * Página de redirección para cliente específico
+ * Client-specific redirect page
  *
- * Redirige automáticamente a /clients/{idclient}/projects
- * siguiendo el patrón definido en el PRD
+ * Automatically redirects to /clients/{idclient}/projects
+ * following the pattern defined in the PRD
  */
 export default async function ClientRedirectPage({ params }: ClientRedirectPageProps) {
-  // Validar acceso de administrador
+  // Validate admin access
   await requireAdminAccess()
 
   const { idclient } = await params
 
-  // Validar que el ID del cliente es válido
+  // Validate that the client ID is valid
   if (!idclient || idclient.length < 10) {
     redirect('/clients')
   }
 
-  // Redirigir a la página de proyectos del cliente
+  // Redirect to the client's projects page
   redirect(`/clients/${idclient}/projects`)
 }

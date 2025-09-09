@@ -417,6 +417,221 @@
       "myDocuments": "Mis documentos"
     }
   },
+  "clients": {
+    "title": "Gestión de Clientes",
+    "description": "Administra todos los usuarios y sus proyectos desde este panel",
+    "breadcrumb": {
+      "admin": "Admin",
+      "clients": "Clientes"
+    },
+    "stats": {
+      "client": "cliente",
+      "clients": "clientes"
+    },
+    "filters": {
+      "search": "Buscar clientes...",
+      "role": "Filtrar por rol",
+      "dateFrom": "Fecha desde",
+      "dateTo": "Fecha hasta",
+      "allRoles": "Todos los roles",
+      "user": "Usuario",
+      "admin": "Administrador",
+      "api": "API"
+    },
+    "pagination": {
+      "showing": "Mostrando",
+      "of": "de",
+      "total": "total",
+      "page": "Página",
+      "previous": "Anterior",
+      "next": "Siguiente"
+    },
+    "actions": {
+      "create": "Crear Cliente",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "viewProjects": "Ver Proyectos"
+    },
+    "createModal": {
+      "title": "Crear Nuevo Cliente",
+      "description": "Completa la información del nuevo cliente. Los campos marcados con * son obligatorios.",
+      "name": "Nombre completo",
+      "namePlaceholder": "Nombre del cliente",
+      "email": "Email",
+      "emailPlaceholder": "cliente@empresa.com",
+      "company": "Empresa",
+      "companyPlaceholder": "Nombre de la empresa",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Contraseña segura",
+      "generatePassword": "Generar contraseña automáticamente",
+      "showPassword": "Mostrar contraseña",
+      "hidePassword": "Ocultar contraseña",
+      "copyPassword": "Copiar contraseña",
+      "passwordCopied": "Contraseña copiada al portapapeles",
+      "cancel": "Cancelar",
+      "create": "Crear Cliente",
+      "creating": "Creando...",
+      "errors": {
+        "nameRequired": "El nombre es requerido",
+        "nameMinLength": "El nombre debe tener al menos 2 caracteres",
+        "nameMaxLength": "El nombre no puede exceder 100 caracteres",
+        "emailRequired": "El email es requerido",
+        "emailInvalid": "El email no tiene un formato válido",
+        "companyRequired": "La empresa es requerida",
+        "companyMinLength": "La empresa debe tener al menos 2 caracteres",
+        "companyMaxLength": "La empresa no puede exceder 100 caracteres",
+        "passwordRequired": "La contraseña es requerida",
+        "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+        "serverError": "Error interno del servidor. Intenta nuevamente."
+      }
+    },
+    "editModal": {
+      "title": "Editar Cliente",
+      "description": "Actualiza la información del cliente. Los campos marcados con * son obligatorios.",
+      "name": "Nombre completo",
+      "namePlaceholder": "Nombre del cliente",
+      "email": "Email",
+      "emailPlaceholder": "cliente@empresa.com",
+      "company": "Empresa",
+      "companyPlaceholder": "Nombre de la empresa",
+      "role": "Rol",
+      "roles": {
+        "user": "Usuario",
+        "admin": "Administrador",
+        "api": "API"
+      },
+      "cancel": "Cancelar",
+      "update": "Actualizar Cliente",
+      "updating": "Actualizando...",
+      "errors": {
+        "nameRequired": "El nombre es requerido",
+        "nameMinLength": "El nombre debe tener al menos 2 caracteres",
+        "nameMaxLength": "El nombre no puede exceder 100 caracteres",
+        "emailRequired": "El email es requerido",
+        "emailInvalid": "El email no tiene un formato válido",
+        "companyRequired": "La empresa es requerida",
+        "companyMinLength": "La empresa debe tener al menos 2 caracteres",
+        "companyMaxLength": "La empresa no puede exceder 100 caracteres",
+        "serverError": "Error interno del servidor. Intenta nuevamente."
+      }
+    },
+    "deleteModal": {
+      "title": "Eliminar Cliente",
+      "description": "¿Estás seguro de que quieres eliminar este cliente? Esta acción no se puede deshacer.",
+      "clientInfo": "Cliente a eliminar:",
+      "warning": "⚠️ Esta acción eliminará permanentemente:",
+      "warningItems": [
+        "El perfil del cliente",
+        "Todos sus proyectos",
+        "Todos los recursos y documentos",
+        "El historial de actividad"
+      ],
+      "confirmText": "Escribir 'ELIMINAR' para confirmar",
+      "confirmPlaceholder": "ELIMINAR",
+      "cancel": "Cancelar",
+      "delete": "Eliminar Cliente",
+      "deleting": "Eliminando...",
+      "errors": {
+        "confirmationRequired": "Debes escribir 'ELIMINAR' para confirmar",
+        "serverError": "Error interno del servidor. Intenta nuevamente."
+      }
+    },
+    "grid": {
+      "noClients": "No hay clientes disponibles",
+      "noClientsDescription": "Crea tu primer cliente para comenzar a gestionar usuarios.",
+      "loading": "Cargando clientes...",
+      "error": "Error cargando clientes",
+      "retry": "Reintentar"
+    },
+    "clientCard": {
+      "projects": "proyectos",
+      "project": "proyecto",
+      "created": "Creado:",
+      "lastActivity": "Última actividad:",
+      "noProjects": "Sin proyectos",
+      "viewProjects": "Ver Proyectos",
+      "state": "Estado",
+      "active": "Activo",
+      "inactive": "Inactivo",
+      "noRecentActivity": "Sin actividad reciente"
+    },
+    "errorBoundary": {
+      "title": "Error Cargando Clientes",
+      "description": "Ha ocurrido un error inesperado al cargar la lista de clientes.",
+      "contactAdmin": "Si el problema persiste, contacta al administrador del sistema.",
+      "retry": "Reintentar"
+    },
+    "filterInfo": {
+      "showing": "Mostrando",
+      "of": "de",
+      "total": "total",
+      "searchTerm": "Búsqueda:",
+      "role": "Rol:",
+      "dateFiltered": "Fecha filtrada"
+    }
+  },
+  "clientProjects": {
+    "title": "Proyectos del Cliente",
+    "description": "Gestiona los proyectos de este cliente",
+    "breadcrumb": {
+      "admin": "Admin",
+      "clients": "Clientes",
+      "client": "Cliente",
+      "projects": "Proyectos"
+    },
+    "stats": {
+      "project": "proyecto",
+      "projects": "proyectos"
+    },
+    "actions": {
+      "create": "Crear Proyecto",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "viewResources": "Ver Recursos"
+    },
+    "managedBy": "Gestionado por:",
+    "administrator": "Administrador",
+    "totalProjects": "Proyectos totales",
+    "accountType": "Tipo de cuenta",
+    "createModal": {
+      "title": "Crear Nuevo Proyecto",
+      "description": "Completa la información del nuevo proyecto para este cliente.",
+      "titleField": "Título del proyecto",
+      "titlePlaceholder": "Nombre del proyecto",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Descripción del proyecto (opcional)",
+      "cancel": "Cancelar",
+      "create": "Crear Proyecto",
+      "creating": "Creando...",
+      "errors": {
+        "titleRequired": "El título es requerido",
+        "titleMinLength": "El título debe tener al menos 2 caracteres",
+        "titleMaxLength": "El título no puede exceder 100 caracteres",
+        "serverError": "Error interno del servidor. Intenta nuevamente."
+      }
+    },
+    "grid": {
+      "noProjects": "No hay proyectos disponibles",
+      "noProjectsDescription": "Este cliente aún no tiene proyectos creados.",
+      "loading": "Cargando proyectos...",
+      "error": "Error cargando proyectos",
+      "retry": "Reintentar"
+    },
+    "projectCard": {
+      "resources": "recursos",
+      "resource": "recurso",
+      "created": "Creado:",
+      "lastActivity": "Última actividad:",
+      "noResources": "Sin recursos",
+      "viewResources": "Ver Recursos"
+    },
+    "errorBoundary": {
+      "title": "Error Cargando Proyectos",
+      "description": "Ha ocurrido un error inesperado al cargar los proyectos del cliente.",
+      "contactAdmin": "Si el problema persiste, contacta al administrador del sistema.",
+      "retry": "Reintentar"
+    }
+  },
   "pricing": {
     "title": "Elige tu plan perfecto",
     "description": "Desbloquea todo el potencial de TRINOA con nuestros planes diseñados para cada necesidad",

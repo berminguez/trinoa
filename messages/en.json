@@ -418,6 +418,216 @@
       "myDocuments": "My documents"
     }
   },
+  "clients": {
+    "title": "Client Management",
+    "description": "Manage all users and their projects from this panel",
+    "breadcrumb": {
+      "admin": "Admin",
+      "clients": "Clients"
+    },
+    "stats": {
+      "client": "client",
+      "clients": "clients"
+    },
+    "filters": {
+      "search": "Search clients...",
+      "role": "Filter by role",
+      "dateFrom": "Date from",
+      "dateTo": "Date to",
+      "allRoles": "All roles",
+      "user": "User",
+      "admin": "Administrator",
+      "api": "API"
+    },
+    "pagination": {
+      "showing": "Showing",
+      "of": "of",
+      "total": "total",
+      "page": "Page",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "actions": {
+      "create": "Create Client",
+      "edit": "Edit",
+      "delete": "Delete",
+      "viewProjects": "View Projects"
+    },
+    "createModal": {
+      "title": "Create New Client",
+      "description": "Complete the information for the new client. Fields marked with * are required.",
+      "name": "Full name",
+      "namePlaceholder": "Client name",
+      "email": "Email",
+      "emailPlaceholder": "client@company.com",
+      "company": "Company",
+      "companyPlaceholder": "Company name",
+      "password": "Password",
+      "passwordPlaceholder": "Secure password",
+      "generatePassword": "Generate password automatically",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
+      "copyPassword": "Copy password",
+      "passwordCopied": "Password copied to clipboard",
+      "cancel": "Cancel",
+      "create": "Create Client",
+      "creating": "Creating...",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must be at least 2 characters",
+        "nameMaxLength": "Name cannot exceed 100 characters",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Email does not have a valid format",
+        "companyRequired": "Company is required",
+        "companyMinLength": "Company must be at least 2 characters",
+        "companyMaxLength": "Company cannot exceed 100 characters",
+        "passwordRequired": "Password is required",
+        "passwordMinLength": "Password must be at least 8 characters",
+        "serverError": "Internal server error. Please try again."
+      }
+    },
+    "editModal": {
+      "title": "Edit Client",
+      "description": "Update the client information. Fields marked with * are required.",
+      "name": "Full name",
+      "namePlaceholder": "Client name",
+      "email": "Email",
+      "emailPlaceholder": "client@company.com",
+      "company": "Company",
+      "companyPlaceholder": "Company name",
+      "role": "Role",
+      "roles": {
+        "user": "User",
+        "admin": "Administrator",
+        "api": "API"
+      },
+      "cancel": "Cancel",
+      "update": "Update Client",
+      "updating": "Updating...",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must be at least 2 characters",
+        "nameMaxLength": "Name cannot exceed 100 characters",
+        "emailRequired": "Email is required",
+        "emailInvalid": "Email does not have a valid format",
+        "companyRequired": "Company is required",
+        "companyMinLength": "Company must be at least 2 characters",
+        "companyMaxLength": "Company cannot exceed 100 characters",
+        "serverError": "Internal server error. Please try again."
+      }
+    },
+    "deleteModal": {
+      "title": "Delete Client",
+      "description": "Are you sure you want to delete this client? This action cannot be undone.",
+      "clientInfo": "Client to delete:",
+      "warning": "⚠️ This action will permanently delete:",
+      "warningItems": ["The client profile", "All their projects", "All resources and documents", "Activity history"],
+      "confirmText": "Type 'DELETE' to confirm",
+      "confirmPlaceholder": "DELETE",
+      "cancel": "Cancel",
+      "delete": "Delete Client",
+      "deleting": "Deleting...",
+      "errors": {
+        "confirmationRequired": "You must type 'DELETE' to confirm",
+        "serverError": "Internal server error. Please try again."
+      }
+    },
+    "grid": {
+      "noClients": "No clients available",
+      "noClientsDescription": "Create your first client to start managing users.",
+      "loading": "Loading clients...",
+      "error": "Error loading clients",
+      "retry": "Retry"
+    },
+    "clientCard": {
+      "projects": "projects",
+      "project": "project",
+      "created": "Created:",
+      "lastActivity": "Last activity:",
+      "noProjects": "No projects",
+      "viewProjects": "View Projects",
+      "state": "State",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noRecentActivity": "No recent activity"
+    },
+    "errorBoundary": {
+      "title": "Error Loading Clients",
+      "description": "An unexpected error occurred while loading the client list.",
+      "contactAdmin": "If the problem persists, contact the system administrator.",
+      "retry": "Retry"
+    },
+    "filterInfo": {
+      "showing": "Showing",
+      "of": "of",
+      "total": "total",
+      "searchTerm": "Search:",
+      "role": "Role:",
+      "dateFiltered": "Date filtered"
+    }
+  },
+  "clientProjects": {
+    "title": "Client Projects",
+    "description": "Manage this client's projects",
+    "breadcrumb": {
+      "admin": "Admin",
+      "clients": "Clients",
+      "client": "Client",
+      "projects": "Projects"
+    },
+    "stats": {
+      "project": "project",
+      "projects": "projects"
+    },
+    "actions": {
+      "create": "Create Project",
+      "edit": "Edit",
+      "delete": "Delete",
+      "viewResources": "View Resources"
+    },
+    "managedBy": "Managed by:",
+    "administrator": "Administrator",
+    "totalProjects": "Total projects",
+    "accountType": "Account type",
+    "createModal": {
+      "title": "Create New Project",
+      "description": "Complete the information for the new project for this client.",
+      "titleField": "Project title",
+      "titlePlaceholder": "Project name",
+      "description": "Description",
+      "descriptionPlaceholder": "Project description (optional)",
+      "cancel": "Cancel",
+      "create": "Create Project",
+      "creating": "Creating...",
+      "errors": {
+        "titleRequired": "Title is required",
+        "titleMinLength": "Title must be at least 2 characters",
+        "titleMaxLength": "Title cannot exceed 100 characters",
+        "serverError": "Internal server error. Please try again."
+      }
+    },
+    "grid": {
+      "noProjects": "No projects available",
+      "noProjectsDescription": "This client doesn't have any projects created yet.",
+      "loading": "Loading projects...",
+      "error": "Error loading projects",
+      "retry": "Retry"
+    },
+    "projectCard": {
+      "resources": "resources",
+      "resource": "resource",
+      "created": "Created:",
+      "lastActivity": "Last activity:",
+      "noResources": "No resources",
+      "viewResources": "View Resources"
+    },
+    "errorBoundary": {
+      "title": "Error Loading Projects",
+      "description": "An unexpected error occurred while loading the client's projects.",
+      "contactAdmin": "If the problem persists, contact the system administrator.",
+      "retry": "Retry"
+    }
+  },
   "pricing": {
     "title": "Choose your perfect plan",
     "description": "Unlock TRINOA's full potential with our plans designed for every need",

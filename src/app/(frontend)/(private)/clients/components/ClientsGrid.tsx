@@ -67,7 +67,7 @@ export function ClientsGrid({
   } = useClientsStore()
 
   // Estado local para input de búsqueda (debounced)
-  const [searchInput, setSearchInput] = useState(filters.searchTerm)
+  const [searchInput, setSearchInput] = useState(filters.searchTerm || '')
 
   // Sincronizar store con filtros actuales del servidor al montar
   useEffect(() => {
@@ -161,7 +161,7 @@ export function ClientsGrid({
           {/* Controles de ordenamiento y filtros */}
           <div className='flex flex-wrap gap-2'>
             {/* Ordenar por */}
-            <Select value={filters.sortBy} onValueChange={handleSortChange}>
+            <Select value={filters.sortBy || 'createdAt'} onValueChange={handleSortChange}>
               <SelectTrigger className='w-40'>
                 <SelectValue placeholder='Ordenar por' />
               </SelectTrigger>
@@ -174,7 +174,7 @@ export function ClientsGrid({
             </Select>
 
             {/* Orden */}
-            <Select value={filters.sortOrder} onValueChange={handleSortOrderChange}>
+            <Select value={filters.sortOrder || 'desc'} onValueChange={handleSortOrderChange}>
               <SelectTrigger className='w-36'>
                 <SelectValue />
               </SelectTrigger>

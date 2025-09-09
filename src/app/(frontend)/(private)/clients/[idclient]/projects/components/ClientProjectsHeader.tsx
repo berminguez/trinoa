@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { IconUser, IconFolder, IconPlus } from '@tabler/icons-react'
 import { CreateClientProjectModal } from './CreateClientProjectModal'
+import { useTranslations } from 'next-intl'
 
 interface ClientProjectsHeaderProps {
   adminUser: User
@@ -23,6 +24,7 @@ export function ClientProjectsHeader({
   totalProjects,
   onProjectCreated,
 }: ClientProjectsHeaderProps) {
+  const t = useTranslations('clientProjects')
   return (
     <div className='space-y-4'>
       {/* Información del cliente */}
@@ -48,8 +50,8 @@ export function ClientProjectsHeader({
           <div className='flex items-center gap-2 text-sm text-muted-foreground'>
             <IconFolder className='h-4 w-4' />
             <span>
-              {totalProjects} proyecto{totalProjects !== 1 ? 's' : ''} total
-              {totalProjects === 0 ? ' - Este cliente no ha creado proyectos aún' : ''}
+              {totalProjects} {totalProjects === 1 ? t('stats.project') : t('stats.projects')} total
+              {totalProjects === 0 ? ` - ${t('grid.noProjectsDescription')}` : ''}
             </span>
           </div>
         </div>
@@ -57,12 +59,12 @@ export function ClientProjectsHeader({
         {/* Información del administrador y acciones */}
         <div className='flex flex-col items-end gap-3'>
           <div className='text-right'>
-            <p className='text-sm text-muted-foreground'>Gestionado por:</p>
+            <p className='text-sm text-muted-foreground'>{t('managedBy')}</p>
             <p className='text-sm font-medium text-green-600'>
               {adminUser.name || adminUser.email}
             </p>
             <Badge variant='outline' className='text-xs'>
-              Administrador
+              {t('administrator')}
             </Badge>
           </div>
 
@@ -73,7 +75,7 @@ export function ClientProjectsHeader({
             trigger={
               <Button className='gap-2'>
                 <IconPlus className='h-4 w-4' />
-                Crear Proyecto
+                {t('actions.create')}
               </Button>
             }
           />
@@ -84,14 +86,14 @@ export function ClientProjectsHeader({
       <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
         <div className='bg-muted/50 p-4 rounded-lg'>
           <div className='text-2xl font-bold text-primary'>{totalProjects}</div>
-          <div className='text-sm text-muted-foreground'>Proyectos totales</div>
+          <div className='text-sm text-muted-foreground'>{t('totalProjects')}</div>
         </div>
 
         <div className='bg-muted/50 p-4 rounded-lg'>
           <div className='text-2xl font-bold text-green-600'>
             {client.role === 'admin' ? 'Admin' : 'Usuario'}
           </div>
-          <div className='text-sm text-muted-foreground'>Tipo de cuenta</div>
+          <div className='text-sm text-muted-foreground'>{t('accountType')}</div>
         </div>
 
         <div className='bg-muted/50 p-4 rounded-lg'>

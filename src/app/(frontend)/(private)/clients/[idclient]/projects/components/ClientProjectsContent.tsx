@@ -4,6 +4,7 @@ import { getClientProjects } from '@/actions/clients/getClientProjects'
 import { ClientProjectsContentClient } from './ClientProjectsContentClient'
 import { ClientProjectsErrorBoundary } from './ClientProjectsErrorBoundary'
 import type { ClientProjectsFilters } from '@/actions/clients/types'
+import { getTranslations } from 'next-intl/server'
 
 interface ClientProjectsContentProps {
   adminUser: User
@@ -30,6 +31,7 @@ export async function ClientProjectsContent({
   searchParams = {},
 }: ClientProjectsContentProps) {
   try {
+    const t = await getTranslations('clientProjects.errorBoundary')
     // Construir filtros desde searchParams
     const filters: ClientProjectsFilters = {
       searchTerm: searchParams.search || '',
@@ -75,7 +77,7 @@ export async function ClientProjectsContent({
       console.error('ClientProjectsContent: No hay datos en la respuesta exitosa')
       return (
         <ClientProjectsErrorBoundary
-          error='No se pudieron cargar los datos de proyectos del cliente'
+          error={t('description')}
           adminUser={adminUser}
           clientId={clientId}
         />
@@ -105,7 +107,7 @@ export async function ClientProjectsContent({
     // En caso de error crítico, mostrar página de error
     return (
       <ClientProjectsErrorBoundary
-        error='Ha ocurrido un error inesperado al cargar los proyectos del cliente'
+        error={t('description')}
         adminUser={adminUser}
         clientId={clientId}
       />

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   IconLoader2,
   IconPlus,
@@ -37,6 +38,7 @@ interface CreateClientModalProps {
 }
 
 export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps) {
+  const t = useTranslations('clients.createModal')
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -59,50 +61,50 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
   // Validaciones
   const validateName = (value: string): string => {
     if (!value.trim()) {
-      return 'El nombre es requerido'
+      return t('errors.nameRequired')
     }
     if (value.trim().length < 2) {
-      return 'El nombre debe tener al menos 2 caracteres'
+      return t('errors.nameMinLength')
     }
     if (value.trim().length > 100) {
-      return 'El nombre no puede exceder 100 caracteres'
+      return t('errors.nameMaxLength')
     }
     return ''
   }
 
   const validateEmail = (value: string): string => {
     if (!value.trim()) {
-      return 'El email es requerido'
+      return t('errors.emailRequired')
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(value.trim())) {
-      return 'El email no tiene un formato válido'
+      return t('errors.emailInvalid')
     }
     return ''
   }
 
   const validateEmpresa = (value: string): string => {
     if (!value.trim()) {
-      return 'La empresa es requerida'
+      return t('errors.companyRequired')
     }
     if (value.trim().length < 2) {
-      return 'La empresa debe tener al menos 2 caracteres'
+      return t('errors.companyMinLength')
     }
     if (value.trim().length > 100) {
-      return 'La empresa no puede exceder 100 caracteres'
+      return t('errors.companyMaxLength')
     }
     return ''
   }
 
   const validatePassword = (value: string): string => {
     if (!generatePassword && !value.trim()) {
-      return 'La contraseña es requerida'
+      return t('errors.passwordRequired')
     }
     if (!generatePassword && value.length < 8) {
-      return 'La contraseña debe tener al menos 8 caracteres'
+      return t('errors.passwordMinLength')
     }
     if (!generatePassword && value.length > 128) {
-      return 'La contraseña no puede exceder 128 caracteres'
+      return t('errors.passwordMinLength') // Reusing this message for max length
     }
     return ''
   }
@@ -223,7 +225,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
           {trigger || (
             <Button className='gap-2'>
               <IconPlus className='h-4 w-4' />
-              Nuevo Cliente
+              {t('create')}
             </Button>
           )}
         </DialogTrigger>
@@ -232,7 +234,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
               <IconUser className='h-5 w-5 text-green-600' />
-              Cliente Creado Exitosamente
+              {t('title')} - Éxito
             </DialogTitle>
             <DialogDescription>
               El cliente ha sido creado y ya puede acceder al sistema.
@@ -321,7 +323,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
         {trigger || (
           <Button className='gap-2'>
             <IconPlus className='h-4 w-4' />
-            Nuevo Cliente
+            {t('create')}
           </Button>
         )}
       </DialogTrigger>
@@ -330,18 +332,18 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
             <IconPlus className='h-5 w-5' />
-            Crear Nuevo Cliente
+            {t('title')}
           </DialogTitle>
-          <DialogDescription>Crear un nuevo usuario cliente para el sistema.</DialogDescription>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className='space-y-4'>
           {/* Nombre */}
           <div className='space-y-2'>
-            <Label htmlFor='name'>Nombre *</Label>
+            <Label htmlFor='name'>{t('name')} *</Label>
             <Input
               id='name'
-              placeholder='Nombre completo del cliente...'
+              placeholder={t('namePlaceholder')}
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
               className={nameError ? 'border-destructive' : ''}
@@ -354,11 +356,11 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
 
           {/* Email */}
           <div className='space-y-2'>
-            <Label htmlFor='email'>Email *</Label>
+            <Label htmlFor='email'>{t('email')} *</Label>
             <Input
               id='email'
               type='email'
-              placeholder='email@empresa.com'
+              placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
               className={emailError ? 'border-destructive' : ''}
@@ -369,7 +371,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
 
           {/* Empresa */}
           <div className='space-y-2'>
-            <Label htmlFor='empresa'>Empresa *</Label>
+            <Label htmlFor='empresa'>{t('company')} *</Label>
             <Input
               id='empresa'
               placeholder='Nombre de la empresa...'
@@ -444,12 +446,12 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
               {isCreating ? (
                 <>
                   <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Creando...
+                  {t('creating')}
                 </>
               ) : (
                 <>
                   <IconPlus className='mr-2 h-4 w-4' />
-                  Crear Cliente
+                  {t('create')}
                 </>
               )}
             </Button>

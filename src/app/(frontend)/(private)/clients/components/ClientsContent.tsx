@@ -7,6 +7,7 @@ import { ClientsGrid } from './ClientsGrid'
 import { ErrorBoundaryContent } from './ErrorBoundaryContent'
 // import { BreadcrumbDemo } from './BreadcrumbDemo'
 import type { ClientsFilters } from '@/actions/clients/types'
+import { getTranslations } from 'next-intl/server'
 
 interface ClientsContentProps {
   searchParams?: {
@@ -30,6 +31,7 @@ export async function ClientsContent({ searchParams = {} }: ClientsContentProps)
   try {
     // Validación de admin
     const adminUser = await requireAdminAccess()
+    const t = await getTranslations('clients')
 
     // Construir filtros desde searchParams
     const filters: ClientsFilters = {
@@ -100,11 +102,12 @@ export async function ClientsContent({ searchParams = {} }: ClientsContentProps)
         {(filters.searchTerm || filters.role || filters.dateFrom || filters.dateTo) && (
           <div className='rounded-lg bg-blue-50 p-4'>
             <p className='text-sm text-blue-800'>
-              📊 Mostrando {clients.length} cliente{clients.length !== 1 ? 's' : ''} de{' '}
-              {totalClients} total
-              {filters.searchTerm && ` | Búsqueda: "${filters.searchTerm}"`}
-              {filters.role && ` | Rol: ${filters.role}`}
-              {(filters.dateFrom || filters.dateTo) && ` | Fecha filtrada`}
+              📊 {t('filterInfo.showing')} {clients.length}{' '}
+              {clients.length === 1 ? t('stats.client') : t('stats.clients')} {t('filterInfo.of')}{' '}
+              {totalClients} {t('filterInfo.total')}
+              {filters.searchTerm && ` | ${t('filterInfo.searchTerm')} "${filters.searchTerm}"`}
+              {filters.role && ` | ${t('filterInfo.role')} ${filters.role}`}
+              {(filters.dateFrom || filters.dateTo) && ` | ${t('filterInfo.dateFiltered')}`}
             </p>
           </div>
         )}
@@ -115,16 +118,13 @@ export async function ClientsContent({ searchParams = {} }: ClientsContentProps)
 
     // En caso de error crítico, mostrar página de error
     // pero no usar el componente ErrorBoundaryContent ya que podríamos no tener adminUser
+    const t = await getTranslations('clients.errorBoundary')
     return (
       <div className='flex-1 space-y-6 p-4 pt-6'>
         <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <h2 className='text-lg font-semibold text-red-900 mb-2'>Error Cargando Clientes</h2>
-          <p className='text-red-700 mb-4'>
-            Ha ocurrido un error inesperado al cargar la lista de clientes.
-          </p>
-          <p className='text-sm text-red-600'>
-            Si el problema persiste, contacta al administrador del sistema.
-          </p>
+          <h2 className='text-lg font-semibold text-red-900 mb-2'>{t('title')}</h2>
+          <p className='text-red-700 mb-4'>{t('description')}</p>
+          <p className='text-sm text-red-600'>{t('contactAdmin')}</p>
         </div>
       </div>
     )
