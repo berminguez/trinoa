@@ -22,9 +22,11 @@ import {
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { IconUser, IconMail, IconBuilding, IconAlertCircle, IconLoader2 } from '@tabler/icons-react'
+import { IconUser, IconMail, IconBuilding, IconAlertCircle, IconLoader2, IconBuildingSkyscraper } from '@tabler/icons-react'
 import { updateClientAction } from '@/actions/clients/updateClient'
 import type { ClientWithStats, UpdateClientData } from '@/actions/clients/types'
+import type { Company } from '@/payload-types'
+import { CompanySelector } from './CompanySelector'
 import { toast } from 'sonner'
 
 interface EditClientModalProps {
@@ -49,8 +51,19 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
   const [formData, setFormData] = useState<UpdateClientData>({
     name: client.name || '',
     empresa: client.empresa || '',
+    filial: client.filial || '',
     email: client.email || '',
     role: client.role || 'user',
+  })
+
+  // Estado para la empresa seleccionada (puede ser objeto Company)
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(() => {
+    // Si la empresa actual es un objeto, usarlo directamente
+    if (typeof client.empresa === 'object' && client.empresa?.id) {
+      return client.empresa
+    }
+    // Si es string, será manejado por el CompanySelector
+    return null
   })
 
   // Estado de validación
@@ -71,13 +84,12 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
         }
         break
 
-      case 'empresa':
-        if (!value.trim()) {
-          errors.empresa = 'La empresa es requerida'
-        } else if (value.trim().length < 2) {
-          errors.empresa = 'La empresa debe tener al menos 2 caracteres'
+      case 'filial':
+        // Filial es opcional, solo validar si se proporciona
+        if (value.trim() && value.trim().length < 2) {
+          errors.filial = 'La filial debe tener al menos 2 caracteres'
         } else if (value.trim().length > 100) {
-          errors.empresa = 'La empresa no puede exceder 100 caracteres'
+          errors.filial = 'La filial no puede exceder 100 caracteres'
         }
         break
 
@@ -121,15 +133,22 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
   const isFormValid = () => {
     const hasErrors = Object.values(fieldErrors).some((error) => error !== '')
     const hasRequiredFields =
-      formData.name?.trim() && formData.empresa?.trim() && formData.email?.trim()
+      formData.name?.trim() && 
+      (selectedCompany || (typeof formData.empresa === 'string' && formData.empresa.trim())) && 
+      formData.email?.trim()
     return !hasErrors && hasRequiredFields
   }
 
   // Verificar si hay cambios
   const hasChanges = () => {
+    // Comparar empresa: si hay selectedCompany, usar su ID, sino usar el valor de formData
+    const currentEmpresaValue = selectedCompany ? selectedCompany.id : formData.empresa
+    const originalEmpresaValue = typeof client.empresa === 'object' ? client.empresa.id : client.empresa
+    
     return (
       formData.name !== (client.name || '') ||
-      formData.empresa !== (client.empresa || '') ||
+      currentEmpresaValue !== originalEmpresaValue ||
+      formData.filial !== (client.filial || '') ||
       formData.email !== (client.email || '') ||
       formData.role !== (client.role || 'user')
     )
@@ -153,9 +172,18 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
       if (formData.name !== (client.name || '')) {
         updateData.name = formData.name
       }
-      if (formData.empresa !== (client.empresa || '')) {
-        updateData.empresa = formData.empresa
+      
+      // Manejar empresa: usar ID de selectedCompany si existe, sino el valor de formData
+      const currentEmpresaValue = selectedCompany ? selectedCompany.id : formData.empresa
+      const originalEmpresaValue = typeof client.empresa === 'object' ? client.empresa.id : client.empresa
+      if (currentEmpresaValue !== originalEmpresaValue) {
+        updateData.empresa = currentEmpresaValue
       }
+      
+      if (formData.filial !== (client.filial || '')) {
+        updateData.filial = formData.filial
+      }
+      
       if (formData.email !== (client.email || '')) {
         updateData.email = formData.email
       }
@@ -194,14 +222,34 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
     }
   }
 
+  // Handler para cambio de empresa
+  const handleCompanyChange = (company: Company | null) => {
+    setSelectedCompany(company)
+    // Actualizar formData.empresa para mantener compatibilidad
+    setFormData(prev => ({
+      ...prev,
+      empresa: company ? company.id : ''
+    }))
+    // Limpiar error si existe
+    if (error) setError(null)
+  }
+
   // Handler para cancelar
   const handleCancel = () => {
     // Resetear formulario
     setFormData({
       name: client.name || '',
       empresa: client.empresa || '',
+      filial: client.filial || '',
       email: client.email || '',
       role: client.role || 'user',
+    })
+    // Resetear empresa seleccionada
+    setSelectedCompany(() => {
+      if (typeof client.empresa === 'object' && client.empresa?.id) {
+        return client.empresa
+      }
+      return null
     })
     setFieldErrors({})
     setError(null)
@@ -252,19 +300,35 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
           </div>
 
           {/* Empresa */}
+          <CompanySelector
+            value={selectedCompany || formData.empresa}
+            onValueChange={handleCompanyChange}
+            placeholder="Seleccionar empresa..."
+            disabled={isLoading}
+            required={true}
+            label="Empresa"
+            className="space-y-2"
+          />
+
+          {/* Filial/Departamento */}
           <div className='space-y-2'>
-            <Label htmlFor='empresa'>Empresa *</Label>
-            <div className='relative'>
-              <IconBuilding className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-              <Input
-                id='empresa'
-                value={formData.empresa || ''}
-                onChange={(e) => handleInputChange('empresa', e.target.value)}
-                placeholder='Empresa del cliente'
-                className={`pl-10 ${fieldErrors.empresa ? 'border-red-500' : ''}`}
-              />
-            </div>
-            {fieldErrors.empresa && <p className='text-sm text-red-500'>{fieldErrors.empresa}</p>}
+            <Label htmlFor='filial' className="flex items-center gap-1">
+              <IconBuildingSkyscraper className='h-4 w-4' />
+              Filial/Departamento
+            </Label>
+            <Input
+              id='filial'
+              value={formData.filial || ''}
+              onChange={(e) => handleInputChange('filial', e.target.value)}
+              placeholder='Ej: Desarrollo, Marketing, Ventas...'
+              className={fieldErrors.filial ? 'border-red-500' : ''}
+              disabled={isLoading}
+              maxLength={100}
+            />
+            {fieldErrors.filial && <p className='text-sm text-red-500'>{fieldErrors.filial}</p>}
+            <p className='text-xs text-muted-foreground'>
+              Opcional - {(formData.filial || '').length}/100 caracteres
+            </p>
           </div>
 
           {/* Email */}

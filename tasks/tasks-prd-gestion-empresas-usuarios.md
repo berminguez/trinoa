@@ -60,11 +60,11 @@
   - [x] 4.5 Implementar validaciones y manejo de errores en formulario
   - [x] 4.6 Crear tests para verificar permisos correctos según rol de usuario
 
-- [ ] 5.0 Actualizar interfaz /clients para administradores
+- [x] 5.0 Actualizar interfaz /clients para administradores
   - [x] 5.1 Crear componente `CompanySelector.tsx` con Select de Shadcn y autocompletado
   - [x] 5.2 Crear componente `CreateCompanyDialog.tsx` con Dialog de Shadcn para crear empresas
-  - [ ] 5.3 Integrar selector de empresa y campo filial en formulario existente de `UserForm.tsx`
+  - [x] 5.3 Integrar selector de empresa y campo filial en formulario existente de `UserForm.tsx`
   - [x] 5.4 Implementar funcionalidad "Crear nueva empresa" accesible desde formulario de usuario
-  - [ ] 5.5 Actualizar validaciones para incluir empresa requerida y filial opcional
-  - [ ] 5.6 Asegurar que administradores pueden modificar todos los campos de cualquier usuario
+  - [x] 5.5 Actualizar validaciones para incluir empresa requerida y filial opcional
+  - [x] 5.6 Asegurar que administradores pueden modificar todos los campos de cualquier usuario
   - [x] 5.7 Crear tests para componentes nuevos y funcionalidad de administrador

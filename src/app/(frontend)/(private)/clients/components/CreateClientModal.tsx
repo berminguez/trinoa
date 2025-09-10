@@ -12,6 +12,7 @@ import {
   IconCopy,
   IconEye,
   IconEyeOff,
+  IconBuildingSkyscraper,
 } from '@tabler/icons-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -30,7 +31,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { createClientAction } from '@/actions/clients'
 import { toast } from 'sonner'
-import type { User } from '@/payload-types'
+import type { User, Company } from '@/payload-types'
+import { CompanySelector } from './CompanySelector'
 
 interface CreateClientModalProps {
   trigger?: React.ReactNode
@@ -42,14 +44,16 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [empresa, setEmpresa] = useState('')
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
+  const [filial, setFilial] = useState('')
   const [password, setPassword] = useState('')
   const [generatePassword, setGeneratePassword] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
 
   const [nameError, setNameError] = useState('')
   const [emailError, setEmailError] = useState('')
-  const [empresaError, setEmpresaError] = useState('')
+  const [companyError, setCompanyError] = useState('')
+  const [filialError, setFilialError] = useState('')
   const [passwordError, setPasswordError] = useState('')
 
   const [isCreating, setIsCreating] = useState(false)
@@ -83,15 +87,20 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
     return ''
   }
 
-  const validateEmpresa = (value: string): string => {
-    if (!value.trim()) {
-      return t('errors.companyRequired')
+  const validateCompany = (): string => {
+    if (!selectedCompany) {
+      return 'La empresa es requerida'
     }
-    if (value.trim().length < 2) {
-      return t('errors.companyMinLength')
+    return ''
+  }
+
+  const validateFilial = (value: string): string => {
+    // Filial es opcional, solo validar si se proporciona
+    if (value.trim() && value.trim().length < 2) {
+      return 'La filial debe tener al menos 2 caracteres'
     }
     if (value.trim().length > 100) {
-      return t('errors.companyMaxLength')
+      return 'La filial no puede exceder 100 caracteres'
     }
     return ''
   }
@@ -119,9 +128,14 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
     setEmailError(validateEmail(value))
   }
 
-  const handleEmpresaChange = (value: string) => {
-    setEmpresa(value)
-    setEmpresaError(validateEmpresa(value))
+  const handleCompanyChange = (company: Company | null) => {
+    setSelectedCompany(company)
+    setCompanyError(validateCompany())
+  }
+
+  const handleFilialChange = (value: string) => {
+    setFilial(value)
+    setFilialError(validateFilial(value))
   }
 
   const handlePasswordChange = (value: string) => {
@@ -143,15 +157,17 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
     // Validar todos los campos
     const nameErr = validateName(name)
     const emailErr = validateEmail(email)
-    const empresaErr = validateEmpresa(empresa)
+    const companyErr = validateCompany()
+    const filialErr = validateFilial(filial)
     const passwordErr = validatePassword(password)
 
     setNameError(nameErr)
     setEmailError(emailErr)
-    setEmpresaError(empresaErr)
+    setCompanyError(companyErr)
+    setFilialError(filialErr)
     setPasswordError(passwordErr)
 
-    if (nameErr || emailErr || empresaErr || passwordErr) {
+    if (nameErr || emailErr || companyErr || filialErr || passwordErr) {
       return
     }
 
@@ -161,7 +177,8 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
       const result = await createClientAction({
         name: name.trim(),
         email: email.trim(),
-        empresa: empresa.trim(),
+        empresa: selectedCompany!.id, // Usar ID de la empresa seleccionada
+        filial: filial.trim() || undefined, // Filial opcional
         password: generatePassword ? undefined : password.trim(),
       })
 
@@ -187,13 +204,15 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
     if (!newOpen) {
       setName('')
       setEmail('')
-      setEmpresa('')
+      setSelectedCompany(null)
+      setFilial('')
       setPassword('')
       setGeneratePassword(true)
       setShowPassword(false)
       setNameError('')
       setEmailError('')
-      setEmpresaError('')
+      setCompanyError('')
+      setFilialError('')
       setPasswordError('')
       setCreatedClient(null)
     }
@@ -211,9 +230,11 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
 
   const isFormValid =
     name.trim().length >= 2 &&
+    selectedCompany !== null &&
     !nameError &&
     !emailError &&
-    !empresaError &&
+    !companyError &&
+    !filialError &&
     !passwordError &&
     !isCreating
 
@@ -260,8 +281,19 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
 
                 <div className='flex items-center gap-2'>
                   <IconBuilding className='h-4 w-4 text-muted-foreground' />
-                  <p className='text-sm'>{createdClient.user.empresa}</p>
+                  <p className='text-sm'>
+                    {typeof createdClient.user.empresa === 'object' 
+                      ? createdClient.user.empresa.name 
+                      : createdClient.user.empresa}
+                  </p>
                 </div>
+                
+                {createdClient.user.filial && (
+                  <div className='flex items-center gap-2'>
+                    <IconBuildingSkyscraper className='h-4 w-4 text-muted-foreground' />
+                    <p className='text-sm'>{createdClient.user.filial}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -370,19 +402,36 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
           </div>
 
           {/* Empresa */}
+          <CompanySelector
+            value={selectedCompany}
+            onValueChange={handleCompanyChange}
+            placeholder="Seleccionar empresa..."
+            disabled={isCreating}
+            required={true}
+            error={companyError}
+            label="Empresa"
+            className="space-y-2"
+          />
+
+          {/* Filial/Departamento */}
           <div className='space-y-2'>
-            <Label htmlFor='empresa'>{t('company')} *</Label>
+            <Label htmlFor='filial' className="flex items-center gap-1">
+              <IconBuildingSkyscraper className='h-4 w-4' />
+              Filial/Departamento
+            </Label>
             <Input
-              id='empresa'
-              placeholder='Nombre de la empresa...'
-              value={empresa}
-              onChange={(e) => handleEmpresaChange(e.target.value)}
-              className={empresaError ? 'border-destructive' : ''}
+              id='filial'
+              placeholder='Ej: Desarrollo, Marketing, Ventas...'
+              value={filial}
+              onChange={(e) => handleFilialChange(e.target.value)}
+              className={filialError ? 'border-destructive' : ''}
               disabled={isCreating}
               maxLength={100}
             />
-            {empresaError && <p className='text-sm text-destructive'>{empresaError}</p>}
-            <p className='text-xs text-muted-foreground'>{empresa.length}/100 caracteres</p>
+            {filialError && <p className='text-sm text-destructive'>{filialError}</p>}
+            <p className='text-xs text-muted-foreground'>
+              Opcional - {filial.length}/100 caracteres
+            </p>
           </div>
 
           {/* Contraseña */}
