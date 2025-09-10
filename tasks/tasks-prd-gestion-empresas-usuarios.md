@@ -52,13 +52,13 @@
   - [x] 3.5 Añadir revalidatePath apropiado después de operaciones de modificación
   - [x] 3.6 Crear tests unitarios para todas las server actions
 
-- [ ] 4.0 Actualizar interfaz /account para usuarios finales
-  - [ ] 4.1 Modificar `UserProfileForm.tsx` para mostrar todos los campos (nombre, email, empresa, filial, rol)
-  - [ ] 4.2 Implementar campo nombre como único editable para usuarios no-admin
-  - [ ] 4.3 Mostrar empresa y filial como badges de solo lectura usando componente Badge de Shadcn
-  - [ ] 4.4 Añadir indicaciones visuales claras de qué campos son editables vs solo lectura
-  - [ ] 4.5 Implementar validaciones y manejo de errores en formulario
-  - [ ] 4.6 Crear tests para verificar permisos correctos según rol de usuario
+- [x] 4.0 Actualizar interfaz /account para usuarios finales
+  - [x] 4.1 Modificar `UserProfileForm.tsx` para mostrar todos los campos (nombre, email, empresa, filial, rol)
+  - [x] 4.2 Implementar campo nombre como único editable para usuarios no-admin
+  - [x] 4.3 Mostrar empresa y filial como badges de solo lectura usando componente Badge de Shadcn
+  - [x] 4.4 Añadir indicaciones visuales claras de qué campos son editables vs solo lectura
+  - [x] 4.5 Implementar validaciones y manejo de errores en formulario
+  - [x] 4.6 Crear tests para verificar permisos correctos según rol de usuario
 
 - [ ] 5.0 Actualizar interfaz /clients para administradores
   - [ ] 5.1 Crear componente `CompanySelector.tsx` con Select de Shadcn y autocompletado

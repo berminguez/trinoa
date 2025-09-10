@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { IconUser, IconMail, IconBuilding, IconAlertCircle, IconLoader2 } from '@tabler/icons-react'
+import { IconUser, IconMail, IconBuilding, IconAlertCircle, IconLoader2, IconBuildingSkyscraper, IconShield } from '@tabler/icons-react'
 import { updateProfileAction, type UpdateProfileData } from '@/actions/auth/updateProfile'
 import type { User } from '@/payload-types'
 import { toast } from 'sonner'
@@ -39,11 +39,33 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Estado del formulario
+  // Verificar si el usuario es admin
+  const isAdmin = user.role === 'admin'
+
+  // Obtener nombre de la empresa (puede ser string o relación)
+  const getCompanyName = (empresa: string | any) => {
+    if (!empresa) return null
+    
+    // Si es un objeto (relación), usar el nombre
+    if (typeof empresa === 'object' && empresa.name) {
+      return empresa.name
+    }
+    
+    // Si es string (legacy), usar directamente
+    if (typeof empresa === 'string') {
+      return empresa
+    }
+    
+    return null
+  }
+
+  // Estado del formulario - solo incluir campos editables
   const [formData, setFormData] = useState<UpdateProfileData>({
     name: user.name || '',
-    empresa: user.empresa || '',
-    email: user.email || '',
+    ...(isAdmin && {
+      empresa: typeof user.empresa === 'string' ? user.empresa : '',
+      email: user.email || '',
+    }),
   })
 
   // Estado de validación
@@ -113,6 +135,13 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
   // Verificar si el formulario es válido
   const isFormValid = () => {
     const hasErrors = Object.values(fieldErrors).some((error) => error !== '')
+    
+    // Para usuarios normales, solo validar que tenga nombre
+    if (!isAdmin) {
+      return !hasErrors && formData.name?.trim()
+    }
+    
+    // Para admins, validar todos los campos
     const hasRequiredFields =
       formData.name?.trim() && formData.empresa?.trim() && formData.email?.trim()
     return !hasErrors && hasRequiredFields
@@ -120,9 +149,16 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
 
   // Verificar si hay cambios
   const hasChanges = () => {
+    // Para usuarios normales, solo verificar cambios en nombre
+    if (!isAdmin) {
+      return formData.name !== (user.name || '')
+    }
+    
+    // Para admins, verificar todos los campos
+    const empresaValue = typeof user.empresa === 'string' ? user.empresa : ''
     return (
       formData.name !== (user.name || '') ||
-      formData.empresa !== (user.empresa || '') ||
+      formData.empresa !== empresaValue ||
       formData.email !== (user.email || '')
     )
   }
@@ -142,14 +178,20 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
       // Preparar datos solo con campos modificados
       const updateData: UpdateProfileData = {}
 
+      // Siempre permitir actualizar nombre
       if (formData.name !== (user.name || '')) {
         updateData.name = formData.name
       }
-      if (formData.empresa !== (user.empresa || '')) {
-        updateData.empresa = formData.empresa
-      }
-      if (formData.email !== (user.email || '')) {
-        updateData.email = formData.email
+      
+      // Solo admins pueden actualizar empresa y email
+      if (isAdmin) {
+        const empresaValue = typeof user.empresa === 'string' ? user.empresa : ''
+        if (formData.empresa !== empresaValue) {
+          updateData.empresa = formData.empresa
+        }
+        if (formData.email !== (user.email || '')) {
+          updateData.email = formData.email
+        }
       }
 
       const result = await updateProfileAction(updateData)
@@ -181,8 +223,10 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
     // Resetear formulario
     setFormData({
       name: user.name || '',
-      empresa: user.empresa || '',
-      email: user.email || '',
+      ...(isAdmin && {
+        empresa: typeof user.empresa === 'string' ? user.empresa : '',
+        email: user.email || '',
+      }),
     })
     setFieldErrors({})
     setError(null)
@@ -200,7 +244,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
           <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className='space-y-4'>
+          <form onSubmit={handleSubmit} className='space-y-4'>
           {/* Información actual */}
           <div className='flex items-center justify-between p-3 bg-muted/50 rounded-lg'>
             <div className='flex items-center gap-2'>
@@ -212,13 +256,56 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
                 <p className='text-xs text-muted-foreground'>{user.email}</p>
               </div>
             </div>
-            <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>
-              {user.role === 'admin' && t('roles.admin')}
-              {user.role === 'user' && t('roles.user')}
-              {user.role === 'api' && t('roles.api')}
-              {!user.role && t('roles.user')}
-            </Badge>
+            <div className='flex items-center gap-2'>
+              <Badge variant={user.role === 'admin' ? 'destructive' : 'default'}>
+                <IconShield className='h-3 w-3 mr-1' />
+                {user.role === 'admin' && t('roles.admin')}
+                {user.role === 'user' && t('roles.user')}
+                {user.role === 'api' && t('roles.api')}
+                {!user.role && t('roles.user')}
+              </Badge>
+            </div>
           </div>
+
+          {/* Mostrar información de solo lectura para usuarios normales */}
+          {!isAdmin && (
+            <div className='space-y-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+              <div className='flex items-center gap-2 text-blue-700'>
+                <IconAlertCircle className='h-4 w-4' />
+                <span className='text-sm font-medium'>{t('limitedAccess')}</span>
+              </div>
+              
+              {/* Empresa (solo lectura) */}
+              <div className='space-y-2'>
+                <label className='text-sm font-medium text-muted-foreground'>{t('company')}</label>
+                <div className='flex items-center gap-2'>
+                  <IconBuilding className='h-4 w-4 text-muted-foreground' />
+                  {getCompanyName(user.empresa) ? (
+                    <Badge variant="secondary">
+                      {getCompanyName(user.empresa)}
+                    </Badge>
+                  ) : (
+                    <span className='text-sm text-muted-foreground'>{t('notSpecifiedCompany')}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Filial (solo lectura) */}
+              <div className='space-y-2'>
+                <label className='text-sm font-medium text-muted-foreground'>{t('branch')}</label>
+                <div className='flex items-center gap-2'>
+                  <IconBuildingSkyscraper className='h-4 w-4 text-muted-foreground' />
+                  {user.filial ? (
+                    <Badge variant="outline">
+                      {user.filial}
+                    </Badge>
+                  ) : (
+                    <span className='text-sm text-muted-foreground'>{t('notSpecifiedBranch')}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Nombre */}
           <div className='space-y-2'>
@@ -233,41 +320,46 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
             {fieldErrors.name && <p className='text-sm text-red-500'>{fieldErrors.name}</p>}
           </div>
 
-          {/* Empresa */}
-          <div className='space-y-2'>
-            <Label htmlFor='empresa'>{t('company')} *</Label>
-            <div className='relative'>
-              <IconBuilding className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-              <Input
-                id='empresa'
-                value={formData.empresa || ''}
-                onChange={(e) => handleInputChange('empresa', e.target.value)}
-                placeholder={t('companyPlaceholder')}
-                className={`pl-10 ${fieldErrors.empresa ? 'border-red-500' : ''}`}
-              />
-            </div>
-            {fieldErrors.empresa && <p className='text-sm text-red-500'>{fieldErrors.empresa}</p>}
-          </div>
+          {/* Solo mostrar empresa y email para admins */}
+          {isAdmin && (
+            <>
+              {/* Empresa */}
+              <div className='space-y-2'>
+                <Label htmlFor='empresa'>{t('company')} *</Label>
+                <div className='relative'>
+                  <IconBuilding className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                  <Input
+                    id='empresa'
+                    value={formData.empresa || ''}
+                    onChange={(e) => handleInputChange('empresa', e.target.value)}
+                    placeholder={t('companyPlaceholder')}
+                    className={`pl-10 ${fieldErrors.empresa ? 'border-red-500' : ''}`}
+                  />
+                </div>
+                {fieldErrors.empresa && <p className='text-sm text-red-500'>{fieldErrors.empresa}</p>}
+              </div>
 
-          {/* Email */}
-          <div className='space-y-2'>
-            <Label htmlFor='email'>{t('email')} *</Label>
-            <div className='relative'>
-              <IconMail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-              <Input
-                id='email'
-                type='email'
-                value={formData.email || ''}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                placeholder={t('emailPlaceholder')}
-                className={`pl-10 ${fieldErrors.email ? 'border-red-500' : ''}`}
-              />
-            </div>
-            {fieldErrors.email && <p className='text-sm text-red-500'>{fieldErrors.email}</p>}
-            {formData.email !== user.email && (
-              <p className='text-xs text-amber-600'>{t('emailWarning')}</p>
-            )}
-          </div>
+              {/* Email */}
+              <div className='space-y-2'>
+                <Label htmlFor='email'>{t('email')} *</Label>
+                <div className='relative'>
+                  <IconMail className='absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                  <Input
+                    id='email'
+                    type='email'
+                    value={formData.email || ''}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    placeholder={t('emailPlaceholder')}
+                    className={`pl-10 ${fieldErrors.email ? 'border-red-500' : ''}`}
+                  />
+                </div>
+                {fieldErrors.email && <p className='text-sm text-red-500'>{fieldErrors.email}</p>}
+                {formData.email !== user.email && (
+                  <p className='text-xs text-amber-600'>{t('emailWarning')}</p>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Error general */}
           {error && (
@@ -280,7 +372,9 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess }: EditProfi
           {/* Información sobre el rol */}
           <Alert>
             <IconAlertCircle className='h-4 w-4' />
-            <AlertDescription>{t('roleInfo')}</AlertDescription>
+            <AlertDescription>
+              {isAdmin ? t('adminRoleInfo') : t('userRoleInfo')}
+            </AlertDescription>
           </Alert>
 
           {/* Footer */}

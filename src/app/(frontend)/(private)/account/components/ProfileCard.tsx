@@ -13,6 +13,7 @@ import {
   IconEdit,
   IconShield,
   IconClock,
+  IconBuildingSkyscraper,
 } from '@tabler/icons-react'
 import type { User } from '@/payload-types'
 import { EditProfileModal } from './EditProfileModal'
@@ -79,6 +80,23 @@ export function ProfileCard({ user }: ProfileCardProps) {
     return 'U'
   }
 
+  // Obtener nombre de la empresa (puede ser string o relación)
+  const getCompanyName = (empresa: string | any) => {
+    if (!empresa) return null
+    
+    // Si es un objeto (relación), usar el nombre
+    if (typeof empresa === 'object' && empresa.name) {
+      return empresa.name
+    }
+    
+    // Si es string (legacy), usar directamente
+    if (typeof empresa === 'string') {
+      return empresa
+    }
+    
+    return null
+  }
+
   return (
     <>
       <Card>
@@ -128,7 +146,7 @@ export function ProfileCard({ user }: ProfileCardProps) {
           </div>
 
           {/* Información detallada */}
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
             {/* Nombre */}
             <div className='space-y-2'>
               <label className='text-sm font-medium text-muted-foreground'>{t('name')}</label>
@@ -143,7 +161,28 @@ export function ProfileCard({ user }: ProfileCardProps) {
               <label className='text-sm font-medium text-muted-foreground'>{t('company')}</label>
               <div className='flex items-center gap-2 p-3 bg-muted/50 rounded-lg'>
                 <IconBuilding className='h-4 w-4 text-muted-foreground' />
-                <span className='text-sm'>{userData.empresa || t('notSpecifiedCompany')}</span>
+                {getCompanyName(userData.empresa) ? (
+                  <Badge variant="secondary" className="text-sm">
+                    {getCompanyName(userData.empresa)}
+                  </Badge>
+                ) : (
+                  <span className='text-sm text-muted-foreground'>{t('notSpecifiedCompany')}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Filial */}
+            <div className='space-y-2'>
+              <label className='text-sm font-medium text-muted-foreground'>{t('branch')}</label>
+              <div className='flex items-center gap-2 p-3 bg-muted/50 rounded-lg'>
+                <IconBuildingSkyscraper className='h-4 w-4 text-muted-foreground' />
+                {userData.filial ? (
+                  <Badge variant="outline" className="text-sm">
+                    {userData.filial}
+                  </Badge>
+                ) : (
+                  <span className='text-sm text-muted-foreground'>{t('notSpecifiedBranch')}</span>
+                )}
               </div>
             </div>
 
