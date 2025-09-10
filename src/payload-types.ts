@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    companies: Company;
     media: Media;
     resources: Resource;
     'field-translations': FieldTranslation;
@@ -88,6 +89,7 @@ export interface Config {
   };
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    companies: CompaniesSelect<false> | CompaniesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     resources: ResourcesSelect<false> | ResourcesSelect<true>;
     'field-translations': FieldTranslationsSelect<false> | FieldTranslationsSelect<true>;
@@ -147,7 +149,11 @@ export interface User {
   /**
    * Empresa o organización a la que pertenece el usuario
    */
-  empresa?: string | null;
+  empresa: string | Company;
+  /**
+   * Filial o departamento dentro de la empresa (opcional)
+   */
+  filial?: string | null;
   /**
    * Rol del usuario para control de acceso
    */
@@ -172,6 +178,31 @@ export interface User {
       }[]
     | null;
   password?: string | null;
+}
+/**
+ * Gestiona empresas del sistema para asignación a usuarios
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "companies".
+ */
+export interface Company {
+  id: string;
+  /**
+   * Nombre de la empresa (único)
+   */
+  name: string;
+  /**
+   * CIF de la empresa (único)
+   */
+  cif: string;
+  /**
+   * Fecha de creación de la empresa
+   */
+  createdAt: string;
+  /**
+   * Fecha de última actualización
+   */
+  updatedAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -934,6 +965,10 @@ export interface PayloadLockedDocument {
         value: string | User;
       } | null)
     | ({
+        relationTo: 'companies';
+        value: string | Company;
+      } | null)
+    | ({
         relationTo: 'media';
         value: string | Media;
       } | null)
@@ -1018,6 +1053,7 @@ export interface PayloadMigration {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   empresa?: T;
+  filial?: T;
   role?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1038,6 +1074,16 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "companies_select".
+ */
+export interface CompaniesSelect<T extends boolean = true> {
+  name?: T;
+  cif?: T;
+  createdAt?: T;
+  updatedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

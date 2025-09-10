@@ -37,12 +37,12 @@
   - [x] 1.5 Registrar colección en `src/payload.config.ts`
   - [x] 1.6 Crear tests unitarios para validaciones de duplicados y permisos
 
-- [ ] 2.0 Modificar colección Users para nueva estructura empresarial
-  - [ ] 2.1 Cambiar campo `empresa` de String a relationship con colección Companies
-  - [ ] 2.2 Añadir campo `filial` como String opcional para departamento/filial
-  - [ ] 2.3 Configurar campo empresa como requerido para todos los usuarios
-  - [ ] 2.4 Actualizar permisos para que usuarios solo puedan editar campo `name`
-  - [ ] 2.5 Regenerar tipos TypeScript con `pnpm payload generate:types`
+- [x] 2.0 Modificar colección Users para nueva estructura empresarial
+  - [x] 2.1 Cambiar campo `empresa` de String a relationship con colección Companies
+  - [x] 2.2 Añadir campo `filial` como String opcional para departamento/filial
+  - [x] 2.3 Configurar campo empresa como requerido para todos los usuarios
+  - [x] 2.4 Actualizar permisos para que usuarios solo puedan editar campo `name`
+  - [x] 2.5 Regenerar tipos TypeScript con `pnpm payload generate:types`
 
 - [ ] 3.0 Implementar server actions para gestión de empresas
   - [ ] 3.1 Crear `createCompanyAction.ts` con validación de duplicados y permisos de admin

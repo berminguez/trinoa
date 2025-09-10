@@ -14,13 +14,54 @@ export const Users: CollectionConfig = {
       name: 'name',
       type: 'text',
       label: 'Nombre',
+      access: {
+        // Los usuarios pueden editar su propio nombre, admins pueden editar todos
+        update: ({ req: { user }, id }) => {
+          if (!user) return false
+          
+          // Los admins pueden editar el nombre de cualquier usuario
+          if (user.role === 'admin') return true
+          
+          // Los usuarios normales solo pueden editar su propio nombre
+          if (user.role === 'user') {
+            return user.id === id
+          }
+          
+          // Los usuarios API no pueden editar nombres
+          return false
+        },
+      },
     },
     {
       name: 'empresa',
-      type: 'text',
+      type: 'relationship',
+      relationTo: 'companies',
+      required: true,
       label: 'Empresa',
+      access: {
+        // Solo admins pueden editar la empresa de un usuario
+        update: ({ req: { user } }) => {
+          if (!user) return false
+          return user.role === 'admin'
+        },
+      },
       admin: {
         description: 'Empresa o organización a la que pertenece el usuario',
+      },
+    },
+    {
+      name: 'filial',
+      type: 'text',
+      label: 'Filial/Departamento',
+      access: {
+        // Solo admins pueden editar la filial de un usuario
+        update: ({ req: { user } }) => {
+          if (!user) return false
+          return user.role === 'admin'
+        },
+      },
+      admin: {
+        description: 'Filial o departamento dentro de la empresa (opcional)',
       },
     },
     {
