@@ -44,13 +44,13 @@
   - [x] 2.4 Actualizar permisos para que usuarios solo puedan editar campo `name`
   - [x] 2.5 Regenerar tipos TypeScript con `pnpm payload generate:types`
 
-- [ ] 3.0 Implementar server actions para gestión de empresas
-  - [ ] 3.1 Crear `createCompanyAction.ts` con validación de duplicados y permisos de admin
-  - [ ] 3.2 Crear `getCompaniesAction.ts` para obtener lista de empresas disponibles
-  - [ ] 3.3 Crear `validateCompanyAction.ts` para validaciones pre-envío en frontend
-  - [ ] 3.4 Implementar manejo de errores y respuestas estructuradas en todas las actions
-  - [ ] 3.5 Añadir revalidatePath apropiado después de operaciones de modificación
-  - [ ] 3.6 Crear tests unitarios para todas las server actions
+- [x] 3.0 Implementar server actions para gestión de empresas
+  - [x] 3.1 Crear `createCompanyAction.ts` con validación de duplicados y permisos de admin
+  - [x] 3.2 Crear `getCompaniesAction.ts` para obtener lista de empresas disponibles
+  - [x] 3.3 Crear `validateCompanyAction.ts` para validaciones pre-envío en frontend
+  - [x] 3.4 Implementar manejo de errores y respuestas estructuradas en todas las actions
+  - [x] 3.5 Añadir revalidatePath apropiado después de operaciones de modificación
+  - [x] 3.6 Crear tests unitarios para todas las server actions
 
 - [ ] 4.0 Actualizar interfaz /account para usuarios finales
   - [ ] 4.1 Modificar `UserProfileForm.tsx` para mostrar todos los campos (nombre, email, empresa, filial, rol)
