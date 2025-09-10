@@ -22,6 +22,8 @@
     "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test",
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
     "test:queue": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/test-queue-system.ts",
+    "migrate:empresas": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/migrate-empresa-to-companies.ts",
+    "migrate:users": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/update-users-empresa-ids.ts",
     "test:api": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/test-api-endpoints.ts",
     "test:upload": "cross-env NODE_OPTIONS=--no-deprecation tsx scripts/test-upload-endpoint.ts",
     "test:resources": "cross-env NODE_OPTIONS=--no-deprecation tsx src/collections/Resources.test.ts",
