@@ -149,7 +149,7 @@ export interface User {
   /**
    * Empresa o organización a la que pertenece el usuario
    */
-  empresa?: (string | null) | Company;
+  empresa?: string | null;
   /**
    * Filial o departamento dentro de la empresa (opcional)
    */

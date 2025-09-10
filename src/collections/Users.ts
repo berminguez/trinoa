@@ -34,9 +34,7 @@ export const Users: CollectionConfig = {
     },
     {
       name: 'empresa',
-      type: 'relationship',
-      relationTo: 'companies',
-      required: false, // Temporalmente no requerido para permitir migración de datos legacy
+      type: 'text', // Temporalmente vuelto a text para permitir login con datos legacy
       label: 'Empresa',
       access: {
         // Solo admins pueden editar la empresa de un usuario
@@ -89,49 +87,6 @@ export const Users: CollectionConfig = {
     },
   ],
   hooks: {
-    beforeValidate: [
-      async ({ data, operation, req }) => {
-        // Manejar migración automática de empresa legacy (string) a relación
-        if (data?.empresa && typeof data.empresa === 'string' && data.empresa.trim()) {
-          const payload = req.payload
-          const empresaNombre = data.empresa.trim()
-          
-          try {
-            // Buscar si ya existe una empresa con este nombre
-            const existingCompany = await payload.find({
-              collection: 'companies',
-              where: {
-                name: {
-                  equals: empresaNombre
-                }
-              },
-              limit: 1
-            })
-
-            if (existingCompany.docs.length > 0) {
-              // Si existe, usar esa empresa
-              data.empresa = existingCompany.docs[0].id
-              console.log(`[USER_MIGRATION] Empresa legacy "${empresaNombre}" migrada a ID: ${existingCompany.docs[0].id}`)
-            } else {
-              // Si no existe, crear una nueva empresa
-              const newCompany = await payload.create({
-                collection: 'companies',
-                data: {
-                  name: empresaNombre,
-                  cif: `LEGACY-${Date.now()}` // CIF temporal para empresas migradas
-                }
-              })
-              data.empresa = newCompany.id
-              console.log(`[USER_MIGRATION] Nueva empresa "${empresaNombre}" creada con ID: ${newCompany.id}`)
-            }
-          } catch (error) {
-            console.error('[USER_MIGRATION] Error al migrar empresa legacy:', error)
-            // En caso de error, dejar el campo vacío para no bloquear el login
-            data.empresa = null
-          }
-        }
-      }
-    ],
     afterChange: [
       async ({ doc, operation, req }) => {
         // Solo crear proyecto Default cuando se crea un nuevo usuario
