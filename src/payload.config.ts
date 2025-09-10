@@ -9,6 +9,7 @@ import sharp from 'sharp'
 
 import { Conversations } from './collections/Conversations'
 import { ApiKeys } from './collections/ApiKeys'
+import { Companies } from './collections/Companies'
 import { Media } from './collections/Media'
 import { Messages } from './collections/Messages'
 import { Projects } from './collections/Projects'
@@ -39,6 +40,7 @@ export default buildConfig({
   },
   collections: [
     Users,
+    Companies,
     Media,
     Resources,
     FieldTranslations,
