@@ -526,6 +526,14 @@ export interface Resource {
    * Momento en que completó el procesamiento
    */
   completedAt?: string | null;
+  /**
+   * Momento en que fue verificado manualmente
+   */
+  verifiedAt?: string | null;
+  /**
+   * Usuario que verificó manualmente el documento
+   */
+  verifiedBy?: (string | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -1218,6 +1226,8 @@ export interface ResourcesSelect<T extends boolean = true> {
   source?: T;
   startedAt?: T;
   completedAt?: T;
+  verifiedAt?: T;
+  verifiedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

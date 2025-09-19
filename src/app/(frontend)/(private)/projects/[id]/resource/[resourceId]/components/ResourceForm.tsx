@@ -3,7 +3,7 @@
 import { Formik, Form } from 'formik'
 import * as Yup from 'yup'
 import { Button } from '@/components/ui/button'
-import { useLocale, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import useVisualizadorStore from '@/stores/visualizador-store'
 import { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
@@ -19,6 +19,9 @@ import { toast } from 'sonner'
 import { updateResourceAction } from '@/actions/resources/updateResource'
 import { rescanResourceAction } from '@/actions/resources/rescanResource'
 import { getResourceStatusAction } from '@/actions/resources/getResourceStatus'
+import { verifyResourceAction } from '@/actions/resources/verifyResource'
+import { canBeVerified, getConfidenceThreshold } from '@/lib/utils/calculateResourceConfidence'
+import { useRouter } from 'next/navigation'
 import AnalyzeFieldsPanel from './AnalyzeFieldsPanel'
 import {
   AlertDialog,
@@ -30,6 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DocumentStatusControl } from '@/components/ui/document-status-control'
 
 export interface ResourceFormInitialValues {
@@ -60,16 +64,55 @@ export default function ResourceForm({
 }: ResourceFormProps) {
   const t = useTranslations('documents.edit')
   const tCommon = useTranslations('common')
-  const locale = useLocale()
+  const router = useRouter()
   const isProcessing = useVisualizadorStore((s) => s.isProcessing)
   const setIsProcessing = useVisualizadorStore((s) => s.setIsProcessing)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [documentoErroneo, setDocumentoErroneo] = useState(Boolean(initialDocumentoErroneo))
+  const [verifyPopoverOpen, setVerifyPopoverOpen] = useState(false)
+  const [canVerify, setCanVerify] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [currentConfidence, setCurrentConfidence] = useState(initialConfidence)
 
   // Establecer estado inicial
   useEffect(() => {
     if (initialStatus === 'processing') setIsProcessing(true)
   }, [initialStatus, setIsProcessing])
+
+  // Verificar si el recurso puede ser verificado
+  useEffect(() => {
+    const checkCanVerify = async () => {
+      try {
+        // Obtener datos actuales del recurso
+        const response = await fetch(`/api/resources/${resourceId}?depth=0`)
+        const resource = await response.json()
+
+        // Obtener threshold de configuración
+        const configResponse = await fetch('/api/globals/configuracion')
+        const config = await configResponse.json()
+        const threshold = config?.confidenceSettings?.confidenceThreshold ?? 70
+
+        // Obtener campos obligatorios
+        const translationsResponse = await fetch('/api/field-translations?limit=1000&sort=order')
+        const translationsData = await translationsResponse.json()
+        const requiredFieldNames =
+          translationsData?.docs?.filter((d: any) => d?.isRequired)?.map((d: any) => d.key) || []
+
+        const canVerifyResource = canBeVerified(resource, threshold, { requiredFieldNames })
+        setCanVerify(canVerifyResource)
+      } catch (error) {
+        console.error('Error checking if resource can be verified:', error)
+        setCanVerify(false)
+      }
+    }
+
+    // Solo verificar si no está procesando y no es documento erróneo
+    if (!isProcessing && !documentoErroneo && currentConfidence !== 'verified') {
+      checkCanVerify()
+    } else {
+      setCanVerify(false)
+    }
+  }, [resourceId, isProcessing, documentoErroneo, currentConfidence])
 
   // Función para manejar el cambio del estado de documento erróneo
   const handleDocumentoErroneoChange = async (checked: boolean) => {
@@ -87,6 +130,32 @@ export default function ResourceForm({
       }
     } catch (error) {
       toast.error('Error al actualizar el estado del documento')
+    }
+  }
+
+  // Función para manejar la verificación del recurso
+  const handleVerifyResource = async () => {
+    try {
+      setIsVerifying(true)
+      const result = await verifyResourceAction(projectId, resourceId)
+
+      if (result.success) {
+        // Actualizar estado local inmediatamente
+        setCurrentConfidence('verified')
+        setCanVerify(false)
+        setVerifyPopoverOpen(false)
+
+        toast.success('Documento verificado exitosamente')
+
+        // Refrescar datos del servidor sin recargar la página
+        router.refresh()
+      } else {
+        toast.error(result.error || 'No se pudo verificar el documento')
+      }
+    } catch (error) {
+      toast.error('Error al verificar el documento')
+    } finally {
+      setIsVerifying(false)
     }
   }
 
@@ -252,6 +321,64 @@ export default function ResourceForm({
               projectId={projectId}
               resourceId={resourceId}
             />
+
+            {/* Botón de verificación */}
+            {currentConfidence !== 'verified' && !documentoErroneo && (
+              <div className='border-t pt-4'>
+                <div className='flex flex-col gap-3'>
+                  <div className='text-sm font-medium'>Verificación del documento</div>
+
+                  {!canVerify && (
+                    <div className='text-xs text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200'>
+                      Modifica o valida los campos obligatorios con poco índice de confianza para
+                      poder verificar el documento
+                    </div>
+                  )}
+
+                  <Popover open={verifyPopoverOpen} onOpenChange={setVerifyPopoverOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type='button'
+                        variant='default'
+                        disabled={!canVerify || isProcessing || isVerifying}
+                        className='w-fit'
+                      >
+                        {isVerifying ? 'Verificando...' : 'Verificar Documento'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-96 p-6' align='center'>
+                      <div className='space-y-4'>
+                        <div className='space-y-2'>
+                          <h4 className='font-medium text-base'>Confirmar verificación</h4>
+                          <p className='text-sm text-muted-foreground'>
+                            Al pulsar en Verificar aceptas que has revisado y verificado los campos
+                            del documento para ser utilizados en el procesamiento de los datos.
+                          </p>
+                        </div>
+
+                        <div className='flex justify-end space-x-2'>
+                          <Button
+                            type='button'
+                            variant='outline'
+                            onClick={() => setVerifyPopoverOpen(false)}
+                            disabled={isVerifying}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type='button'
+                            onClick={handleVerifyResource}
+                            disabled={isVerifying}
+                          >
+                            {isVerifying ? 'Verificando...' : 'Verificar'}
+                          </Button>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            )}
 
             {/* Sin botón de guardar, el guardado es automático */}
           </fieldset>

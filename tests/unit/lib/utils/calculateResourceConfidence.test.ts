@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { calculateResourceConfidence, getConfidenceThreshold } from '@/lib/utils/calculateResourceConfidence'
+import { calculateResourceConfidence, getConfidenceThreshold, canBeVerified } from '@/lib/utils/calculateResourceConfidence'
 
 describe('calculateResourceConfidence', () => {
   const mockResource = (analyzeResult: any) => ({
@@ -104,8 +104,8 @@ describe('calculateResourceConfidence', () => {
     })
   })
 
-  describe('Estado verified', () => {
-    it('debe retornar verified cuando todos los campos de baja confianza son manuales', () => {
+  describe('Estado trusted (incluye campos corregidos manualmente)', () => {
+    it('debe retornar trusted cuando todos los campos de baja confianza son manuales', () => {
       const resource = mockResource({
         fields: {
           field1: { confidence: 0.5, manual: true, type: 'string' }, // Bajo confidence pero manual
@@ -114,10 +114,10 @@ describe('calculateResourceConfidence', () => {
         },
       })
       const result = calculateResourceConfidence(resource, 70)
-      expect(result).toBe('verified')
+      expect(result).toBe('trusted')
     })
 
-    it('debe retornar verified cuando solo hay un campo de baja confianza manual', () => {
+    it('debe retornar trusted cuando solo hay un campo de baja confianza manual', () => {
       const resource = mockResource({
         fields: {
           field1: { confidence: 0.5, manual: true, type: 'string' }, // Único campo bajo, manual
@@ -125,7 +125,7 @@ describe('calculateResourceConfidence', () => {
         },
       })
       const result = calculateResourceConfidence(resource, 70)
-      expect(result).toBe('verified')
+      expect(result).toBe('trusted')
     })
 
     it('debe retornar needs_revision si hay campos de baja confianza sin manual:true', () => {
@@ -184,7 +184,7 @@ describe('calculateResourceConfidence', () => {
   })
 
   describe('Casos de transición', () => {
-    it('debe manejar transición de needs_revision a verified', () => {
+    it('debe manejar transición de needs_revision a trusted', () => {
       const resource = mockResource({
         fields: {
           field1: { confidence: 0.5, manual: true, type: 'string' }, // Era problemático, ahora manual
@@ -193,7 +193,7 @@ describe('calculateResourceConfidence', () => {
         },
       })
       const result = calculateResourceConfidence(resource, 70)
-      expect(result).toBe('verified')
+      expect(result).toBe('trusted')
     })
 
     it('debe manejar mix de campos buenos y corregidos', () => {
@@ -207,8 +207,147 @@ describe('calculateResourceConfidence', () => {
         },
       })
       const result = calculateResourceConfidence(resource, 70)
-      expect(result).toBe('verified')
+      expect(result).toBe('trusted')
     })
+  })
+})
+
+describe('canBeVerified', () => {
+  const mockResource = (analyzeResult: any) => ({
+    id: 'test-resource',
+    analyzeResult,
+  })
+
+  it('debe retornar false cuando no hay analyzeResult', () => {
+    const resource = mockResource(null)
+    const result = canBeVerified(resource, 70)
+    expect(result).toBe(false)
+  })
+
+  it('debe retornar false cuando no hay fields', () => {
+    const resource = mockResource({ otherData: 'test' })
+    const result = canBeVerified(resource, 70)
+    expect(result).toBe(false)
+  })
+
+  it('debe retornar true cuando todos los campos obligatorios tienen confianza suficiente', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { confidence: 0.9, type: 'string' },
+        field3: { confidence: 0.7, type: 'string' }, // Exactamente el umbral
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: ['field1', 'field2', 'field3'],
+    })
+    expect(result).toBe(true)
+  })
+
+  it('debe retornar false cuando hay campos obligatorios con baja confianza', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { confidence: 0.5, type: 'string' }, // Por debajo del umbral
+        field3: { confidence: 0.9, type: 'string' },
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: ['field1', 'field2', 'field3'],
+    })
+    expect(result).toBe(false)
+  })
+
+  it('debe retornar true cuando campos obligatorios con baja confianza son manuales', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { confidence: 0.5, manual: true, type: 'string' }, // Bajo pero manual
+        field3: { confidence: 0.9, type: 'string' },
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: ['field1', 'field2', 'field3'],
+    })
+    expect(result).toBe(true)
+  })
+
+  it('debe retornar false cuando campos obligatorios no tienen confianza y no son manuales', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { type: 'string' }, // Sin confidence, no manual
+        field3: { confidence: 0.9, type: 'string' },
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: ['field1', 'field2', 'field3'],
+    })
+    expect(result).toBe(false)
+  })
+
+  it('debe retornar true cuando campos obligatorios sin confianza son manuales', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { manual: true, type: 'string' }, // Sin confidence pero manual
+        field3: { confidence: 0.9, type: 'string' },
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: ['field1', 'field2', 'field3'],
+    })
+    expect(result).toBe(true)
+  })
+
+  it('debe ignorar campos no obligatorios', () => {
+    const resource = mockResource({
+      fields: {
+        requiredField: { confidence: 0.8, type: 'string' },
+        optionalField: { confidence: 0.3, type: 'string' }, // Muy bajo pero no obligatorio
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: ['requiredField'],
+    })
+    expect(result).toBe(true)
+  })
+
+  it('debe tratar todos los campos como obligatorios cuando no se especifican campos requeridos', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { confidence: 0.5, type: 'string' }, // Por debajo del umbral
+      },
+    })
+    const result = canBeVerified(resource, 70) // Sin requiredFieldNames
+    expect(result).toBe(false)
+  })
+
+  it('debe aceptar requiredFieldNames como array', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { confidence: 0.9, type: 'string' },
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: ['field1', 'field2'],
+    })
+    expect(result).toBe(true)
+  })
+
+  it('debe aceptar requiredFieldNames como Set', () => {
+    const resource = mockResource({
+      fields: {
+        field1: { confidence: 0.8, type: 'string' },
+        field2: { confidence: 0.9, type: 'string' },
+      },
+    })
+    const result = canBeVerified(resource, 70, {
+      requiredFieldNames: new Set(['field1', 'field2']),
+    })
+    expect(result).toBe(true)
   })
 })
 

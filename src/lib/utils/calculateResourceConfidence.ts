@@ -56,14 +56,11 @@ export function calculateResourceConfidence(
       manualFields.push(fieldName)
     }
 
-    // Si el campo es obligatorio y tiene confidence < threshold y no es manual, añadirlo a low confidence
-    if (
-      isRequired &&
-      typeof confidence === 'number' &&
-      confidence < thresholdDecimal &&
-      !isManual
-    ) {
-      lowConfidenceFields.push(fieldName)
+    // Si el campo es obligatorio y (no tiene confidence o tiene confidence < threshold) y no es manual
+    if (isRequired && !isManual) {
+      if (typeof confidence !== 'number' || confidence < thresholdDecimal) {
+        lowConfidenceFields.push(fieldName)
+      }
     }
   }
 
@@ -90,20 +87,69 @@ export function calculateResourceConfidence(
     return 'needs_revision'
   }
 
-  // Si todos los campos que tenían baja confianza ahora tienen manual: true
-  if (originalLowConfidenceFields.length > 0) {
-    const allLowConfidenceFieldsAreManual = originalLowConfidenceFields.every((fieldName) => {
-      const field = fields[fieldName]
-      return field && field.manual === true
-    })
+  // Si todos los campos tienen confianza >= threshold (incluyendo los corregidos manualmente)
+  // NOTA: 'verified' ahora solo se asigna manualmente por el usuario mediante doble aceptación
+  return 'trusted'
+}
 
-    if (allLowConfidenceFieldsAreManual) {
-      return 'verified'
+/**
+ * Valida si todos los campos obligatorios tienen confianza suficiente para permitir verificación
+ * @param resource - Recurso con analyzeResult
+ * @param threshold - Umbral de confianza (0-100)
+ * @param options - Opciones con nombres de campos obligatorios
+ * @returns true si todos los campos obligatorios tienen confianza >= threshold o son manuales
+ */
+export function canBeVerified(
+  resource: any,
+  threshold: number,
+  options?: { requiredFieldNames?: Set<string> | string[] },
+): boolean {
+  if (!resource?.analyzeResult?.fields) {
+    return false
+  }
+
+  const fields = resource.analyzeResult.fields
+  const fieldNames = Object.keys(fields)
+  const thresholdDecimal = threshold / 100
+
+  // Convertir a Set si es necesario
+  const requiredSet: Set<string> | null =
+    options?.requiredFieldNames instanceof Set
+      ? options.requiredFieldNames
+      : Array.isArray(options?.requiredFieldNames)
+        ? new Set(options.requiredFieldNames)
+        : options?.requiredFieldNames
+          ? (options?.requiredFieldNames as Set<string>)
+          : null
+
+  for (const fieldName of fieldNames) {
+    const field = fields[fieldName]
+
+    // Verificar que el campo tenga estructura válida
+    if (!field || typeof field !== 'object') {
+      continue
+    }
+
+    const isRequired = requiredSet ? requiredSet.has(fieldName) : true
+    if (!isRequired) {
+      continue
+    }
+
+    const confidence = field.confidence
+    const isManual = field.manual === true
+
+    // Si el campo es obligatorio y no es manual y tiene confidence < threshold
+    if (typeof confidence === 'number' && confidence < thresholdDecimal && !isManual) {
+      return false
+    }
+
+    // Si el campo es obligatorio y no tiene confidence y no es manual
+    if (typeof confidence !== 'number' && !isManual) {
+      return false
     }
   }
 
-  // Si todos los campos tienen confianza >= threshold (y no hay campos que requirieron corrección manual)
-  return 'trusted'
+  return true
 }
 
 /**

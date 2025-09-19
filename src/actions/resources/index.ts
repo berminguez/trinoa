@@ -9,6 +9,8 @@ export {
   type UpdateResourceConfidenceResult,
 } from './updateResourceConfidence'
 
+export { verifyResourceAction, type VerifyResourceResult } from './verifyResource'
+
 // Resource updates
 export { updateResourceAction } from './updateResource'
 

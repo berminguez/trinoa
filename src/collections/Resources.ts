@@ -548,6 +548,28 @@ export const Resources: CollectionConfig = {
         },
       },
     },
+    {
+      name: 'verifiedAt',
+      type: 'date',
+      admin: {
+        description: 'Momento en que fue verificado manualmente',
+        readOnly: true,
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+      },
+    },
+    {
+      name: 'verifiedBy',
+      label: 'Verificado por',
+      type: 'relationship',
+      relationTo: 'users' as any,
+      required: false,
+      admin: {
+        description: 'Usuario que verificó manualmente el documento',
+        readOnly: true,
+      },
+    },
   ],
   endpoints: [
     {
