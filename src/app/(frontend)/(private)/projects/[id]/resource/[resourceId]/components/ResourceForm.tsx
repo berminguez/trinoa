@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner'
 import { updateResourceAction } from '@/actions/resources/updateResource'
 import { rescanResourceAction } from '@/actions/resources/rescanResource'
+import { cancelProcessingResourceAction } from '@/actions/resources/cancelProcessingResource'
 import { getResourceStatusAction } from '@/actions/resources/getResourceStatus'
 import { verifyResourceAction } from '@/actions/resources/verifyResource'
 import { canBeVerified, getConfidenceThreshold } from '@/lib/utils/calculateResourceConfidence'
@@ -73,6 +74,7 @@ export default function ResourceForm({
   const [canVerify, setCanVerify] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [currentConfidence, setCurrentConfidence] = useState(initialConfidence)
+  const [isCancelling, setIsCancelling] = useState(false)
 
   // Establecer estado inicial
   useEffect(() => {
@@ -159,6 +161,27 @@ export default function ResourceForm({
     }
   }
 
+  // Función para manejar la cancelación del procesamiento
+  const handleCancelProcessing = async () => {
+    try {
+      setIsCancelling(true)
+      const result = await cancelProcessingResourceAction(projectId, resourceId)
+
+      if (result.success) {
+        toast.success('Procesamiento cancelado exitosamente')
+
+        // Refrescar la página para mostrar el nuevo estado
+        router.refresh()
+      } else {
+        toast.error(result.error || 'No se pudo cancelar el procesamiento')
+      }
+    } catch (error) {
+      toast.error('Error al cancelar el procesamiento')
+    } finally {
+      setIsCancelling(false)
+    }
+  }
+
   return (
     <Formik<ResourceFormInitialValues>
       initialValues={initialValues}
@@ -190,44 +213,79 @@ export default function ResourceForm({
         <Form className='flex h-full w-full flex-col gap-4'>
           <div className='flex items-center justify-between'>
             <div className='text-xs text-muted-foreground'>{t('metadataEdit')}</div>
-            <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-              <AlertDialogTrigger asChild>
-                <Button type='button' size='sm' variant='outline' disabled={isProcessing}>
-                  {t('rescan')}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t('rescanConfirm')}</AlertDialogTitle>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={async () => {
-                      try {
-                        setIsProcessing(true)
+            {initialStatus === 'processing' ? (
+              // Botón para cancelar procesamiento cuando está en processing
+              <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button type='button' size='sm' variant='destructive' disabled={isCancelling}>
+                    {isCancelling ? 'Cancelando...' : 'Cancelar escaneo'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Cancelar procesamiento?</AlertDialogTitle>
+                  </AlertDialogHeader>
+                  <div className='py-4'>
+                    <p className='text-sm text-muted-foreground'>
+                      Esta acción cancelará el procesamiento actual y marcará el documento como
+                      fallido. Podrás volver a escanearlo después.
+                    </p>
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
                         setConfirmOpen(false)
-                        const res = await rescanResourceAction(projectId, resourceId, {
-                          caso: values.caso ?? undefined,
-                          tipo: values.tipo ?? undefined,
-                        })
-                        if (!res.success) {
+                        await handleCancelProcessing()
+                      }}
+                      className='bg-destructive text-white hover:bg-destructive/90'
+                    >
+                      Cancelar procesamiento
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              // Botón de rescan para otros estados
+              <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button type='button' size='sm' variant='outline' disabled={isProcessing}>
+                    {t('rescan')}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t('rescanConfirm')}</AlertDialogTitle>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{tCommon('cancel')}</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={async () => {
+                        try {
+                          setIsProcessing(true)
+                          setConfirmOpen(false)
+                          const res = await rescanResourceAction(projectId, resourceId, {
+                            caso: values.caso ?? undefined,
+                            tipo: values.tipo ?? undefined,
+                          })
+                          if (!res.success) {
+                            setIsProcessing(false)
+                            toast.error(res.error || t('rescanStartError'))
+                          } else {
+                            toast.success(t('rescanStarted'))
+                          }
+                        } catch (_e) {
                           setIsProcessing(false)
-                          toast.error(res.error || t('rescanStartError'))
-                        } else {
-                          toast.success(t('rescanStarted'))
+                          toast.error(t('rescanStartError'))
                         }
-                      } catch (_e) {
-                        setIsProcessing(false)
-                        toast.error(t('rescanStartError'))
-                      }
-                    }}
-                  >
-                    {tCommon('confirm')}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                      }}
+                    >
+                      {tCommon('confirm')}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
           <FormChangeWatcher dirty={dirty} />
           {/* Campos globales */}
