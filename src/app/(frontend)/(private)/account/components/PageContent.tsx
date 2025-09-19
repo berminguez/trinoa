@@ -3,6 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { ProfileCard } from './ProfileCard'
 import { AccountSettings } from './AccountSettings'
+import { User } from '@/payload-types'
 
 /**
  * Contenido principal de la página de cuenta
@@ -11,16 +12,16 @@ import { AccountSettings } from './AccountSettings'
  */
 export async function PageContent() {
   // Obtener usuario actual
-  const user = await getCurrentUser()
+  const user = (await getCurrentUser()) as User | null
   const t = await getTranslations('account')
 
   // Verificar autenticación
-  if (!user) {
+  if (!user || !user.id) {
     redirect('/login?redirect=/account')
   }
 
   // Verificar que el usuario existe (no debería pasar, pero por seguridad)
-  if (!user.id) {
+  if (!user?.id) {
     notFound()
   }
 
@@ -37,10 +38,10 @@ export async function PageContent() {
       {/* Contenido principal */}
       <div className='space-y-6'>
         {/* Información del perfil */}
-        <ProfileCard user={user} />
+        <ProfileCard user={user as User} />
 
         {/* Configuración de cuenta */}
-        <AccountSettings user={user} />
+        <AccountSettings user={user as User} />
       </div>
     </div>
   )

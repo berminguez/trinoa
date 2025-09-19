@@ -9,6 +9,7 @@ import {
   IconMessageCircle,
   IconKey,
 } from '@tabler/icons-react'
+import { getTranslations } from 'next-intl/server'
 
 import PersonalProjects from './PersonalProjects'
 import ResourcesOverview from './ResourcesOverview'
@@ -23,7 +24,8 @@ interface UserDashboardProps {
  * Dashboard principal para usuarios normales
  * Muestra vista personal con solo los datos del usuario
  */
-export default function UserDashboard({ user }: UserDashboardProps) {
+export default async function UserDashboard({ user }: UserDashboardProps) {
+  const t = await getTranslations('dashboardUser')
   return (
     <div className='flex flex-1 flex-col'>
       <div className='@container/main flex flex-1 flex-col gap-6'>
@@ -33,16 +35,18 @@ export default function UserDashboard({ user }: UserDashboardProps) {
             <div className='flex items-center gap-3'>
               <IconUser className='h-8 w-8 text-primary' />
               <div>
-                <h1 className='text-3xl font-bold text-gray-900'>Mi Dashboard</h1>
-                <p className='text-gray-600'>Bienvenido de vuelta, {user.name || user.email}</p>
+                <h1 className='text-3xl font-bold text-gray-900'>{t('myDashboard')}</h1>
+                <p className='text-gray-600'>
+                  {t('welcomeBack', { name: user.name || user.email })}
+                </p>
               </div>
             </div>
             <div className='flex items-center gap-2'>
               <Badge variant='secondary' className='bg-green-100 text-green-800'>
                 <IconUser className='h-3 w-3 mr-1' />
-                Usuario
+                {t('user')}
               </Badge>
-              <Badge variant='outline'>Vista personal</Badge>
+              <Badge variant='outline'>{t('personalView')}</Badge>
             </div>
           </div>
 

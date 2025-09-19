@@ -9,6 +9,7 @@ import {
   IconTrendingUp,
   IconServer,
 } from '@tabler/icons-react'
+import { getTranslations } from 'next-intl/server'
 
 import GlobalMetrics from './GlobalMetrics'
 import UsersOverview from './UsersOverview'
@@ -25,7 +26,8 @@ interface AdminDashboardProps {
  * Dashboard principal para usuarios administradores
  * Muestra vista global del sistema con métricas de todos los usuarios
  */
-export default function AdminDashboard({ user }: AdminDashboardProps) {
+export default async function AdminDashboard({ user }: AdminDashboardProps) {
+  const t = await getTranslations('dashboardAdmin')
   return (
     <div className='flex flex-1 flex-col'>
       <div className='@container/main flex flex-1 flex-col gap-6'>
@@ -35,18 +37,18 @@ export default function AdminDashboard({ user }: AdminDashboardProps) {
             <div className='flex items-center gap-3'>
               <IconServer className='h-8 w-8 text-primary' />
               <div>
-                <h1 className='text-3xl font-bold text-gray-900'>Dashboard Administrativo</h1>
+                <h1 className='text-3xl font-bold text-gray-900'>{t('administrativeDashboard')}</h1>
                 <p className='text-gray-600'>
-                  Vista global del sistema - Bienvenido, {user.name || user.email}
+                  {t('globalSystemView', { name: user.name || user.email })}
                 </p>
               </div>
             </div>
             <div className='flex items-center gap-2'>
               <Badge variant='secondary' className='bg-blue-100 text-blue-800'>
                 <IconUsers className='h-3 w-3 mr-1' />
-                Administrador
+                {t('administrator')}
               </Badge>
-              <Badge variant='outline'>Acceso completo al sistema</Badge>
+              <Badge variant='outline'>{t('fullSystemAccess')}</Badge>
             </div>
           </div>
 

@@ -10,13 +10,19 @@ import {
 } from '@tabler/icons-react'
 import { getResourcesNeedingAttention } from '@/actions/dashboard'
 import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, enUS } from 'date-fns/locale'
+import { getTranslations, getLocale } from 'next-intl/server'
 
 /**
  * Panel de alertas que muestra recursos que necesitan atención
  * Usado tanto en dashboard de admin como de usuario
  */
 export default async function AlertsPanel() {
+  // Obtener traducciones y locale
+  const t = await getTranslations('alertsPanel')
+  const locale = await getLocale()
+  const dateLocale = locale === 'es' ? es : enUS
+
   // Obtener alertas del servidor
   const result = await getResourcesNeedingAttention()
 
@@ -54,15 +60,15 @@ export default async function AlertsPanel() {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'needs-review':
-        return 'Necesita Revisión'
+        return t('alertTypes.needs-review')
       case 'processing-failed':
-        return 'Error de Procesamiento'
+        return t('alertTypes.processing-failed')
       case 'processing-stuck':
-        return 'Procesamiento Atascado'
+        return t('alertTypes.processing-stuck')
       case 'low-confidence':
-        return 'Baja Confianza'
+        return t('alertTypes.low-confidence')
       default:
-        return 'Alerta'
+        return t('alertTypes.default')
     }
   }
 
@@ -72,19 +78,17 @@ export default async function AlertsPanel() {
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <IconAlertTriangle className='h-5 w-5' />
-            Alertas y Notificaciones
+            {t('alertsAndNotifications')}
           </CardTitle>
-          <CardDescription>Recursos que requieren tu atención</CardDescription>
+          <CardDescription>{t('resourcesRequiringAttention')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='text-center py-8'>
             <div className='h-12 w-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4'>
               <IconAlertTriangle className='h-6 w-6 text-green-600' />
             </div>
-            <p className='text-gray-500 mb-2'>¡Todo bien!</p>
-            <p className='text-sm text-gray-400'>
-              No hay recursos que requieran atención en este momento
-            </p>
+            <p className='text-gray-500 mb-2'>{t('noActiveAlerts')}</p>
+            <p className='text-sm text-gray-400'>{t('noActiveAlertsDescription')}</p>
           </div>
         </CardContent>
       </Card>
@@ -98,14 +102,14 @@ export default async function AlertsPanel() {
           <div>
             <CardTitle className='flex items-center gap-2'>
               <IconAlertTriangle className='h-5 w-5' />
-              Alertas y Notificaciones
+              {t('alertsAndNotifications')}
               {alerts.length > 0 && (
                 <Badge variant='destructive' className='ml-2'>
                   {alerts.length}
                 </Badge>
               )}
             </CardTitle>
-            <CardDescription>Recursos que requieren tu atención</CardDescription>
+            <CardDescription>{t('resourcesRequiringAttention')}</CardDescription>
           </div>
           <Button variant='ghost' size='sm'>
             <IconRefresh className='h-4 w-4' />
@@ -136,7 +140,7 @@ export default async function AlertsPanel() {
                         {' • '}
                         {formatDistanceToNow(new Date(alert.updatedAt), {
                           addSuffix: true,
-                          locale: es,
+                          locale: dateLocale,
                         })}
                       </div>
                       <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' asChild>
@@ -155,7 +159,7 @@ export default async function AlertsPanel() {
         {alerts.length > 5 && (
           <div className='mt-4 pt-4 border-t'>
             <Button variant='outline' className='w-full' size='sm'>
-              Ver todas las alertas ({alerts.length})
+              {t('viewAllAlerts', { count: alerts.length })}
             </Button>
           </div>
         )}

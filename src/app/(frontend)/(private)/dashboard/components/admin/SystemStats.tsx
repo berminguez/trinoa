@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { IconServer, IconDatabase, IconCpu, IconTrendingUp } from '@tabler/icons-react'
 import { getDashboardMetrics } from '@/actions/dashboard'
+import { getTranslations } from 'next-intl/server'
 
 /**
  * Componente que muestra estadísticas operativas del sistema para administradores
@@ -9,6 +10,7 @@ import { getDashboardMetrics } from '@/actions/dashboard'
 export default async function SystemStats() {
   // Obtener métricas reales del servidor
   const result = await getDashboardMetrics()
+  const t = await getTranslations('dashboardAdmin')
 
   // Obtener estadísticas del sistema si están disponibles
   const stats =
@@ -37,9 +39,9 @@ export default async function SystemStats() {
       <CardHeader>
         <CardTitle className='flex items-center gap-2'>
           <IconServer className='h-5 w-5' />
-          Estadísticas del Sistema
+          {t('systemStatistics')}
         </CardTitle>
-        <CardDescription>Métricas operativas y rendimiento</CardDescription>
+        <CardDescription>{t('operationalMetrics')}</CardDescription>
       </CardHeader>
       <CardContent className='space-y-6'>
         {/* Uso de almacenamiento */}
@@ -47,12 +49,14 @@ export default async function SystemStats() {
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <IconDatabase className='h-4 w-4 text-blue-500' />
-              <span className='text-sm font-medium'>Almacenamiento</span>
+              <span className='text-sm font-medium'>{t('storage')}</span>
             </div>
             <span className='text-sm text-gray-600'>{stats.storageUsed}%</span>
           </div>
           <Progress value={stats.storageUsed} className='h-2' />
-          <p className='text-xs text-gray-500'>{stats.storageTotal} total disponible</p>
+          <p className='text-xs text-gray-500'>
+            {t('totalAvailable', { total: stats.storageTotal })}
+          </p>
         </div>
 
         {/* Éxito de procesamiento */}
@@ -60,23 +64,25 @@ export default async function SystemStats() {
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-2'>
               <IconCpu className='h-4 w-4 text-green-500' />
-              <span className='text-sm font-medium'>Éxito de Procesamiento</span>
+              <span className='text-sm font-medium'>{t('processingSuccess')}</span>
             </div>
             <span className='text-sm text-gray-600'>{stats.processingSuccess}%</span>
           </div>
           <Progress value={stats.processingSuccess} className='h-2' />
-          <p className='text-xs text-gray-500'>{stats.processingFailed} procesos fallidos en 24h</p>
+          <p className='text-xs text-gray-500'>
+            {t('failedProcesses', { count: stats.processingFailed })}
+          </p>
         </div>
 
         {/* Métricas rápidas */}
         <div className='grid grid-cols-2 gap-4 pt-4 border-t'>
           <div className='text-center'>
             <div className='text-2xl font-bold text-blue-600'>{stats.activeUsers}</div>
-            <p className='text-xs text-gray-500'>Usuarios activos</p>
+            <p className='text-xs text-gray-500'>{t('activeUsers')}</p>
           </div>
           <div className='text-center'>
             <div className='text-2xl font-bold text-green-600'>{stats.totalProjects}</div>
-            <p className='text-xs text-gray-500'>Proyectos totales</p>
+            <p className='text-xs text-gray-500'>{t('totalProjects')}</p>
           </div>
         </div>
 
@@ -86,9 +92,9 @@ export default async function SystemStats() {
             <IconTrendingUp className='h-4 w-4 text-yellow-600' />
             <div>
               <p className='text-sm font-medium text-yellow-800'>
-                {stats.processingQueue} documentos en cola
+                {t('documentsInQueue', { count: stats.processingQueue })}
               </p>
-              <p className='text-xs text-yellow-600'>Procesamiento en curso</p>
+              <p className='text-xs text-yellow-600'>{t('processingInProgress')}</p>
             </div>
           </div>
         )}

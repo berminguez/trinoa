@@ -8,12 +8,17 @@ import {
   IconLoader,
 } from '@tabler/icons-react'
 import { getAlertsStats, getDashboardMetrics } from '@/actions/dashboard'
+import { getTranslations, getLocale } from 'next-intl/server'
 
 /**
  * Indicador de salud del sistema en tiempo real
  * Muestra el estado general y alertas críticas
  */
 export default async function SystemHealthIndicator() {
+  // Obtener traducciones y locale
+  const t = await getTranslations('systemHealth')
+  const locale = await getLocale()
+
   // Obtener métricas y alertas en paralelo
   const [metricsResult, alertsResult] = await Promise.all([getDashboardMetrics(), getAlertsStats()])
 
@@ -178,15 +183,14 @@ export default async function SystemHealthIndicator() {
       {/* Mensaje de estado detallado */}
       <div className='mt-3 pt-3 border-t'>
         <p className='text-xs text-gray-600'>
-          {systemStatus.status === 'healthy' && 'Todos los sistemas funcionan correctamente.'}
-          {systemStatus.status === 'warning' && 'Algunos sistemas requieren atención.'}
-          {systemStatus.status === 'critical' &&
-            'Se detectaron problemas críticos que requieren atención inmediata.'}
-          {systemStatus.status === 'unknown' && 'Verificando estado del sistema...'}
+          {systemStatus.status === 'healthy' && t('healthyStatus')}
+          {systemStatus.status === 'warning' && t('warningStatus')}
+          {systemStatus.status === 'critical' && t('criticalStatus')}
+          {systemStatus.status === 'unknown' && t('unknownStatus')}
 
           {metrics?.system && (
             <span className='ml-1'>
-              Última actualización: {new Date().toLocaleTimeString('es-ES')}
+              {t('lastUpdate')} {new Date().toLocaleTimeString(locale === 'es' ? 'es-ES' : 'en-US')}
             </span>
           )}
         </p>

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button'
 import { IconUsers, IconFolder, IconExternalLink } from '@tabler/icons-react'
 import { getDashboardMetrics } from '@/actions/dashboard'
 import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, enUS } from 'date-fns/locale'
+import { getTranslations, getLocale } from 'next-intl/server'
 
 /**
  * Componente que muestra overview de usuarios del sistema para administradores
@@ -12,6 +13,9 @@ import { es } from 'date-fns/locale'
 export default async function UsersOverview() {
   // Obtener métricas reales del servidor
   const result = await getDashboardMetrics()
+  const t = await getTranslations('dashboardAdmin')
+  const locale = await getLocale()
+  const dateLocale = locale === 'es' ? es : enUS
 
   // Obtener datos de usuarios si están disponibles
   const users =
@@ -24,7 +28,7 @@ export default async function UsersOverview() {
           projectsCount: user.projectsCount || 0,
           lastActivity: formatDistanceToNow(new Date(user.lastActivity), {
             addSuffix: true,
-            locale: es,
+            locale: dateLocale,
           }),
           status: 'active',
         }))
@@ -35,19 +39,17 @@ export default async function UsersOverview() {
       <CardHeader>
         <CardTitle className='flex items-center gap-2'>
           <IconUsers className='h-5 w-5' />
-          Clientes
+          {t('clients')}
         </CardTitle>
-        <CardDescription>Acceso a los proyectos de cada cliente</CardDescription>
+        <CardDescription>{t('accessToClientProjects')}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className='space-y-4'>
           {users.length === 0 ? (
             <div className='text-center py-8'>
               <IconUsers className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-              <p className='text-gray-500 mb-2'>No hay usuarios registrados</p>
-              <p className='text-sm text-gray-400'>
-                Los usuarios aparecerán aquí cuando se registren
-              </p>
+              <p className='text-gray-500 mb-2'>{t('noRegisteredUsers')}</p>
+              <p className='text-sm text-gray-400'>{t('usersWillAppearHere')}</p>
             </div>
           ) : (
             users.map((user) => (
@@ -68,9 +70,11 @@ export default async function UsersOverview() {
                   <div className='text-right'>
                     <div className='flex items-center gap-1 text-xs text-gray-600'>
                       <IconFolder className='h-3 w-3' />
-                      {user.projectsCount || 0} proyectos
+                      {user.projectsCount || 0} {t('projects')}
                     </div>
-                    <p className='text-xs text-gray-500'>Activo hace {user.lastActivity}</p>
+                    <p className='text-xs text-gray-500'>
+                      {t('activeAgo', { time: user.lastActivity })}
+                    </p>
                   </div>
                   <Button variant='ghost' size='sm' asChild>
                     <a href={`/clients/${user.id}/projects`}>
@@ -84,7 +88,7 @@ export default async function UsersOverview() {
         </div>
         <div className='mt-4 pt-4 border-t'>
           <Button variant='outline' className='w-full' asChild>
-            <a href='/clients'>Ver todos los clientes</a>
+            <a href='/clients'>{t('seeAllClients')}</a>
           </Button>
         </div>
       </CardContent>

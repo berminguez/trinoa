@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { IconFiles, IconShieldCheck, IconFileCheck, IconClock } from '@tabler/icons-react'
 import { getDashboardMetrics } from '@/actions/dashboard'
+import { getTranslations } from 'next-intl/server'
 
 /**
  * Componente que muestra métricas globales del sistema para administradores
@@ -8,6 +9,7 @@ import { getDashboardMetrics } from '@/actions/dashboard'
 export default async function GlobalMetrics() {
   // Obtener métricas reales del servidor
   const result = await getDashboardMetrics()
+  const t = await getTranslations('dashboardAdmin')
 
   // Fallback a datos demo si hay error
   const metrics =
@@ -27,30 +29,30 @@ export default async function GlobalMetrics() {
 
   const cards = [
     {
-      title: 'Total Recursos',
+      title: t('totalResources'),
       value: metrics.totalResources,
-      description: 'En todo el sistema',
+      description: t('inEntireSystem'),
       icon: IconFiles,
       color: 'text-blue-600',
     },
     {
-      title: 'Trusted',
+      title: t('trustedResources'),
       value: metrics.trustedResources,
-      description: 'Recursos confiables',
+      description: t('trustedResourcesDesc'),
       icon: IconShieldCheck,
       color: 'text-green-600',
     },
     {
-      title: 'Verified',
+      title: t('verifiedResources'),
       value: metrics.verifiedResources,
-      description: 'Recursos verificados',
+      description: t('verifiedResourcesDesc'),
       icon: IconFileCheck,
       color: 'text-blue-600',
     },
     {
-      title: 'Pending Review',
+      title: t('pendingReview'),
       value: metrics.needsReview,
-      description: 'Necesitan revisión',
+      description: t('needsReviewDesc'),
       icon: IconClock,
       color: 'text-orange-600',
     },
