@@ -301,7 +301,8 @@
     "typeCase": "Type (case)",
     "case": "Case",
     "caseLabels": {
-      "factura_suministros": "Utilities invoice"
+      "factura_suministros": "Utilities invoice",
+      "otros": "Other"
     },
     "typeLabels": {
       "electricidad": "Electricity",

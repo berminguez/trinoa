@@ -301,7 +301,8 @@
     "typeCase": "Tipo (caso)",
     "case": "Caso",
     "caseLabels": {
-      "factura_suministros": "Factura de suministros"
+      "factura_suministros": "Factura de suministros",
+      "otros": "Otros"
     },
     "typeLabels": {
       "electricidad": "Electricidad",
