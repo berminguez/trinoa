@@ -17,7 +17,6 @@ export interface ResourceAlert {
     title: string
   }
   type: 'needs-review' | 'processing-failed' | 'low-confidence' | 'processing-stuck'
-  message: string
   priority: 'high' | 'medium' | 'low'
   createdAt: string
   updatedAt: string
@@ -110,7 +109,6 @@ export async function getResourcesNeedingAttention(): Promise<{
             title: project.title,
           },
           type: 'needs-review',
-          message: 'Recurso necesita revisión manual',
           priority: 'medium',
           createdAt: resource.createdAt,
           updatedAt: resource.updatedAt,
@@ -130,7 +128,6 @@ export async function getResourcesNeedingAttention(): Promise<{
             title: project.title,
           },
           type: 'processing-failed',
-          message: 'Error en el procesamiento del documento',
           priority: 'high',
           createdAt: resource.createdAt,
           updatedAt: resource.updatedAt,
@@ -150,7 +147,6 @@ export async function getResourcesNeedingAttention(): Promise<{
             title: project.title,
           },
           type: 'processing-stuck',
-          message: 'Procesamiento atascado por más de 1 hora',
           priority: 'high',
           createdAt: resource.createdAt,
           updatedAt: resource.updatedAt,

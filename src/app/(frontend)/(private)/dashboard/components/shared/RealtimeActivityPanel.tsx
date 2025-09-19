@@ -12,7 +12,7 @@ import {
 } from '@tabler/icons-react'
 import { getRealtimeActivity } from '@/actions/dashboard'
 import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { es, enUS } from 'date-fns/locale'
 import { getServerTranslations } from '@/lib/server-translations'
 
 /**
@@ -30,16 +30,7 @@ export default async function RealtimeActivityPanel({ userId }: { userId?: strin
 
   const { t, locale } = await getServerTranslations('realtimeActivityPanel')
 
-  // Debug: mostrar información de traducción
-  console.log('[RealtimeActivityPanel] Server translation locale:', locale)
-  console.log('[RealtimeActivityPanel] Activities count:', activities.length)
-
-  // Debug: probar interpolación directa
-  const testResult = t('activities.resourceCreated.description', {
-    resourceTitle: 'TEST_RESOURCE',
-    projectTitle: 'TEST_PROJECT',
-  })
-  console.log('[RealtimeActivityPanel] Test interpolation result:', testResult)
+  const dateLocale = locale === 'es' ? es : enUS
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -108,23 +99,12 @@ export default async function RealtimeActivityPanel({ userId }: { userId?: strin
   }
 
   const getActivityDescription = (activity: any) => {
-    // Debug: mostrar datos de la actividad
-    console.log('[RealtimeActivityPanel] Activity data:', {
-      type: activity.type,
-      resource: activity.resource,
-      project: activity.project,
-    })
-
     switch (activity.type) {
       case 'resource_created':
-        const variables = {
+        return t('activities.resourceCreated.description', {
           resourceTitle: activity.resource?.title || '',
           projectTitle: activity.project?.title || '',
-        }
-        console.log('[RealtimeActivityPanel] Variables for interpolation:', variables)
-        const result = t('activities.resourceCreated.description', variables)
-        console.log('[RealtimeActivityPanel] Translation result:', result)
-        return result
+        })
       case 'resource_processed':
         const isSuccess = activity.resource?.confidence === 'trusted'
         return t('activities.resourceProcessed.description', {
@@ -216,9 +196,14 @@ export default async function RealtimeActivityPanel({ userId }: { userId?: strin
                       {activity.project && ' • '}
                       {formatDistanceToNow(new Date(activity.timestamp), {
                         addSuffix: true,
-                        locale: es,
+                        locale: dateLocale,
                       })}
-                      {activity.user && <span className='ml-1'>por {activity.user.name}</span>}
+                      {activity.user && (
+                        <span className='ml-1'>
+                          {' '}
+                          {t('by')} {activity.user.name}
+                        </span>
+                      )}
                     </div>
                     {(activity.resource || activity.project) && (
                       <Button variant='ghost' size='sm' className='h-6 px-2 text-xs' asChild>

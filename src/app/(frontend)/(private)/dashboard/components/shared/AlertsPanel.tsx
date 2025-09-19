@@ -71,6 +71,36 @@ export default async function AlertsPanel() {
     }
   }
 
+  const getAlertMessage = (alert: any) => {
+    switch (alert.type) {
+      case 'needs-review':
+        return t('alertMessages.needsReview', {
+          resourceTitle: alert.title,
+          projectTitle: alert.project?.title || '',
+        })
+      case 'processing-failed':
+        return t('alertMessages.processingFailed', {
+          resourceTitle: alert.title,
+          projectTitle: alert.project?.title || '',
+        })
+      case 'processing-stuck':
+        return t('alertMessages.processingStuck', {
+          resourceTitle: alert.title,
+          projectTitle: alert.project?.title || '',
+        })
+      case 'low-confidence':
+        return t('alertMessages.lowConfidence', {
+          resourceTitle: alert.title,
+          projectTitle: alert.project?.title || '',
+        })
+      default:
+        return t('alertMessages.default', {
+          resourceTitle: alert.title,
+          projectTitle: alert.project?.title || '',
+        })
+    }
+  }
+
   if (alerts.length === 0) {
     return (
       <Card>
@@ -132,7 +162,7 @@ export default async function AlertsPanel() {
                         {getTypeLabel(alert.type)}
                       </Badge>
                     </div>
-                    <p className='text-xs opacity-90 mb-2'>{alert.message}</p>
+                    <p className='text-xs opacity-90 mb-2'>{getAlertMessage(alert)}</p>
                     <div className='flex items-center justify-between'>
                       <div className='text-xs opacity-75'>
                         <span className='font-medium'>{alert.project.title}</span>

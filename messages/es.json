@@ -84,6 +84,13 @@
       "low-confidence": "Baja Confianza",
       "default": "Alerta"
     },
+    "alertMessages": {
+      "needsReview": "El recurso \"{{resourceTitle}}\" necesita revisión manual en el proyecto \"{{projectTitle}}\"",
+      "processingFailed": "Error en el procesamiento del documento \"{{resourceTitle}}\" en el proyecto \"{{projectTitle}}\"",
+      "processingStuck": "El procesamiento de \"{{resourceTitle}}\" está atascado por más de 1 hora en \"{{projectTitle}}\"",
+      "lowConfidence": "El recurso \"{{resourceTitle}}\" tiene baja confianza de procesamiento en \"{{projectTitle}}\"",
+      "default": "Alerta para el recurso \"{{resourceTitle}}\" en el proyecto \"{{projectTitle}}\""
+    },
     "viewResource": "Ver recurso",
     "ago": "hace",
     "viewAllAlerts": "Ver todas las alertas ({count})"
@@ -130,7 +137,8 @@
     },
     "priority": {
       "urgent": "Urgente"
-    }
+    },
+    "by": "por"
   },
   "account": {
     "title": "Mi Cuenta",

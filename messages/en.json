@@ -84,6 +84,13 @@
       "low-confidence": "Low Confidence",
       "default": "Alert"
     },
+    "alertMessages": {
+      "needsReview": "The resource \"{{resourceTitle}}\" needs manual review in project \"{{projectTitle}}\"",
+      "processingFailed": "Error processing document \"{{resourceTitle}}\" in project \"{{projectTitle}}\"",
+      "processingStuck": "Processing of \"{{resourceTitle}}\" is stuck for more than 1 hour in \"{{projectTitle}}\"",
+      "lowConfidence": "The resource \"{{resourceTitle}}\" has low processing confidence in \"{{projectTitle}}\"",
+      "default": "Alert for resource \"{{resourceTitle}}\" in project \"{{projectTitle}}\""
+    },
     "viewResource": "View resource",
     "ago": "ago",
     "viewAllAlerts": "View all alerts ({count})"
@@ -130,7 +137,8 @@
     },
     "priority": {
       "urgent": "Urgent"
-    }
+    },
+    "by": "by"
   },
   "account": {
     "title": "My Account",
