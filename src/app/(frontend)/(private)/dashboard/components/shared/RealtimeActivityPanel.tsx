@@ -13,6 +13,7 @@ import {
 import { getRealtimeActivity } from '@/actions/dashboard'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { getServerTranslations } from '@/lib/server-translations'
 
 /**
  * Panel de actividad en tiempo real
@@ -26,6 +27,8 @@ export default async function RealtimeActivityPanel({ userId }: { userId?: strin
   const result = await getRealtimeActivity(8, userId)
 
   const activities = result.success && result.data ? result.data : []
+
+  const { t } = await getServerTranslations('realtimeActivityPanel')
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -84,17 +87,15 @@ export default async function RealtimeActivityPanel({ userId }: { userId?: strin
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <IconFileText className='h-5 w-5' />
-            Actividad Reciente
+            {t('recentActivity')}
           </CardTitle>
-          <CardDescription>Últimas acciones en tus proyectos</CardDescription>
+          <CardDescription>{t('lastActions')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='text-center py-8'>
             <IconFileText className='h-12 w-12 text-gray-400 mx-auto mb-4' />
-            <p className='text-gray-500 mb-2'>No hay actividad reciente</p>
-            <p className='text-sm text-gray-400'>
-              La actividad aparecerá aquí cuando proceses documentos
-            </p>
+            <p className='text-gray-500 mb-2'>{t('noRecentActivity')}</p>
+            <p className='text-sm text-gray-400'>{t('recentActivityDescription')}</p>
           </div>
         </CardContent>
       </Card>
@@ -108,12 +109,12 @@ export default async function RealtimeActivityPanel({ userId }: { userId?: strin
           <div>
             <CardTitle className='flex items-center gap-2'>
               <IconFileText className='h-5 w-5' />
-              Actividad Reciente
+              {t('recentActivity')}
               <Badge variant='outline' className='ml-2'>
                 {activities.length}
               </Badge>
             </CardTitle>
-            <CardDescription>Últimas acciones en tus proyectos</CardDescription>
+            <CardDescription>{t('lastActions')}</CardDescription>
           </div>
           <Button variant='ghost' size='sm'>
             <IconRefresh className='h-4 w-4' />
@@ -179,7 +180,7 @@ export default async function RealtimeActivityPanel({ userId }: { userId?: strin
         {activities.length >= 8 && (
           <div className='mt-4 pt-4 border-t'>
             <Button variant='outline' className='w-full' size='sm'>
-              Ver toda la actividad
+              {t('viewAllActivity')}
             </Button>
           </div>
         )}

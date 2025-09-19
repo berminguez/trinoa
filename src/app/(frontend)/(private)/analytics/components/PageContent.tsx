@@ -1,9 +1,7 @@
 import { getAnalytics } from '@/actions/analytics/getAnalytics'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { redirect } from 'next/navigation'
-import { getTranslations, getLocale } from 'next-intl/server'
-import { cookies } from 'next/headers'
-import { locales, defaultLocale } from '@/i18n'
+import { getServerTranslations } from '@/lib/server-translations'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 // import { Input } from '@/components/ui/input'
@@ -31,70 +29,8 @@ export default async function PageContent({
   const user = await getCurrentUser()
   if (!user) redirect('/login')
 
-  // Try to use next-intl's getTranslations with explicit locale
-  let t: any
-  try {
-    // First try to get locale from cookie
-    const cookieStore = await cookies()
-    const localeCookie = cookieStore.get('NEXT_LOCALE')
-    const locale =
-      localeCookie?.value && locales.includes(localeCookie.value as any)
-        ? localeCookie.value
-        : defaultLocale
-
-    console.log('Analytics PageContent - Current locale:', locale)
-
-    // Try to use getTranslations with explicit locale
-    t = await getTranslations({ locale, namespace: 'analytics' })
-    console.log('Using getTranslations with locale:', locale)
-  } catch (error) {
-    console.warn('Error with getTranslations, falling back to manual approach:', error)
-
-    // Fallback: manual translation loading
-    let locale: string = defaultLocale
-    try {
-      const cookieStore = await cookies()
-      const localeCookie = cookieStore.get('NEXT_LOCALE')
-      if (localeCookie && locales.includes(localeCookie.value as any)) {
-        locale = localeCookie.value
-      }
-    } catch (cookieError) {
-      console.warn('Error getting locale from cookie:', cookieError)
-    }
-
-    // Load messages for the detected locale
-    let messages: any = {}
-    try {
-      messages = (await import(`../../../../../../messages/${locale}.json`)).default
-    } catch (error) {
-      console.warn('Error loading messages, falling back to default:', error)
-      try {
-        messages = (await import('../../../../../../messages/es.json')).default
-      } catch (importError) {
-        console.warn('Error importing fallback messages:', importError)
-        messages = {}
-      }
-    }
-
-    // Create manual translation function
-    t = (key: string) => {
-      const keys = key.split('.')
-      let value: any = messages
-
-      for (const k of keys) {
-        value = value?.[k]
-      }
-
-      if (typeof value === 'string') {
-        return value
-      }
-
-      return key
-    }
-  }
-
-  // Test translation
-  console.log('Test translation for title:', t('title'))
+  // Obtener traducciones usando nuestro helper
+  const { t } = await getServerTranslations('analytics')
 
   const dateFrom = searchParams?.from || ''
   const dateTo = searchParams?.to || ''

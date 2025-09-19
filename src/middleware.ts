@@ -6,6 +6,9 @@ import {
   createAdminLoginUrl,
 } from '@/lib/auth'
 
+// Importación de configuración de i18n (solo para validaciones si es necesario)
+import { locales, defaultLocale } from '@/i18n'
+
 /**
  * Rutas que requieren autenticación
  */

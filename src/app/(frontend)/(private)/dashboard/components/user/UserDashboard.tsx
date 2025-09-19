@@ -9,7 +9,7 @@ import {
   IconMessageCircle,
   IconKey,
 } from '@tabler/icons-react'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 import PersonalProjects from './PersonalProjects'
 import ResourcesOverview from './ResourcesOverview'
@@ -25,7 +25,8 @@ interface UserDashboardProps {
  * Muestra vista personal con solo los datos del usuario
  */
 export default async function UserDashboard({ user }: UserDashboardProps) {
-  const t = await getTranslations('dashboardUser')
+  const { t, locale } = await getServerTranslations('dashboardUser')
+  console.log('[UserDashboard] Server Component locale detected:', locale)
   return (
     <div className='flex flex-1 flex-col'>
       <div className='@container/main flex flex-1 flex-col gap-6'>

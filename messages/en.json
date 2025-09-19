@@ -88,6 +88,13 @@
     "ago": "ago",
     "viewAllAlerts": "View all alerts ({count})"
   },
+  "realtimeActivityPanel": {
+    "recentActivity": "Recent Activity",
+    "lastActions": "Last actions in your projects",
+    "noRecentActivity": "No recent activity",
+    "recentActivityDescription": "The activity will appear here when you process documents",
+    "viewAllActivity": "View all activity"
+  },
   "account": {
     "title": "My Account",
     "description": "Manage your personal information and account settings",
@@ -506,6 +513,10 @@
       "client": "Client",
       "myDocuments": "My documents"
     }
+  },
+  "clientsHeader": {
+    "title": "Client Management",
+    "description": "Manage all users and their projects from this panel"
   },
   "clients": {
     "title": "Client Management",

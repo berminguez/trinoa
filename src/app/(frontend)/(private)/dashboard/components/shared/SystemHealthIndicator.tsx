@@ -8,7 +8,7 @@ import {
   IconLoader,
 } from '@tabler/icons-react'
 import { getAlertsStats, getDashboardMetrics } from '@/actions/dashboard'
-import { getTranslations, getLocale } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 /**
  * Indicador de salud del sistema en tiempo real
@@ -16,8 +16,7 @@ import { getTranslations, getLocale } from 'next-intl/server'
  */
 export default async function SystemHealthIndicator() {
   // Obtener traducciones y locale
-  const t = await getTranslations('systemHealth')
-  const locale = await getLocale()
+  const { t, locale } = await getServerTranslations('systemHealth')
 
   // Obtener métricas y alertas en paralelo
   const [metricsResult, alertsResult] = await Promise.all([getDashboardMetrics(), getAlertsStats()])

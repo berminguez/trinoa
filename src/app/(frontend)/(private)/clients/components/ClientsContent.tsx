@@ -7,7 +7,7 @@ import { ClientsGrid } from './ClientsGrid'
 import { ErrorBoundaryContent } from './ErrorBoundaryContent'
 // import { BreadcrumbDemo } from './BreadcrumbDemo'
 import type { ClientsFilters } from '@/actions/clients/types'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 interface ClientsContentProps {
   searchParams?: {
@@ -31,7 +31,8 @@ export async function ClientsContent({ searchParams = {} }: ClientsContentProps)
   try {
     // Validación de admin
     const adminUser = await requireAdminAccess()
-    const t = await getTranslations('clients')
+    const { t, locale } = await getServerTranslations('clients')
+    console.log('[ClientsContent] Server Component locale detected:', locale)
 
     // Construir filtros desde searchParams
     const filters: ClientsFilters = {
@@ -118,13 +119,13 @@ export async function ClientsContent({ searchParams = {} }: ClientsContentProps)
 
     // En caso de error crítico, mostrar página de error
     // pero no usar el componente ErrorBoundaryContent ya que podríamos no tener adminUser
-    const t = await getTranslations('clients.errorBoundary')
+    const { t: tError } = await getServerTranslations('clients.errorBoundary')
     return (
       <div className='flex-1 space-y-6 p-4 pt-6'>
         <div className='rounded-lg border border-red-200 bg-red-50 p-6 text-center'>
-          <h2 className='text-lg font-semibold text-red-900 mb-2'>{t('title')}</h2>
-          <p className='text-red-700 mb-4'>{t('description')}</p>
-          <p className='text-sm text-red-600'>{t('contactAdmin')}</p>
+          <h2 className='text-lg font-semibold text-red-900 mb-2'>{tError('title')}</h2>
+          <p className='text-red-700 mb-4'>{tError('description')}</p>
+          <p className='text-sm text-red-600'>{tError('contactAdmin')}</p>
         </div>
       </div>
     )

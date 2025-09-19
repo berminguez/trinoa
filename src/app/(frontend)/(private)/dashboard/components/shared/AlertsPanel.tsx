@@ -11,7 +11,7 @@ import {
 import { getResourcesNeedingAttention } from '@/actions/dashboard'
 import { formatDistanceToNow } from 'date-fns'
 import { es, enUS } from 'date-fns/locale'
-import { getTranslations, getLocale } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 /**
  * Panel de alertas que muestra recursos que necesitan atención
@@ -19,8 +19,7 @@ import { getTranslations, getLocale } from 'next-intl/server'
  */
 export default async function AlertsPanel() {
   // Obtener traducciones y locale
-  const t = await getTranslations('alertsPanel')
-  const locale = await getLocale()
+  const { t, locale } = await getServerTranslations('alertsPanel')
   const dateLocale = locale === 'es' ? es : enUS
 
   // Obtener alertas del servidor

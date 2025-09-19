@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { IconServer, IconDatabase, IconCpu, IconTrendingUp } from '@tabler/icons-react'
 import { getDashboardMetrics } from '@/actions/dashboard'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 /**
  * Componente que muestra estadísticas operativas del sistema para administradores
@@ -10,7 +10,8 @@ import { getTranslations } from 'next-intl/server'
 export default async function SystemStats() {
   // Obtener métricas reales del servidor
   const result = await getDashboardMetrics()
-  const t = await getTranslations('dashboardAdmin')
+  const { t, locale } = await getServerTranslations('dashboardAdmin')
+  console.log('[SystemStats] Server Component locale detected:', locale)
 
   // Obtener estadísticas del sistema si están disponibles
   const stats =

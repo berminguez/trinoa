@@ -1,6 +1,6 @@
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { redirect, notFound } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 import { ProfileCard } from './ProfileCard'
 import { AccountSettings } from './AccountSettings'
 import { User } from '@/payload-types'
@@ -13,7 +13,7 @@ import { User } from '@/payload-types'
 export async function PageContent() {
   // Obtener usuario actual
   const user = (await getCurrentUser()) as User | null
-  const t = await getTranslations('account')
+  const { t } = await getServerTranslations('account')
 
   // Verificar autenticación
   if (!user || !user.id) {

@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { getUserSubscription } from '@/actions/subscriptions'
@@ -15,7 +15,8 @@ export default async function PricingContent() {
     redirect('/login')
   }
 
-  const t = await getTranslations('pricing')
+  const { t, locale } = await getServerTranslations('pricing')
+  console.log('[PricingContent] Server Component locale detected:', locale)
 
   // Obtener suscripción actual del usuario y planes con precios dinámicos
   const [subscriptionResult, subscriptionPlans] = await Promise.all([

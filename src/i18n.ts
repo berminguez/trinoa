@@ -3,20 +3,18 @@ import { getRequestConfig } from 'next-intl/server'
 export const locales = ['es', 'en'] as const
 export const defaultLocale = 'es' as const
 
-export default getRequestConfig(async ({ locale }) => {
-  // Use the locale parameter directly, fallback to default if not provided
-  const currentLocale = locale || defaultLocale
+export default getRequestConfig(async ({ requestLocale }) => {
+  // requestLocale contiene el locale que se pasó al provider
+  // Si no hay requestLocale (server-side), usamos el default
+  let locale = requestLocale || defaultLocale
 
-  // Validate the locale
-  if (!locales.includes(currentLocale as any)) {
-    return {
-      locale: defaultLocale,
-      messages: (await import(`../messages/${defaultLocale}.json`)).default,
-    }
+  // Validar que el locale sea válido
+  if (!locales.includes(locale as (typeof locales)[number])) {
+    locale = defaultLocale
   }
 
   return {
-    locale: currentLocale,
-    messages: (await import(`../messages/${currentLocale}.json`)).default,
+    locale,
+    messages: (await import(`../messages/${locale}.json`)).default,
   }
 })

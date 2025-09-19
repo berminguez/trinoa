@@ -4,7 +4,7 @@ import { getClientProjects } from '@/actions/clients/getClientProjects'
 import { ClientProjectsContentClient } from './ClientProjectsContentClient'
 import { ClientProjectsErrorBoundary } from './ClientProjectsErrorBoundary'
 import type { ClientProjectsFilters } from '@/actions/clients/types'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 interface ClientProjectsContentProps {
   adminUser: User
@@ -30,7 +30,8 @@ export async function ClientProjectsContent({
   clientId,
   searchParams = {},
 }: ClientProjectsContentProps) {
-  const t = await getTranslations('clientProjects.errorBoundary')
+  const { t, locale } = await getServerTranslations('clientProjects.errorBoundary')
+  console.log('[ClientProjectsContent] Server Component locale detected:', locale)
 
   try {
     // Construir filtros desde searchParams

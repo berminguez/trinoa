@@ -13,25 +13,39 @@ import {
 import { Button } from '@/components/ui/button'
 import { locales } from '@/i18n'
 import { changeLocale } from '@/actions/change-locale'
+import { useLocaleContext } from '@/lib/locale-context'
 
 export function LanguageSelector() {
   const [isPending, startTransition] = useTransition()
   const pathname = usePathname()
+
+  // Sistema original de next-intl
   const locale = useLocale()
   const t = useTranslations('common')
 
+  // Nuestro sistema personalizado
+  const { locale: contextLocale, setLocale } = useLocaleContext()
+
+  // Usar el locale del contexto como fuente de verdad
+  const currentLocale = contextLocale || locale
+
   const handleLanguageChange = (newLocale: string) => {
-    if (newLocale === locale) return // No cambiar si ya está en el mismo idioma
+    if (newLocale === currentLocale) return // No cambiar si ya está en el mismo idioma
 
     startTransition(async () => {
       try {
-        // Establecer la cookie directamente
-        document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+        // Usar nuestro contexto personalizado para cambio inmediato
+        setLocale(newLocale as (typeof locales)[number])
 
-        // Recargar la página para que tome efecto el cambio
-        window.location.reload()
+        // También establecer la cookie del lado del servidor para persistencia
+        // Esto hará que la próxima carga de página use el locale correcto
+        await changeLocale(newLocale, pathname)
       } catch (error) {
         console.error('Error changing language:', error)
+
+        // Fallback: establecer la cookie directamente y recargar
+        document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`
+        window.location.reload()
       }
     })
   }
@@ -41,7 +55,7 @@ export function LanguageSelector() {
     flag: lang === 'es' ? '🇪🇸' : '🇺🇸',
   })
 
-  const currentLanguageInfo = getLanguageInfo(locale)
+  const currentLanguageInfo = getLanguageInfo(currentLocale)
 
   return (
     <DropdownMenu>

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { IconFiles, IconShieldCheck, IconFileCheck, IconClock } from '@tabler/icons-react'
 import { getDashboardMetrics } from '@/actions/dashboard'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 /**
  * Componente que muestra métricas globales del sistema para administradores
@@ -9,7 +9,12 @@ import { getTranslations } from 'next-intl/server'
 export default async function GlobalMetrics() {
   // Obtener métricas reales del servidor
   const result = await getDashboardMetrics()
-  const t = await getTranslations('dashboardAdmin')
+
+  // Usar nuestro helper para detectar locale correctamente en Server Components
+  const { t, locale } = await getServerTranslations('dashboardAdmin')
+
+  // Debug: mostrar el locale detectado en server component
+  console.log('[GlobalMetrics] Server Component locale detected:', locale)
 
   // Fallback a datos demo si hay error
   const metrics =

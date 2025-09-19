@@ -5,7 +5,7 @@ import { IconUsers, IconFolder, IconExternalLink } from '@tabler/icons-react'
 import { getDashboardMetrics } from '@/actions/dashboard'
 import { formatDistanceToNow } from 'date-fns'
 import { es, enUS } from 'date-fns/locale'
-import { getTranslations, getLocale } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 /**
  * Componente que muestra overview de usuarios del sistema para administradores
@@ -13,8 +13,8 @@ import { getTranslations, getLocale } from 'next-intl/server'
 export default async function UsersOverview() {
   // Obtener métricas reales del servidor
   const result = await getDashboardMetrics()
-  const t = await getTranslations('dashboardAdmin')
-  const locale = await getLocale()
+  const { t, locale } = await getServerTranslations('dashboardAdmin')
+  console.log('[UsersOverview] Server Component locale detected:', locale)
   const dateLocale = locale === 'es' ? es : enUS
 
   // Obtener datos de usuarios si están disponibles

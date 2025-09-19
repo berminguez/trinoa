@@ -9,7 +9,7 @@ import {
   IconTrendingUp,
   IconServer,
 } from '@tabler/icons-react'
-import { getTranslations } from 'next-intl/server'
+import { getServerTranslations } from '@/lib/server-translations'
 
 import GlobalMetrics from './GlobalMetrics'
 import UsersOverview from './UsersOverview'
@@ -27,7 +27,8 @@ interface AdminDashboardProps {
  * Muestra vista global del sistema con métricas de todos los usuarios
  */
 export default async function AdminDashboard({ user }: AdminDashboardProps) {
-  const t = await getTranslations('dashboardAdmin')
+  const { t, locale } = await getServerTranslations('dashboardAdmin')
+  console.log('[AdminDashboard] Server Component locale detected:', locale)
   return (
     <div className='flex flex-1 flex-col'>
       <div className='@container/main flex flex-1 flex-col gap-6'>

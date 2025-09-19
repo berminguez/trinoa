@@ -1,8 +1,8 @@
 import React from 'react'
 import { NextIntlClientProvider } from 'next-intl'
-import { getLocale, getMessages } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import { locales, defaultLocale } from '@/i18n'
+import { LocaleProvider } from '@/lib/locale-context'
 
 import './styles.css'
 import { ActiveThemeProvider } from '@/components/active-theme'
@@ -15,22 +15,23 @@ export const metadata = {
 export default async function RootLayout(props: { children: React.ReactNode }) {
   const { children } = props
 
-  // Get locale from cookie first, fallback to default
-  let locale: string = defaultLocale
+  // Detectar locale desde la cookie NEXT_LOCALE
+  let locale: (typeof locales)[number] = defaultLocale
   let messages: any = {}
 
   try {
-    // Try to get locale from cookie
     const cookieStore = await cookies()
     const localeCookie = cookieStore.get('NEXT_LOCALE')
-    if (localeCookie && locales.includes(localeCookie.value as any)) {
-      locale = localeCookie.value
+
+    if (localeCookie && locales.includes(localeCookie.value as (typeof locales)[number])) {
+      locale = localeCookie.value as (typeof locales)[number]
     }
 
-    // Load messages for the detected locale
+    console.log('[Layout] Detected locale:', locale, 'from cookie:', localeCookie?.value)
+
+    // Cargar mensajes para el locale detectado
     messages = (await import(`../../../messages/${locale}.json`)).default
   } catch (error) {
-    // Fallback to default locale if there's an error
     console.warn('Error getting locale, falling back to default:', error)
     locale = defaultLocale
     try {
@@ -45,9 +46,11 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     <html lang={locale}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <ActiveThemeProvider initialTheme='trinoa'>
-            <main>{children}</main>
-          </ActiveThemeProvider>
+          <LocaleProvider initialLocale={locale}>
+            <ActiveThemeProvider initialTheme='trinoa'>
+              <main>{children}</main>
+            </ActiveThemeProvider>
+          </LocaleProvider>
         </NextIntlClientProvider>
       </body>
     </html>

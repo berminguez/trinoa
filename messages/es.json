@@ -88,6 +88,13 @@
     "ago": "hace",
     "viewAllAlerts": "Ver todas las alertas ({count})"
   },
+  "realtimeActivityPanel": {
+    "recentActivity": "Actividad Reciente",
+    "lastActions": "Últimas acciones en tus proyectos",
+    "noRecentActivity": "No hay actividad reciente",
+    "recentActivityDescription": "La actividad aparecerá aquí cuando proceses documentos",
+    "viewAllActivity": "Ver toda la actividad"
+  },
   "account": {
     "title": "Mi Cuenta",
     "description": "Gestiona tu información personal y configuración de cuenta",
@@ -506,6 +513,10 @@
       "client": "Cliente",
       "myDocuments": "Mis documentos"
     }
+  },
+  "clientsHeader": {
+    "title": "Gestión de Clientes",
+    "description": "Administra todos los usuarios y sus proyectos desde este panel"
   },
   "clients": {
     "title": "Gestión de Clientes",
