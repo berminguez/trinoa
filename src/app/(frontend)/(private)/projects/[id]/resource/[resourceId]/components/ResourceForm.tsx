@@ -124,14 +124,12 @@ export default function ResourceForm({
       })
       if (result.success) {
         setDocumentoErroneo(checked)
-        toast.success(
-          checked ? 'Documento marcado como erróneo' : 'Marca de documento erróneo removida',
-        )
+        toast.success(checked ? t('documentMarkedAsWrong') : t('documentWrongMarkRemoved'))
       } else {
-        toast.error(result.error || 'No se pudo actualizar el estado del documento')
+        toast.error(result.error || t('couldNotUpdateDocumentStatus'))
       }
     } catch (error) {
-      toast.error('Error al actualizar el estado del documento')
+      toast.error(t('documentUpdateError'))
     }
   }
 
@@ -147,15 +145,15 @@ export default function ResourceForm({
         setCanVerify(false)
         setVerifyPopoverOpen(false)
 
-        toast.success('Documento verificado exitosamente')
+        toast.success(t('documentVerifiedSuccessfully'))
 
         // Refrescar datos del servidor sin recargar la página
         router.refresh()
       } else {
-        toast.error(result.error || 'No se pudo verificar el documento')
+        toast.error(result.error || t('couldNotVerifyDocument'))
       }
     } catch (error) {
-      toast.error('Error al verificar el documento')
+      toast.error(t('documentVerificationError'))
     } finally {
       setIsVerifying(false)
     }
@@ -168,15 +166,15 @@ export default function ResourceForm({
       const result = await cancelProcessingResourceAction(projectId, resourceId)
 
       if (result.success) {
-        toast.success('Procesamiento cancelado exitosamente')
+        toast.success(t('processingCancelled'))
 
         // Refrescar la página para mostrar el nuevo estado
         router.refresh()
       } else {
-        toast.error(result.error || 'No se pudo cancelar el procesamiento')
+        toast.error(result.error || t('processingCancelError'))
       }
     } catch (error) {
-      toast.error('Error al cancelar el procesamiento')
+      toast.error(t('processingCancelError'))
     } finally {
       setIsCancelling(false)
     }
@@ -186,7 +184,7 @@ export default function ResourceForm({
     <Formik<ResourceFormInitialValues>
       initialValues={initialValues}
       validationSchema={Yup.object({
-        nombre_cliente: Yup.string().max(200, 'Máximo 200 caracteres'),
+        nombre_cliente: Yup.string().max(200, t('maxCharacters', { count: 200 })),
         caso: Yup.string().nullable(),
         tipo: Yup.string().nullable(),
       })}
@@ -202,8 +200,8 @@ export default function ResourceForm({
           }
 
           const result = await updateResourceAction(projectId, resourceId, updates)
-          if (result.success) toast.success('Cambios guardados correctamente')
-          else toast.error(result.error || 'No se pudieron guardar los cambios')
+          if (result.success) toast.success(t('changesSavedSuccessfully'))
+          else toast.error(result.error || t('couldNotSaveChanges'))
         } finally {
           helpers.setSubmitting(false)
         }
@@ -218,17 +216,16 @@ export default function ResourceForm({
               <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
                 <AlertDialogTrigger asChild>
                   <Button type='button' size='sm' variant='destructive' disabled={isCancelling}>
-                    {isCancelling ? 'Cancelando...' : 'Cancelar escaneo'}
+                    {isCancelling ? t('cancelling') : t('cancelProcessing')}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>¿Cancelar procesamiento?</AlertDialogTitle>
+                    <AlertDialogTitle>{t('cancelProcessingConfirm')}</AlertDialogTitle>
                   </AlertDialogHeader>
                   <div className='py-4'>
                     <p className='text-sm text-muted-foreground'>
-                      Esta acción cancelará el procesamiento actual y marcará el documento como
-                      fallido. Podrás volver a escanearlo después.
+                      {t('cancelProcessingDescription')}
                     </p>
                   </div>
                   <AlertDialogFooter>
@@ -240,7 +237,7 @@ export default function ResourceForm({
                       }}
                       className='bg-destructive text-white hover:bg-destructive/90'
                     >
-                      Cancelar procesamiento
+                      {t('cancelProcessingAction')}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -384,12 +381,11 @@ export default function ResourceForm({
             {currentConfidence !== 'verified' && !documentoErroneo && (
               <div className='border-t pt-4'>
                 <div className='flex flex-col gap-3'>
-                  <div className='text-sm font-medium'>Verificación del documento</div>
+                  <div className='text-sm font-medium'>{t('documentVerification')}</div>
 
                   {!canVerify && (
                     <div className='text-xs text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200'>
-                      Modifica o valida los campos obligatorios con poco índice de confianza para
-                      poder verificar el documento
+                      {t('modifyFieldsToVerify')}
                     </div>
                   )}
 
@@ -401,16 +397,15 @@ export default function ResourceForm({
                         disabled={!canVerify || isProcessing || isVerifying}
                         className='w-fit'
                       >
-                        {isVerifying ? 'Verificando...' : 'Verificar Documento'}
+                        {isVerifying ? t('verifying') : t('verifyDocument')}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className='w-96 p-6' align='center'>
                       <div className='space-y-4'>
                         <div className='space-y-2'>
-                          <h4 className='font-medium text-base'>Confirmar verificación</h4>
+                          <h4 className='font-medium text-base'>{t('confirmVerification')}</h4>
                           <p className='text-sm text-muted-foreground'>
-                            Al pulsar en Verificar aceptas que has revisado y verificado los campos
-                            del documento para ser utilizados en el procesamiento de los datos.
+                            {t('verificationConfirmText')}
                           </p>
                         </div>
 
@@ -421,14 +416,14 @@ export default function ResourceForm({
                             onClick={() => setVerifyPopoverOpen(false)}
                             disabled={isVerifying}
                           >
-                            Cancelar
+                            {tCommon('cancel')}
                           </Button>
                           <Button
                             type='button'
                             onClick={handleVerifyResource}
                             disabled={isVerifying}
                           >
-                            {isVerifying ? 'Verificando...' : 'Verificar'}
+                            {isVerifying ? t('verifying') : t('verify')}
                           </Button>
                         </div>
                       </div>
@@ -458,7 +453,7 @@ export default function ResourceForm({
               }
               setValues(next)
               setIsProcessing(false)
-              toast.success('Datos actualizados tras el escaneo')
+              toast.success(t('dataUpdatedAfterScan'))
             }}
           />
         </Form>
@@ -485,6 +480,7 @@ function _CaseFields({
   if (!caso) {
     return (
       <div className='rounded-md border bg-card p-4 text-xs text-muted-foreground'>
+        {/* Note: This function doesn't have access to t() directly, but it's rarely shown since the component is being refactored */}
         Selecciona un caso para ver sus campos específicos.
       </div>
     )
@@ -837,6 +833,7 @@ function _CaseFields({
   // Caso 'otros' o no implementado: mostrar bloque genérico
   return (
     <div className='rounded-md border bg-card p-4 text-xs text-muted-foreground'>
+      {/* Note: This function doesn't have direct access to t(), but this text is rarely shown */}
       No hay campos específicos para este caso.
     </div>
   )
@@ -929,18 +926,20 @@ function SelectRow({
   value,
   onValueChange,
   options,
+  placeholder = 'Select an option',
 }: {
   label: string
   value: string
   onValueChange: (v: string) => void
   options: { label: string; value: string }[]
+  placeholder?: string
 }) {
   return (
     <div className='space-y-1'>
       <label className='text-xs text-muted-foreground'>{label}</label>
       <Select value={value} onValueChange={onValueChange}>
         <SelectTrigger className='w-full'>
-          <SelectValue placeholder='Selecciona una opción' />
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {options.map((opt) => (
