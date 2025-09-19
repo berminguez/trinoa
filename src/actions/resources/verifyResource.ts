@@ -120,29 +120,18 @@ export async function verifyResourceAction(
     }
 
     // 9) Actualizar el recurso con confidence = 'verified'
-    const updateData = {
-      confidence: 'verified' as const,
-      // Auditoría de verificación
-      lastUpdatedBy: user.id,
-      verifiedAt: new Date().toISOString(),
-      verifiedBy: user.id,
-    }
-
-    console.log(`[VERIFY_RESOURCE] Updating resource ${resourceId} with data:`, updateData)
-
     const updated = (await payload.update({
       collection: 'resources',
       id: resourceId,
-      data: updateData,
+      data: {
+        confidence: 'verified',
+        // Auditoría de verificación
+        lastUpdatedBy: user.id,
+        verifiedAt: new Date().toISOString(),
+        verifiedBy: user.id,
+      },
       user,
     })) as Resource
-
-    console.log(`[VERIFY_RESOURCE] Updated resource result:`, {
-      id: updated.id,
-      confidence: updated.confidence,
-      verifiedAt: (updated as any).verifiedAt,
-      verifiedBy: (updated as any).verifiedBy,
-    })
 
     // 10) Revalidar rutas que podrían mostrar este recurso
     try {

@@ -1497,12 +1497,15 @@ export const Resources: CollectionConfig = {
         }
 
         // Recalcular confidence automáticamente cuando analyzeResult cambia
+        // PERO SOLO si no se está estableciendo manualmente a 'verified'
         if (operation === 'update' && data && req) {
           try {
             // Si el update contiene analyzeResult, recalcular confidence
             const currentAnalyzeResult = (data as any)?.analyzeResult
+            const explicitConfidence = (data as any)?.confidence
 
-            if (currentAnalyzeResult) {
+            // NO recalcular si se está estableciendo explícitamente a 'verified'
+            if (currentAnalyzeResult && explicitConfidence !== 'verified') {
               console.log(
                 `[RESOURCES_BEFORECHANGE] analyzeResult being updated, recalculating confidence...`,
               )
@@ -1560,6 +1563,10 @@ export const Resources: CollectionConfig = {
                   )
                 })
               }
+            } else if (explicitConfidence === 'verified') {
+              console.log(
+                `[RESOURCES_BEFORECHANGE] Confidence being set to 'verified' manually - skipping auto-calculation`,
+              )
             }
           } catch (confidenceError) {
             console.warn(

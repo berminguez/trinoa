@@ -60,8 +60,8 @@ export default async function PageContent({ params }: PageContentProps) {
   // Verificar ownership del proyecto (owner o admin)
   const createdByUserId =
     typeof projectRes.createdBy === 'object' ? projectRes.createdBy.id : projectRes.createdBy
-  const isOwner = createdByUserId === user.id
-  const isAdmin = user.role === 'admin'
+  const isOwner = createdByUserId === user?.id
+  const isAdmin = user?.role === 'admin'
   if (!isOwner && !isAdmin) notFound()
 
   // Verificar pertenencia del recurso al proyecto
