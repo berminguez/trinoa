@@ -87,7 +87,7 @@ export function useAppTranslations(namespace?: string) {
     }
   }, [locale, namespace, isLoading])
 
-  const t = (key: string) => {
+  const t = (key: string, variables?: Record<string, string | number>) => {
     const keys = key.split('.')
     let value: any = messages
 
@@ -96,6 +96,15 @@ export function useAppTranslations(namespace?: string) {
     }
 
     if (typeof value === 'string') {
+      // Si hay variables, realizar interpolación
+      if (variables) {
+        let result = value
+        Object.entries(variables).forEach(([varKey, varValue]) => {
+          const placeholder = new RegExp(`{{${varKey}}}`, 'g')
+          result = result.replace(placeholder, String(varValue))
+        })
+        return result
+      }
       return value
     }
 

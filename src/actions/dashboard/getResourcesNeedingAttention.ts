@@ -42,7 +42,7 @@ export async function getResourcesNeedingAttention(): Promise<{
     if (!user) {
       return {
         success: false,
-        error: 'Usuario no autenticado',
+        error: 'UNAUTHORIZED',
       }
     }
 
@@ -176,7 +176,7 @@ export async function getResourcesNeedingAttention(): Promise<{
     console.error('Error en getResourcesNeedingAttention:', error)
     return {
       success: false,
-      error: 'Error obteniendo recursos que necesitan atención',
+      error: 'RESOURCES_ATTENTION_ERROR',
     }
   }
 }
@@ -205,7 +205,7 @@ export async function getAlertsStats(): Promise<{
     if (!result.success || !result.data) {
       return {
         success: false,
-        error: result.error || 'Error obteniendo alertas',
+        error: result.error || 'ALERTS_ERROR',
       }
     }
 
@@ -230,7 +230,7 @@ export async function getAlertsStats(): Promise<{
     console.error('Error en getAlertsStats:', error)
     return {
       success: false,
-      error: 'Error obteniendo estadísticas de alertas',
+      error: 'ALERTS_STATS_ERROR',
     }
   }
 }

@@ -93,7 +93,44 @@
     "lastActions": "Last actions in your projects",
     "noRecentActivity": "No recent activity",
     "recentActivityDescription": "The activity will appear here when you process documents",
-    "viewAllActivity": "View all activity"
+    "viewAllActivity": "View all activity",
+    "activityTypes": {
+      "resourceCreated": "New Resource",
+      "resourceProcessed": "Processed",
+      "resourceUpdated": "Error",
+      "projectCreated": "New Project",
+      "userJoined": "User",
+      "default": "Activity"
+    },
+    "activities": {
+      "resourceCreated": {
+        "title": "New resource created",
+        "description": "\"{{resourceTitle}}\" added to project \"{{projectTitle}}\""
+      },
+      "resourceProcessed": {
+        "title": "Document processed",
+        "description": "\"{{resourceTitle}}\" processed {{status}}"
+      },
+      "resourceUpdated": {
+        "title": "Processing error",
+        "description": "Error processing \"{{resourceTitle}}\""
+      },
+      "projectCreated": {
+        "title": "New project created",
+        "description": "Project \"{{projectTitle}}\" created"
+      },
+      "default": {
+        "title": "System activity",
+        "description": "Activity registered in the system"
+      }
+    },
+    "processingStatus": {
+      "success": "successfully",
+      "warning": "with warnings"
+    },
+    "priority": {
+      "urgent": "Urgent"
+    }
   },
   "account": {
     "title": "My Account",

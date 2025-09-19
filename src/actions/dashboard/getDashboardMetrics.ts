@@ -73,7 +73,7 @@ export async function getDashboardMetrics(): Promise<{
     if (!user) {
       return {
         success: false,
-        error: 'Usuario no autenticado',
+        error: 'UNAUTHORIZED',
       }
     }
 
@@ -205,7 +205,7 @@ async function getAdminDashboardMetrics(payload: any): Promise<{
     console.error('Error en getAdminDashboardMetrics:', error)
     return {
       success: false,
-      error: 'Error obteniendo métricas de administrador',
+      error: 'ADMIN_METRICS_ERROR',
     }
   }
 }
@@ -296,7 +296,7 @@ async function getUserDashboardMetrics(
     console.error('Error en getUserDashboardMetrics:', error)
     return {
       success: false,
-      error: 'Error obteniendo métricas del usuario',
+      error: 'USER_METRICS_ERROR',
     }
   }
 }
@@ -316,7 +316,7 @@ export async function getRecentProjects(limit: number = 5): Promise<{
     if (!user) {
       return {
         success: false,
-        error: 'Usuario no autenticado',
+        error: 'UNAUTHORIZED',
       }
     }
 
@@ -364,7 +364,7 @@ export async function getRecentProjects(limit: number = 5): Promise<{
     console.error('Error en getRecentProjects:', error)
     return {
       success: false,
-      error: 'Error obteniendo proyectos recientes',
+      error: 'RECENT_PROJECTS_ERROR',
     }
   }
 }

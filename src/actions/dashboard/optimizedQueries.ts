@@ -30,7 +30,7 @@ export async function getOptimizedDashboardData(): Promise<{
     if (!user) {
       return {
         success: false,
-        error: 'Usuario no autenticado',
+        error: 'UNAUTHORIZED',
       }
     }
 
@@ -151,7 +151,7 @@ export async function getOptimizedDashboardData(): Promise<{
     console.error('Error en getOptimizedDashboardData:', error)
     return {
       success: false,
-      error: 'Error obteniendo datos optimizados del dashboard',
+      error: 'DASHBOARD_ERROR',
     }
   }
 }
@@ -248,16 +248,13 @@ async function processOptimizedData({
 
         let type = 'needs-review'
         let priority = 'medium'
-        let message = 'Recurso necesita revisión manual'
 
         if (resource.status === 'failed') {
           type = 'processing-failed'
           priority = 'high'
-          message = 'Error en el procesamiento del documento'
         } else if (resource.status === 'processing') {
           type = 'processing-stuck'
           priority = 'high'
-          message = 'Procesamiento atascado por más de 1 hora'
         }
 
         return {
@@ -268,8 +265,9 @@ async function processOptimizedData({
             title: project.title,
           },
           type,
-          message,
           priority,
+          status: resource.status,
+          confidence: resource.confidence,
           createdAt: resource.createdAt,
           updatedAt: resource.updatedAt,
         }
@@ -291,8 +289,6 @@ async function processOptimizedData({
           return {
             id: `resource_created_${resource.id}`,
             type: 'resource_created',
-            title: 'Nuevo recurso creado',
-            description: `"${resource.title}" agregado al proyecto "${project.title}"`,
             timestamp: resource.createdAt,
             project: {
               id: project.id,

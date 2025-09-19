@@ -17,8 +17,6 @@ export interface ActivityItem {
     | 'resource_updated'
     | 'project_created'
     | 'user_joined'
-  title: string
-  description: string
   timestamp: string
   user?: {
     id: string
@@ -101,8 +99,6 @@ export async function getRealtimeActivity(
         activities.push({
           id: `resource_created_${resource.id}`,
           type: 'resource_created',
-          title: 'Nuevo recurso creado',
-          description: `"${resource.title}" agregado al proyecto "${project.title}"`,
           timestamp: resource.createdAt,
           user: createdBy
             ? {
@@ -136,8 +132,6 @@ export async function getRealtimeActivity(
         activities.push({
           id: `resource_processed_${resource.id}`,
           type: 'resource_processed',
-          title: 'Documento procesado',
-          description: `"${resource.title}" procesado ${resource.confidence === 'trusted' ? 'exitosamente' : 'con advertencias'}`,
           timestamp: resource.updatedAt,
           user: createdBy
             ? {
@@ -164,8 +158,6 @@ export async function getRealtimeActivity(
         activities.push({
           id: `resource_failed_${resource.id}`,
           type: 'resource_updated',
-          title: 'Error en procesamiento',
-          description: `Error al procesar "${resource.title}"`,
           timestamp: resource.updatedAt,
           user: createdBy
             ? {
@@ -208,8 +200,6 @@ export async function getRealtimeActivity(
         activities.push({
           id: `project_created_${project.id}`,
           type: 'project_created',
-          title: 'Nuevo proyecto creado',
-          description: `Proyecto "${project.title}" creado`,
           timestamp: project.createdAt,
           user: createdBy
             ? {
@@ -239,7 +229,7 @@ export async function getRealtimeActivity(
     console.error('Error en getRealtimeActivity:', error)
     return {
       success: false,
-      error: 'Error obteniendo actividad en tiempo real',
+      error: 'REALTIME_ACTIVITY_ERROR',
     }
   }
 }
@@ -371,7 +361,7 @@ export async function getActivityStats(userId?: string): Promise<{
     console.error('Error en getActivityStats:', error)
     return {
       success: false,
-      error: 'Error obteniendo estadísticas de actividad',
+      error: 'ACTIVITY_STATS_ERROR',
     }
   }
 }

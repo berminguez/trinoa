@@ -34,8 +34,8 @@ export async function getServerTranslations(namespace?: string) {
     }
   }
 
-  // Crear función de traducción
-  const t = (key: string) => {
+  // Crear función de traducción con soporte para interpolación de variables
+  const t = (key: string, variables?: Record<string, string | number>) => {
     const keys = key.split('.')
     let value: any = namespace ? messages[namespace] : messages
 
@@ -44,6 +44,15 @@ export async function getServerTranslations(namespace?: string) {
     }
 
     if (typeof value === 'string') {
+      // Si hay variables, realizar interpolación
+      if (variables) {
+        let result = value
+        Object.entries(variables).forEach(([varKey, varValue]) => {
+          const placeholder = new RegExp(`{{${varKey}}}`, 'g')
+          result = result.replace(placeholder, String(varValue))
+        })
+        return result
+      }
       return value
     }
 
