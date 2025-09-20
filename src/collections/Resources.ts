@@ -1597,6 +1597,16 @@ export const Resources: CollectionConfig = {
             const url = String(automation.url)
             console.log('[AUTOMATION] Preparing webhook call:', { method, url })
 
+            // 🆕 Detectar alta concurrencia y añadir delay para uploads masivos (reduce concurrencia en n8n)
+            const isHighConcurrency = data.namespace && data.namespace.includes('project-')
+            if (isHighConcurrency) {
+              const delay = Math.floor(Math.random() * 2000) + 500 // 500-2500ms aleatorio
+              console.log(
+                `[AUTOMATION] High concurrency detected, adding ${delay}ms delay to reduce n8n load`,
+              )
+              await new Promise((resolve) => setTimeout(resolve, delay))
+            }
+
             const headers: Record<string, string> = {
               'User-Agent': 'Trinoa-Automation/1.0',
               Accept: 'application/json',
@@ -1679,22 +1689,30 @@ export const Resources: CollectionConfig = {
 
             init.headers = headers
 
-            // Timeout de 10s por seguridad
+            // Timeout dinámico mejorado: 15s por defecto, más tiempo si detectamos alta carga
+            const baseTimeout = 15000
+            const timeoutMs = isHighConcurrency ? baseTimeout + 10000 : baseTimeout // +10s si es proyecto
+
             const controller = new AbortController()
-            const timer = setTimeout(() => controller.abort(), 10000)
+            const timer = setTimeout(() => {
+              console.log(`[AUTOMATION] Timeout after ${timeoutMs}ms`)
+              controller.abort()
+            }, timeoutMs)
             ;(init as any).signal = controller.signal
 
             console.log('[AUTOMATION] Calling webhook...', {
               fetchUrl,
               method,
               headers: Object.keys(headers),
+              timeout: timeoutMs,
+              concurrencyMode: isHighConcurrency ? 'high' : 'normal',
             })
 
             const res = await fetch(fetchUrl, init)
             clearTimeout(timer)
             const ok = res.ok
             const status = res.status
-            console.log('[AUTOMATION] Webhook response:', { ok, status })
+            console.log('[AUTOMATION] Webhook response:', { ok, status, timeoutUsed: timeoutMs })
 
             let responseText = ''
             let executionId: string | null = null
@@ -1704,48 +1722,75 @@ export const Resources: CollectionConfig = {
               responseText = await res.text()
               console.log('[AUTOMATION] Webhook response text:', responseText)
 
-              // Intentar extraer executionId de la respuesta de n8n
+              // Intentar extraer executionId de la respuesta de n8n con validación estricta
               if (ok && responseText) {
                 try {
                   const responseJson = JSON.parse(responseText)
 
-                  executionId =
+                  // Buscar executionId en múltiples ubicaciones posibles
+                  const candidateExecutionId =
                     responseJson?.executionId ||
                     responseJson?.data?.executionId ||
                     responseJson?.execution?.id ||
+                    responseJson?.id ||
                     null
 
-                  executionUrl =
-                    responseJson?.executionUrl ||
-                    responseJson?.data?.executionUrl ||
-                    responseJson?.execution?.url ||
-                    null
+                  // Validar que el executionId sea un string/number válido
+                  if (candidateExecutionId && String(candidateExecutionId).trim()) {
+                    executionId = String(candidateExecutionId).trim()
 
-                  if (executionId) {
+                    executionUrl =
+                      responseJson?.executionUrl ||
+                      responseJson?.data?.executionUrl ||
+                      responseJson?.execution?.url ||
+                      null
+
                     console.log(
-                      `[AUTOMATION] Extracted executionId from n8n response: ${executionId}`,
+                      `[AUTOMATION] ✅ Extracted executionId from n8n response: ${executionId}`,
                     )
                     // Añadir executionId directamente a los datos que se van a guardar
                     data.executionId = executionId
-                    console.log(`[AUTOMATION] Adding executionId ${executionId} to resource data`)
+                    console.log(
+                      `[AUTOMATION] ✅ Adding executionId ${executionId} to resource data`,
+                    )
+                  } else {
+                    console.warn('[AUTOMATION] ⚠️  Response OK but no valid executionId found:', {
+                      responseJson: JSON.stringify(responseJson, null, 2).slice(0, 500),
+                      candidateExecutionId,
+                    })
                   }
                 } catch (parseError) {
-                  console.warn('[AUTOMATION] Could not parse webhook response as JSON:', parseError)
+                  console.warn(
+                    '[AUTOMATION] ❌ Could not parse webhook response as JSON:',
+                    parseError,
+                  )
+                  console.warn('[AUTOMATION] Raw response:', responseText.slice(0, 200))
                 }
+              } else if (!ok) {
+                console.warn(
+                  `[AUTOMATION] ❌ Webhook failed with status ${status}:`,
+                  responseText.slice(0, 200),
+                )
+              } else {
+                console.warn('[AUTOMATION] ⚠️  Empty response from webhook')
               }
             } catch (responseError) {
-              console.warn('[AUTOMATION] Error reading response:', responseError)
+              console.warn('[AUTOMATION] ❌ Error reading response:', responseError)
             }
 
-            // Añadir log del webhook a los datos
+            // Añadir log del webhook a los datos con información mejorada
             const currentLogs = Array.isArray(data.logs) ? data.logs : []
+            const webhookSuccess = ok && !!executionId // Solo es éxito si obtuvimos executionId
+
             const newLog = {
-              step: 'automation-webhook',
-              status: ok ? ('success' as const) : ('error' as const),
+              step: 'automation-webhook-improved',
+              status: webhookSuccess ? ('success' as const) : ('error' as const),
               at: new Date().toISOString(),
-              details: ok
-                ? `Webhook enviado correctamente (status ${status})${executionId ? ` - ExecutionId: ${executionId}` : ''}`
-                : `Webhook falló (status ${status})`,
+              details: webhookSuccess
+                ? `Webhook enviado correctamente (status ${status}) - ExecutionId: ${executionId}`
+                : ok
+                  ? `Webhook respondió OK (status ${status}) pero SIN executionId - PROBLEMA DE CONCURRENCIA`
+                  : `Webhook falló completamente (status ${status})`,
               data: {
                 url: fetchUrl,
                 method,
@@ -1753,17 +1798,32 @@ export const Resources: CollectionConfig = {
                 responsePreview: responseText?.slice(0, 300),
                 executionId: executionId || null,
                 executionUrl: executionUrl || null,
+                httpStatus: status,
+                httpOk: ok,
+                hasExecutionId: !!executionId,
+                timeoutUsed: timeoutMs,
+                concurrencyMode: isHighConcurrency ? 'high' : 'normal',
               },
             }
 
             data.logs = [...currentLogs, newLog]
 
-            // Establecer estado basado en la respuesta del webhook
-            if (ok) {
+            // Establecer estado basado en la respuesta del webhook Y la presencia de executionId
+            if (webhookSuccess) {
               data.status = 'processing'
               data.startedAt = new Date().toISOString()
+              console.log(
+                `[AUTOMATION] ✅ Resource set to processing with executionId: ${executionId}`,
+              )
+            } else if (ok && !executionId) {
+              // Caso especial: webhook OK pero sin executionId (el problema que experimentaste)
+              data.status = 'failed'
+              console.log(
+                `[AUTOMATION] ❌ Resource set to failed - webhook OK but missing executionId (concurrency issue)`,
+              )
             } else {
               data.status = 'failed'
+              console.log(`[AUTOMATION] ❌ Resource set to failed - webhook completely failed`)
             }
 
             console.log(
