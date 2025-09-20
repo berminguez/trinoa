@@ -9,6 +9,7 @@ import {
   IconFolder,
   IconCalendar,
   IconClock,
+  IconBuilding,
   IconMail,
   IconTrendingUp,
   IconChevronRight,
@@ -46,6 +47,11 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
 
   // Formateo de datos del cliente
   const clientName = clientData.name || 'Usuario sin nombre'
+  const clientCompany =
+    typeof clientData.empresa === 'object' && clientData.empresa !== null
+      ? clientData.empresa.name
+      : clientData.empresa || 'Empresa sin nombre'
+  const clientUnity = clientData.filial || ''
   const displayEmail = clientData.email
   const joinDate = new Date(clientData.createdAt).toLocaleDateString('es-ES', {
     year: 'numeric',
@@ -124,8 +130,12 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                   </div>
                   <div className='flex-1 min-w-0'>
                     <h3 className='font-semibold text-base truncate group-hover:text-primary transition-colors'>
-                      {clientName}
+                      {clientCompany} {clientUnity ? `- ${clientUnity}` : ''}
                     </h3>
+                    <div className='flex items-center space-x-1 text-sm text-muted-foreground'>
+                      <IconUser className='h-3 w-3 flex-shrink-0' />
+                      <span className='truncate'>{clientName}</span>
+                    </div>
                     <div className='flex items-center space-x-1 text-sm text-muted-foreground'>
                       <IconMail className='h-3 w-3 flex-shrink-0' />
                       <span className='truncate'>{displayEmail}</span>
@@ -193,8 +203,10 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                   <span className='text-xs opacity-70'>
                     (
                     {daysSinceJoin === 0
-                      ? 'hoy'
-                      : `hace ${daysSinceJoin} día${daysSinceJoin !== 1 ? 's' : ''}`}
+                      ? t('today')
+                      : daysSinceJoin === 1
+                        ? t('yesterday')
+                        : `${t('ago')} ${daysSinceJoin} ${t('days', { count: daysSinceJoin })}`}
                     )
                   </span>
                 </div>
@@ -214,15 +226,15 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                   <div className='flex items-center space-x-2'>
                     <IconTrendingUp className='h-4 w-4 text-green-600' />
                     <span className='text-sm font-medium'>
-                      {projectCount > 1 ? 'Usuario activo' : 'Usuario nuevo'}
+                      {projectCount > 1 ? t('activeUser') : t('newUser')}
                     </span>
                   </div>
                   <span className='text-xs text-muted-foreground'>
                     {projectCount > 5
-                      ? 'Alto uso'
+                      ? t('highUsage')
                       : projectCount > 1
-                        ? 'Uso moderado'
-                        : 'Uso inicial'}
+                        ? t('moderateUsage')
+                        : t('initialUsage')}
                   </span>
                 </div>
               )}
@@ -256,7 +268,7 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                     className='flex-1 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700'
                   >
                     <IconEdit className='h-4 w-4 mr-1' />
-                    Editar
+                    {t('edit')}
                   </Button>
                   <Button
                     variant='outline'
@@ -265,7 +277,7 @@ export function ClientGridItem({ client }: ClientGridItemProps) {
                     className='flex-1 hover:bg-red-50 hover:border-red-300 hover:text-red-700'
                   >
                     <IconTrash className='h-4 w-4 mr-1' />
-                    Eliminar
+                    {t('delete')}
                   </Button>
                 </div>
               </div>

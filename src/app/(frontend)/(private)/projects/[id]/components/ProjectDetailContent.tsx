@@ -16,6 +16,7 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
   const user = await getCurrentUser()
   if (!user) {
     redirect('/login')
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   // Obtener payload instance
@@ -23,6 +24,7 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
 
   // Obtener proyecto con verificación de ownership
   let project: Project
+  let resources: any
   try {
     project = await payload.findByID({
       collection: 'projects',
@@ -39,6 +41,7 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
     if (!isOwner && !isAdmin) {
       console.log('Access denied: User is not owner or admin')
       notFound()
+      return // Esto nunca se ejecuta pero ayuda a TypeScript
     }
   } catch (error) {
     console.error('Error fetching project:', error)
@@ -50,10 +53,11 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
     }
 
     notFound()
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   // Obtener videos/recursos del proyecto
-  const resources = await payload.find({
+  resources = await payload.find({
     collection: 'resources',
     where: {
       project: { equals: projectId },

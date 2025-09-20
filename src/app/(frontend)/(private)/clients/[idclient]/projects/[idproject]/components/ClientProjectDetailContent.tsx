@@ -37,6 +37,7 @@ export async function ClientProjectDetailContent({
     // Obtener datos del proyecto con información del cliente
     let project: Project
     let client: User
+    let resources: any
 
     try {
       console.log(
@@ -61,6 +62,7 @@ export async function ClientProjectDetailContent({
           `ClientProjectDetailContent: Proyecto no pertenece al cliente. Proyecto creado por: ${createdByUserId}, Cliente esperado: ${clientId}`,
         )
         notFound()
+        return // Esto nunca se ejecuta pero ayuda a TypeScript
       }
 
       // Obtener información del cliente
@@ -71,25 +73,26 @@ export async function ClientProjectDetailContent({
       })
 
       console.log(`ClientProjectDetailContent: Cliente encontrado: ${client.email}`)
+
+      // Obtener recursos del proyecto
+      resources = await payload.find({
+        collection: 'resources',
+        where: {
+          project: { equals: projectId },
+        },
+        limit: 50,
+        sort: '-createdAt',
+        depth: 2,
+      })
+
+      console.log(
+        `ClientProjectDetailContent: ${resources.docs.length} recursos encontrados para proyecto ${project.title}`,
+      )
     } catch (error) {
       console.error('ClientProjectDetailContent: Error obteniendo proyecto o cliente:', error)
       notFound()
+      return // Esto nunca se ejecuta pero ayuda a TypeScript
     }
-
-    // Obtener recursos del proyecto
-    const resources = await payload.find({
-      collection: 'resources',
-      where: {
-        project: { equals: projectId },
-      },
-      limit: 50,
-      sort: '-createdAt',
-      depth: 2,
-    })
-
-    console.log(
-      `ClientProjectDetailContent: ${resources.docs.length} recursos encontrados para proyecto ${project.title}`,
-    )
 
     // Usar versión editable o solo lectura según el parámetro
     if (editable) {

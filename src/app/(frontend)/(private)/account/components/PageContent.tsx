@@ -18,11 +18,13 @@ export async function PageContent() {
   // Verificar autenticación
   if (!user || !user.id) {
     redirect('/login?redirect=/account')
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   // Verificar que el usuario existe (no debería pasar, pero por seguridad)
   if (!user?.id) {
     notFound()
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   console.log(`PageContent: Renderizando página de cuenta para usuario ${user.email}`)

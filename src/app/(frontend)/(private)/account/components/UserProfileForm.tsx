@@ -14,7 +14,7 @@ import {
   IconBuilding,
   IconShield,
   IconEdit,
-  IconSave,
+  IconDeviceFloppy,
   IconX,
   IconAlertCircle,
   IconLoader2,
@@ -31,7 +31,7 @@ interface UserProfileFormProps {
 
 /**
  * Formulario de perfil de usuario con campos limitados según rol
- * 
+ *
  * Usuarios normales: solo pueden editar nombre
  * Administradores: pueden editar todos los campos
  */
@@ -45,19 +45,19 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
   const isAdmin = user.role === 'admin'
 
   // Obtener nombre de la empresa (puede ser string o relación)
-  const getCompanyName = (empresa: string | Company) => {
+  const getCompanyName = (empresa: string | Company | null | undefined) => {
     if (!empresa) return null
-    
+
     // Si es un objeto (relación), usar el nombre
     if (typeof empresa === 'object' && empresa.name) {
       return empresa.name
     }
-    
+
     // Si es string (legacy), usar directamente
     if (typeof empresa === 'string') {
       return empresa
     }
-    
+
     return null
   }
 
@@ -126,12 +126,12 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
   // Verificar si el formulario es válido
   const isFormValid = () => {
     const hasErrors = Object.values(fieldErrors).some((error) => error !== '')
-    
+
     // Para usuarios normales, solo validar que tenga nombre
     if (!isAdmin) {
       return !hasErrors && formData.name?.trim()
     }
-    
+
     // Para admins, validar nombre y email
     const hasRequiredFields = formData.name?.trim() && formData.email?.trim()
     return !hasErrors && hasRequiredFields
@@ -143,12 +143,9 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
     if (!isAdmin) {
       return formData.name !== (user.name || '')
     }
-    
+
     // Para admins, verificar nombre y email
-    return (
-      formData.name !== (user.name || '') ||
-      formData.email !== (user.email || '')
-    )
+    return formData.name !== (user.name || '') || formData.email !== (user.email || '')
   }
 
   // Handler para envío del formulario
@@ -170,7 +167,7 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
       if (formData.name !== (user.name || '')) {
         updateData.name = formData.name
       }
-      
+
       // Solo admins pueden actualizar email
       if (isAdmin && formData.email !== (user.email || '')) {
         updateData.email = formData.email
@@ -280,18 +277,20 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
             {!isAdmin && (
               <div className='space-y-4 p-3 bg-muted/50 rounded-lg'>
                 <h4 className='text-sm font-medium text-muted-foreground'>{t('readOnlyFields')}</h4>
-                
+
                 {/* Empresa (solo lectura) */}
                 <div className='space-y-2'>
-                  <label className='text-sm font-medium text-muted-foreground'>{t('company')}</label>
+                  <label className='text-sm font-medium text-muted-foreground'>
+                    {t('company')}
+                  </label>
                   <div className='flex items-center gap-2'>
                     <IconBuilding className='h-4 w-4 text-muted-foreground' />
                     {getCompanyName(user.empresa) ? (
-                      <Badge variant="secondary">
-                        {getCompanyName(user.empresa)}
-                      </Badge>
+                      <Badge variant='secondary'>{getCompanyName(user.empresa)}</Badge>
                     ) : (
-                      <span className='text-sm text-muted-foreground'>{t('notSpecifiedCompany')}</span>
+                      <span className='text-sm text-muted-foreground'>
+                        {t('notSpecifiedCompany')}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -302,11 +301,11 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
                   <div className='flex items-center gap-2'>
                     <IconBuildingSkyscraper className='h-4 w-4 text-muted-foreground' />
                     {user.filial ? (
-                      <Badge variant="outline">
-                        {user.filial}
-                      </Badge>
+                      <Badge variant='outline'>{user.filial}</Badge>
                     ) : (
-                      <span className='text-sm text-muted-foreground'>{t('notSpecifiedBranch')}</span>
+                      <span className='text-sm text-muted-foreground'>
+                        {t('notSpecifiedBranch')}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -323,8 +322,8 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
 
             {/* Botones de acción */}
             <div className='flex items-center gap-2'>
-              <Button 
-                type='submit' 
+              <Button
+                type='submit'
                 disabled={!isFormValid() || !hasChanges() || isLoading}
                 className='flex items-center gap-2'
               >
@@ -335,14 +334,14 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
                   </>
                 ) : (
                   <>
-                    <IconSave className='h-4 w-4' />
+                    <IconDeviceFloppy className='h-4 w-4' />
                     {t('save')}
                   </>
                 )}
               </Button>
-              <Button 
-                type='button' 
-                variant='outline' 
+              <Button
+                type='button'
+                variant='outline'
                 onClick={handleCancel}
                 disabled={isLoading}
                 className='flex items-center gap-2'
@@ -380,11 +379,13 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
                 <div className='flex items-center gap-2 p-3 bg-muted/50 rounded-lg'>
                   <IconBuilding className='h-4 w-4 text-muted-foreground' />
                   {getCompanyName(user.empresa) ? (
-                    <Badge variant="secondary" className="text-sm">
+                    <Badge variant='secondary' className='text-sm'>
                       {getCompanyName(user.empresa)}
                     </Badge>
                   ) : (
-                    <span className='text-sm text-muted-foreground'>{t('notSpecifiedCompany')}</span>
+                    <span className='text-sm text-muted-foreground'>
+                      {t('notSpecifiedCompany')}
+                    </span>
                   )}
                 </div>
               </div>
@@ -395,7 +396,7 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
                 <div className='flex items-center gap-2 p-3 bg-muted/50 rounded-lg'>
                   <IconBuildingSkyscraper className='h-4 w-4 text-muted-foreground' />
                   {user.filial ? (
-                    <Badge variant="outline" className="text-sm">
+                    <Badge variant='outline' className='text-sm'>
                       {user.filial}
                     </Badge>
                   ) : (
@@ -424,9 +425,7 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
             {!isAdmin && (
               <Alert>
                 <IconAlertCircle className='h-4 w-4' />
-                <AlertDescription>
-                  {t('userPermissions')}
-                </AlertDescription>
+                <AlertDescription>{t('userPermissions')}</AlertDescription>
               </Alert>
             )}
           </div>

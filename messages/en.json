@@ -696,7 +696,20 @@
       "state": "State",
       "active": "Active",
       "inactive": "Inactive",
-      "noRecentActivity": "No recent activity"
+      "noRecentActivity": "No recent activity",
+      "edit": "Edit",
+      "delete": "Delete",
+      "newUser": "New user",
+      "activeUser": "Active user",
+      "moderateUser": "Moderate user",
+      "initialUser": "Initial user",
+      "highUsage": "High usage",
+      "moderateUsage": "Moderate usage",
+      "initialUsage": "Initial usage",
+      "today": "Today",
+      "ago": "ago",
+      "yesterday": "yesterday",
+      "days": "days"
     },
     "errorBoundary": {
       "title": "Error Loading Clients",

@@ -99,7 +99,7 @@ export async function loginAction(formData: FormData): Promise<LoginResult> {
   }
 }
 
-export async function loginWithRedirect(formData: FormData, redirectUrl?: string): Promise<never> {
+export async function loginWithRedirect(formData: FormData, redirectUrl?: string): Promise<void> {
   const result = await loginAction(formData)
 
   if (result.success) {

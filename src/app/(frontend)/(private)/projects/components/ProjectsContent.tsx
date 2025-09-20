@@ -11,6 +11,7 @@ export async function ProjectsContent() {
   const user = await getCurrentUser()
   if (!user) {
     redirect('/login')
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   // Obtener payload instance

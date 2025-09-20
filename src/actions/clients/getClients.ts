@@ -59,6 +59,16 @@ export async function getClients(filters: ClientsFilters = {}): Promise<ClientsL
             contains: searchTerm,
           },
         },
+        {
+          filial: {
+            contains: searchTerm,
+          },
+        },
+        {
+          'empresa.name': {
+            contains: searchTerm,
+          },
+        },
       ]
     }
 
@@ -114,7 +124,7 @@ export async function getClients(filters: ClientsFilters = {}): Promise<ClientsL
       sort,
       page: validPage,
       limit: validLimit,
-      depth: 0, // Solo campos básicos del usuario
+      depth: 1,
     })
 
     const clients = usersResponse.docs as User[]

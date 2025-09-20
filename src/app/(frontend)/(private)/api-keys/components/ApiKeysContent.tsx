@@ -10,11 +10,13 @@ export async function ApiKeysContent() {
   const user = await getCurrentUser()
   if (!user) {
     redirect('/login')
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   // Solo usuarios normales y admins pueden acceder a API Keys
   if (user.role !== 'user' && user.role !== 'admin') {
     redirect('/dashboard')
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   // Obtener API Keys del usuario
@@ -24,6 +26,7 @@ export async function ApiKeysContent() {
     // Si hay error en la obtención de datos, mostrar error
     console.error('[API_KEYS_CONTENT] Error fetching keys:', apiKeysResult.error)
     redirect('/dashboard')
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
   }
 
   const apiKeys = apiKeysResult.data || []

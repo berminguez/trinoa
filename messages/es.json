@@ -701,7 +701,20 @@
       "state": "Estado",
       "active": "Activo",
       "inactive": "Inactivo",
-      "noRecentActivity": "Sin actividad reciente"
+      "noRecentActivity": "Sin actividad reciente",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "newUser": "Nuevo usuario",
+      "activeUser": "Usuario activo",
+      "moderateUser": "Usuario moderado",
+      "initialUser": "Usuario inicial",
+      "highUsage": "Alto uso",
+      "moderateUsage": "Uso moderado",
+      "initialUsage": "Uso inicial",
+      "today": "Hoy",
+      "ago": "hace",
+      "yesterday": "ayer",
+      "days": "días"
     },
     "errorBoundary": {
       "title": "Error Cargando Clientes",

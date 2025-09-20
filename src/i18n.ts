@@ -3,7 +3,7 @@ import { getRequestConfig } from 'next-intl/server'
 export const locales = ['es', 'en'] as const
 export const defaultLocale = 'es' as const
 
-export default getRequestConfig(async ({ requestLocale }) => {
+export default getRequestConfig(async ({ requestLocale }: { requestLocale: string }) => {
   // requestLocale contiene el locale que se pasó al provider
   // Si no hay requestLocale (server-side), usamos el default
   let locale = requestLocale || defaultLocale

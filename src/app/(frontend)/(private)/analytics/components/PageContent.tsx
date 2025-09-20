@@ -27,7 +27,10 @@ export default async function PageContent({
   searchParams?: Record<string, string>
 }) {
   const user = await getCurrentUser()
-  if (!user) redirect('/login')
+  if (!user) {
+    redirect('/login')
+    return // Esto nunca se ejecuta pero ayuda a TypeScript
+  }
 
   // Obtener traducciones usando nuestro helper
   const { t } = await getServerTranslations('analytics')

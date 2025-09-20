@@ -67,7 +67,7 @@ export async function logoutAction(): Promise<LogoutResult> {
   }
 }
 
-export async function logoutWithRedirect(): Promise<never> {
+export async function logoutWithRedirect(): Promise<void> {
   const result = await logoutAction()
 
   if (result.success) {

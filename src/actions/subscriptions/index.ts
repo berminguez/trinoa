@@ -25,6 +25,7 @@ export async function createSubscriptionCheckout(planId: SubscriptionPlanId) {
 
     if (!user) {
       redirect('/login')
+      return // Esto nunca se ejecuta pero ayuda a TypeScript
     }
 
     // Verificar que el plan sea válido y no sea gratuito

@@ -41,11 +41,11 @@ export default function PricingPlanCard({
     try {
       const result = await createSubscriptionCheckout(planId)
 
-      if (result.success && result.data?.checkoutUrl) {
+      if (result && result.success && result.data?.checkoutUrl) {
         // Redirigir a Stripe Checkout
         window.location.href = result.data.checkoutUrl
       } else {
-        toast.error(result.error || 'Error al crear la sesión de checkout')
+        toast.error(result?.error || 'Error al crear la sesión de checkout')
       }
     } catch (error) {
       console.error('Error subscribing:', error)

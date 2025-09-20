@@ -22,7 +22,14 @@ import {
 } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { IconUser, IconMail, IconBuilding, IconAlertCircle, IconLoader2, IconBuildingSkyscraper } from '@tabler/icons-react'
+import {
+  IconUser,
+  IconMail,
+  IconBuilding,
+  IconAlertCircle,
+  IconLoader2,
+  IconBuildingSkyscraper,
+} from '@tabler/icons-react'
 import { updateClientAction } from '@/actions/clients/updateClient'
 import type { ClientWithStats, UpdateClientData } from '@/actions/clients/types'
 import type { Company } from '@/payload-types'
@@ -50,8 +57,10 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
   // Estado del formulario
   const [formData, setFormData] = useState<UpdateClientData>({
     name: client.name || '',
-    empresa: client.empresa || '',
-    filial: client.filial || '',
+    empresa:
+      typeof client.empresa === 'object' && client.empresa?.id
+        ? client.empresa.id
+        : (client.empresa as string) || '',
     email: client.email || '',
     role: client.role || 'user',
   })
@@ -81,15 +90,6 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
           errors.name = 'El nombre debe tener al menos 2 caracteres'
         } else if (value.trim().length > 100) {
           errors.name = 'El nombre no puede exceder 100 caracteres'
-        }
-        break
-
-      case 'filial':
-        // Filial es opcional, solo validar si se proporciona
-        if (value.trim() && value.trim().length < 2) {
-          errors.filial = 'La filial debe tener al menos 2 caracteres'
-        } else if (value.trim().length > 100) {
-          errors.filial = 'La filial no puede exceder 100 caracteres'
         }
         break
 
@@ -133,8 +133,8 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
   const isFormValid = () => {
     const hasErrors = Object.values(fieldErrors).some((error) => error !== '')
     const hasRequiredFields =
-      formData.name?.trim() && 
-      (selectedCompany || (typeof formData.empresa === 'string' && formData.empresa.trim())) && 
+      formData.name?.trim() &&
+      (selectedCompany || (typeof formData.empresa === 'string' && formData.empresa.trim())) &&
       formData.email?.trim()
     return !hasErrors && hasRequiredFields
   }
@@ -143,12 +143,14 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
   const hasChanges = () => {
     // Comparar empresa: si hay selectedCompany, usar su ID, sino usar el valor de formData
     const currentEmpresaValue = selectedCompany ? selectedCompany.id : formData.empresa
-    const originalEmpresaValue = typeof client.empresa === 'object' ? client.empresa.id : client.empresa
-    
+    const originalEmpresaValue =
+      typeof client.empresa === 'object' && client.empresa?.id
+        ? client.empresa.id
+        : client.empresa || ''
+
     return (
       formData.name !== (client.name || '') ||
       currentEmpresaValue !== originalEmpresaValue ||
-      formData.filial !== (client.filial || '') ||
       formData.email !== (client.email || '') ||
       formData.role !== (client.role || 'user')
     )
@@ -172,18 +174,17 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
       if (formData.name !== (client.name || '')) {
         updateData.name = formData.name
       }
-      
+
       // Manejar empresa: usar ID de selectedCompany si existe, sino el valor de formData
       const currentEmpresaValue = selectedCompany ? selectedCompany.id : formData.empresa
-      const originalEmpresaValue = typeof client.empresa === 'object' ? client.empresa.id : client.empresa
+      const originalEmpresaValue =
+        typeof client.empresa === 'object' && client.empresa?.id
+          ? client.empresa.id
+          : client.empresa || ''
       if (currentEmpresaValue !== originalEmpresaValue) {
         updateData.empresa = currentEmpresaValue
       }
-      
-      if (formData.filial !== (client.filial || '')) {
-        updateData.filial = formData.filial
-      }
-      
+
       if (formData.email !== (client.email || '')) {
         updateData.email = formData.email
       }
@@ -226,9 +227,9 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
   const handleCompanyChange = (company: Company | null) => {
     setSelectedCompany(company)
     // Actualizar formData.empresa para mantener compatibilidad
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      empresa: company ? company.id : ''
+      empresa: company ? company.id : '',
     }))
     // Limpiar error si existe
     if (error) setError(null)
@@ -239,8 +240,10 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
     // Resetear formulario
     setFormData({
       name: client.name || '',
-      empresa: client.empresa || '',
-      filial: client.filial || '',
+      empresa:
+        typeof client.empresa === 'object' && client.empresa?.id
+          ? client.empresa.id
+          : (client.empresa as string) || '',
       email: client.email || '',
       role: client.role || 'user',
     })
@@ -303,33 +306,12 @@ export function EditClientModal({ client, isOpen, onClose, onSuccess }: EditClie
           <CompanySelector
             value={selectedCompany || formData.empresa}
             onValueChange={handleCompanyChange}
-            placeholder="Seleccionar empresa..."
+            placeholder='Seleccionar empresa...'
             disabled={isLoading}
             required={true}
-            label="Empresa"
-            className="space-y-2"
+            label='Empresa'
+            className='space-y-2'
           />
-
-          {/* Filial/Departamento */}
-          <div className='space-y-2'>
-            <Label htmlFor='filial' className="flex items-center gap-1">
-              <IconBuildingSkyscraper className='h-4 w-4' />
-              Filial/Departamento
-            </Label>
-            <Input
-              id='filial'
-              value={formData.filial || ''}
-              onChange={(e) => handleInputChange('filial', e.target.value)}
-              placeholder='Ej: Desarrollo, Marketing, Ventas...'
-              className={fieldErrors.filial ? 'border-red-500' : ''}
-              disabled={isLoading}
-              maxLength={100}
-            />
-            {fieldErrors.filial && <p className='text-sm text-red-500'>{fieldErrors.filial}</p>}
-            <p className='text-xs text-muted-foreground'>
-              Opcional - {(formData.filial || '').length}/100 caracteres
-            </p>
-          </div>
 
           {/* Email */}
           <div className='space-y-2'>

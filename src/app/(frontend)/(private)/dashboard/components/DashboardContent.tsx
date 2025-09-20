@@ -21,12 +21,14 @@ export default async function DashboardContent(props: DashboardContentProps) {
     // Verificar autenticación
     if (!user) {
       redirect('/login')
+      return // Esto nunca se ejecuta pero ayuda a TypeScript
     }
 
     // Verificar que el usuario tenga un rol válido
     if (!user.role || !['admin', 'user'].includes(user.role)) {
       console.error(`Usuario ${user.email} tiene rol no válido para dashboard: ${user.role}`)
       redirect('/login')
+      return // Esto nunca se ejecuta pero ayuda a TypeScript
     }
 
     // Renderizar dashboard según el rol
