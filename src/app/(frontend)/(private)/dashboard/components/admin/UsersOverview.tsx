@@ -24,6 +24,8 @@ export default async function UsersOverview() {
           id: user.id,
           name: user.name || user.email || 'Usuario',
           email: user.email,
+          empresa: user.empresa,
+          unidad: user.unidad,
           role: 'user',
           projectsCount: user.projectsCount || 0,
           lastActivity: formatDistanceToNow(new Date(user.lastActivity), {
@@ -62,7 +64,10 @@ export default async function UsersOverview() {
                     {(user.name || user.email || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className='font-medium text-sm'>{user.name}</p>
+                    <p className='font-medium text-sm'>
+                      {user.empresa?.name} {user.unidad ? `- ${user.unidad}` : ''}
+                    </p>
+                    <p className='text-xs text-gray-500'>{user.name}</p>
                     <p className='text-xs text-gray-500'>{user.email}</p>
                   </div>
                 </div>

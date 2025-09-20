@@ -30,6 +30,11 @@ export interface UserMetrics {
     id: string
     name: string
     email: string
+    empresa: {
+      name: string
+      cif: string
+    }
+    unidad: string
     lastActivity: string
     projectsCount: number
   }[]
@@ -161,6 +166,8 @@ async function getAdminDashboardMetrics(payload: any): Promise<{
           id: user.id,
           name: user.name || user.email,
           email: user.email,
+          empresa: user.empresa,
+          unidad: user.filial,
           lastActivity: user.updatedAt,
           projectsCount: projectCount.totalDocs,
         }
