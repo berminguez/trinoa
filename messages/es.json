@@ -148,6 +148,7 @@
       "edit": "Editar",
       "name": "Nombre",
       "company": "Empresa",
+      "unity": "Unidad",
       "email": "Email",
       "role": "Rol",
       "registered": "Registrado:",
@@ -155,6 +156,7 @@
       "noName": "Usuario sin nombre",
       "notSpecified": "No especificado",
       "notSpecifiedCompany": "No especificada",
+      "notSpecifiedUnity": "No especificada",
       "roles": {
         "admin": "Administrador",
         "user": "Usuario",

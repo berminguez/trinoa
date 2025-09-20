@@ -37,7 +37,7 @@
     "verifiedResourcesDesc": "Verified resources",
     "needsReviewDesc": "Need review",
     "administrativeDashboard": "Administrative Dashboard",
-    "globalSystemView": "Global system view - Welcome, {name}",
+    "globalSystemView": "Global system view - Welcome, {{name}}",
     "administrator": "Administrator",
     "fullSystemAccess": "Full system access",
     "clients": "Clients",
@@ -60,7 +60,7 @@
   },
   "dashboardUser": {
     "myDashboard": "My Dashboard",
-    "welcomeBack": "Welcome back, {name}",
+    "welcomeBack": "Welcome back, {{name}}",
     "user": "User",
     "personalView": "Personal view"
   },
@@ -148,6 +148,7 @@
       "edit": "Edit",
       "name": "Name",
       "company": "Company",
+      "unity": "Unity",
       "email": "Email",
       "role": "Role",
       "registered": "Registered:",
@@ -155,6 +156,7 @@
       "noName": "User without name",
       "notSpecified": "Not specified",
       "notSpecifiedCompany": "Not specified",
+      "notSpecifiedUnity": "Not specified",
       "roles": {
         "admin": "Administrator",
         "user": "User",

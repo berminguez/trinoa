@@ -87,8 +87,9 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
     return ''
   }
 
-  const validateCompany = (): string => {
-    if (!selectedCompany) {
+  const validateCompany = (company?: Company | null): string => {
+    const companyToValidate = company !== undefined ? company : selectedCompany
+    if (!companyToValidate) {
       return 'La empresa es requerida'
     }
     return ''
@@ -129,8 +130,11 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
   }
 
   const handleCompanyChange = (company: Company | null) => {
+    console.log('🔷 handleCompanyChange called with:', company)
     setSelectedCompany(company)
-    setCompanyError(validateCompany())
+    const error = validateCompany(company)
+    setCompanyError(error)
+    console.log('🔷 Validation result:', error)
   }
 
   const handleFilialChange = (value: string) => {
@@ -157,7 +161,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
     // Validar todos los campos
     const nameErr = validateName(name)
     const emailErr = validateEmail(email)
-    const companyErr = validateCompany()
+    const companyErr = validateCompany(selectedCompany)
     const filialErr = validateFilial(filial)
     const passwordErr = validatePassword(password)
 
@@ -282,12 +286,15 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
                 <div className='flex items-center gap-2'>
                   <IconBuilding className='h-4 w-4 text-muted-foreground' />
                   <p className='text-sm'>
-                    {typeof createdClient.user.empresa === 'object' 
-                      ? createdClient.user.empresa.name 
-                      : createdClient.user.empresa}
+                    {createdClient.user.empresa
+                      ? typeof createdClient.user.empresa === 'object' &&
+                        createdClient.user.empresa !== null
+                        ? (createdClient.user.empresa as Company).name
+                        : String(createdClient.user.empresa)
+                      : 'Sin empresa'}
                   </p>
                 </div>
-                
+
                 {createdClient.user.filial && (
                   <div className='flex items-center gap-2'>
                     <IconBuildingSkyscraper className='h-4 w-4 text-muted-foreground' />
@@ -403,19 +410,19 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
 
           {/* Empresa */}
           <CompanySelector
-            value={selectedCompany}
+            value={selectedCompany as Company | null}
             onValueChange={handleCompanyChange}
-            placeholder="Seleccionar empresa..."
+            placeholder='Seleccionar empresa...'
             disabled={isCreating}
             required={true}
             error={companyError}
-            label="Empresa"
-            className="space-y-2"
+            label='Empresa'
+            className='space-y-2'
           />
 
           {/* Filial/Departamento */}
           <div className='space-y-2'>
-            <Label htmlFor='filial' className="flex items-center gap-1">
+            <Label htmlFor='filial' className='flex items-center gap-1'>
               <IconBuildingSkyscraper className='h-4 w-4' />
               Filial/Departamento
             </Label>

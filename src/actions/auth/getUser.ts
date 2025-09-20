@@ -79,7 +79,9 @@ export async function getUserAction(): Promise<GetUserResult> {
             const user = await payload.findByID({
               collection: 'users',
               id: jwtPayload.id,
+              depth: 2,
             })
+            console.log('[getUserAction] 👤 Direct user fetch result:', user)
             console.log('[getUserAction] 👤 Direct user fetch result:', {
               found: !!user,
               userEmail: user?.email,

@@ -83,17 +83,17 @@ export function ProfileCard({ user }: ProfileCardProps) {
   // Obtener nombre de la empresa (puede ser string o relación)
   const getCompanyName = (empresa: string | any) => {
     if (!empresa) return null
-    
+
     // Si es un objeto (relación), usar el nombre
     if (typeof empresa === 'object' && empresa.name) {
       return empresa.name
     }
-    
+
     // Si es string (legacy), usar directamente
     if (typeof empresa === 'string') {
       return empresa
     }
-    
+
     return null
   }
 
@@ -162,7 +162,7 @@ export function ProfileCard({ user }: ProfileCardProps) {
               <div className='flex items-center gap-2 p-3 bg-muted/50 rounded-lg'>
                 <IconBuilding className='h-4 w-4 text-muted-foreground' />
                 {getCompanyName(userData.empresa) ? (
-                  <Badge variant="secondary" className="text-sm">
+                  <Badge variant='secondary' className='text-sm'>
                     {getCompanyName(userData.empresa)}
                   </Badge>
                 ) : (
@@ -171,17 +171,17 @@ export function ProfileCard({ user }: ProfileCardProps) {
               </div>
             </div>
 
-            {/* Filial */}
+            {/* Unidad */}
             <div className='space-y-2'>
-              <label className='text-sm font-medium text-muted-foreground'>{t('branch')}</label>
+              <label className='text-sm font-medium text-muted-foreground'>{t('unity')}</label>
               <div className='flex items-center gap-2 p-3 bg-muted/50 rounded-lg'>
                 <IconBuildingSkyscraper className='h-4 w-4 text-muted-foreground' />
                 {userData.filial ? (
-                  <Badge variant="outline" className="text-sm">
+                  <Badge variant='outline' className='text-sm'>
                     {userData.filial}
                   </Badge>
                 ) : (
-                  <span className='text-sm text-muted-foreground'>{t('notSpecifiedBranch')}</span>
+                  <span className='text-sm text-muted-foreground'>{t('notSpecifiedUnity')}</span>
                 )}
               </div>
             </div>

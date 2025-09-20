@@ -10,6 +10,7 @@ interface CreateClientData {
   name: string
   email: string
   empresa: string
+  filial?: string // Opcional - filial/departamento del usuario
   password?: string // Opcional - si no se proporciona se genera una aleatoria
 }
 
@@ -163,6 +164,7 @@ export async function createClientAction(data: CreateClientData): Promise<Create
       name: data.name.trim(),
       email: data.email.trim().toLowerCase(),
       empresa: data.empresa.trim(),
+      filial: data.filial?.trim() || undefined, // Filial opcional
       password: password,
       role: 'user' as const, // Siempre crear como usuario normal
     }

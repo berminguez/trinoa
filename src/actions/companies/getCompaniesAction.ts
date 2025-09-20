@@ -2,7 +2,7 @@
 
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { getUser } from '@/actions/auth/getUser'
+import { getCurrentUser } from '@/actions/auth/getUser'
 import type { Company } from '@/payload-types'
 
 export interface GetCompaniesResult {
@@ -13,15 +13,15 @@ export interface GetCompaniesResult {
 
 /**
  * Server action para obtener lista de empresas disponibles
- * 
+ *
  * Todos los usuarios autenticados pueden obtener la lista (para selectors)
- * 
+ *
  * @returns Promise<GetCompaniesResult> - Lista de empresas
  */
 export async function getCompaniesAction(): Promise<GetCompaniesResult> {
   try {
     // Validar que hay un usuario autenticado
-    const user = await getUser()
+    const user = await getCurrentUser()
     if (!user) {
       return {
         success: false,

@@ -120,7 +120,7 @@ async function getAdminDashboardMetrics(payload: any): Promise<{
       }),
       payload.count({
         collection: 'resources',
-        where: { confidence: { equals: 'needs-review' } },
+        where: { confidence: { equals: 'needs_revision' } },
       }),
       payload.count({
         collection: 'resources',
