@@ -23,6 +23,8 @@ export const Resources: CollectionConfig = {
     defaultColumns: [
       'title',
       'project',
+      'empresa',
+      'codigo',
       'namespace',
       'type',
       'status',
@@ -57,6 +59,45 @@ export const Resources: CollectionConfig = {
         if (!value) {
           return 'El recurso debe estar asociado a un proyecto'
         }
+        return true
+      },
+    },
+    {
+      name: 'empresa',
+      type: 'relationship',
+      relationTo: 'companies',
+      required: true,
+      admin: {
+        description: 'Empresa a la que pertenece este recurso',
+        position: 'sidebar',
+      },
+      validate: (value: any) => {
+        if (!value) {
+          return 'El recurso debe estar asociado a una empresa'
+        }
+        return true
+      },
+    },
+    {
+      name: 'codigo',
+      type: 'text',
+      required: false, // Se genera automáticamente
+      unique: true, // Garantizar unicidad global
+      admin: {
+        description:
+          'Código único autogenerado con formato COD-XXXX (donde COD es el código de empresa)',
+        position: 'sidebar',
+      },
+      validate: (value: string | null | undefined) => {
+        if (!value) {
+          return true // El campo puede estar vacío al momento de validación (se genera automáticamente)
+        }
+
+        // Validar formato COD-XXXX donde COD son 3 letras y XXXX son 4 caracteres alfanuméricos
+        if (!/^[A-Z]{3}-[0-9A-Z]{4}$/.test(value)) {
+          return 'El código debe tener el formato COD-XXXX (3 letras mayúsculas, guión, 4 caracteres alfanuméricos)'
+        }
+
         return true
       },
     },
@@ -1454,9 +1495,162 @@ export const Resources: CollectionConfig = {
             throw new Error('Namespace es requerido para crear un recurso')
           }
 
+          // Validar que se haya especificado una empresa
+          if (!data.empresa) {
+            throw new Error('La empresa es requerida para crear un recurso')
+          }
+
           // Inicializar campos opcionales si no están presentes
           data.filters = data.filters || {}
           data.user_metadata = data.user_metadata || {}
+
+          // Generar código único automáticamente
+          try {
+            // Obtener información de la empresa
+            const empresaId = typeof data.empresa === 'object' ? data.empresa.id : data.empresa
+            const empresa = await req.payload.findByID({
+              collection: 'companies',
+              id: empresaId,
+              depth: 0,
+            })
+
+            if (!empresa || !empresa.code) {
+              throw new Error('No se pudo obtener el código de la empresa')
+            }
+
+            const empresaCode = empresa.code.toUpperCase()
+
+            // Buscar el último código generado para esta empresa
+            const existingResources = await req.payload.find({
+              collection: 'resources',
+              where: {
+                empresa: {
+                  equals: empresaId,
+                },
+                codigo: {
+                  like: `${empresaCode}-`,
+                },
+              },
+              sort: '-codigo',
+              limit: 1,
+              depth: 0,
+            })
+
+            let nextSequence = '0001' // Valor por defecto
+
+            if (existingResources.docs.length > 0) {
+              const lastCode = existingResources.docs[0].codigo
+              if (!lastCode) {
+                throw new Error('Código del último recurso no encontrado')
+              }
+              const lastSequence = lastCode.split('-')[1] // Obtener la parte XXXX
+
+              // Convertir de base 36 a decimal, incrementar, y volver a base 36
+              const lastNumber = parseInt(lastSequence, 36)
+              const nextNumber = lastNumber + 1
+              nextSequence = nextNumber.toString(36).toUpperCase().padStart(4, '0')
+            }
+
+            // Generar el código final
+            const newCode = `${empresaCode}-${nextSequence}`
+
+            // Verificar que el código no existe (doble verificación)
+            const codeCheck = await req.payload.find({
+              collection: 'resources',
+              where: {
+                codigo: {
+                  equals: newCode,
+                },
+              },
+              limit: 1,
+              depth: 0,
+            })
+
+            if (codeCheck.docs.length > 0) {
+              throw new Error(`El código ${newCode} ya está en uso`)
+            }
+
+            data.codigo = newCode
+            console.log(`[RESOURCES] Código generado automáticamente: ${newCode}`)
+          } catch (error) {
+            console.error('[RESOURCES] Error generando código automático:', error)
+            throw new Error(`Error generando código automático: ${error}`)
+          }
+        }
+
+        // Generar código automáticamente en updates cuando hay empresa pero no código
+        if (operation === 'update' && data.empresa && !data.codigo) {
+          try {
+            // Obtener información de la empresa
+            const empresaId = typeof data.empresa === 'object' ? data.empresa.id : data.empresa
+            const empresa = await req.payload.findByID({
+              collection: 'companies',
+              id: empresaId,
+              depth: 0,
+            })
+
+            if (!empresa || !empresa.code) {
+              throw new Error('No se pudo obtener el código de la empresa')
+            }
+
+            const empresaCode = empresa.code.toUpperCase()
+
+            // Buscar el último código generado para esta empresa
+            const existingResources = await req.payload.find({
+              collection: 'resources',
+              where: {
+                empresa: {
+                  equals: empresaId,
+                },
+                codigo: {
+                  like: `${empresaCode}-`,
+                },
+              },
+              sort: '-codigo',
+              limit: 1,
+              depth: 0,
+            })
+
+            let nextSequence = '0001' // Valor por defecto
+
+            if (existingResources.docs.length > 0) {
+              const lastCode = existingResources.docs[0].codigo
+              if (!lastCode) {
+                throw new Error('Código del último recurso no encontrado')
+              }
+              const lastSequence = lastCode.split('-')[1] // Obtener la parte XXXX
+
+              // Convertir de base 36 a decimal, incrementar, y volver a base 36
+              const lastNumber = parseInt(lastSequence, 36)
+              const nextNumber = lastNumber + 1
+              nextSequence = nextNumber.toString(36).toUpperCase().padStart(4, '0')
+            }
+
+            // Generar el código final
+            const newCode = `${empresaCode}-${nextSequence}`
+
+            // Verificar que el código no existe (doble verificación)
+            const codeCheck = await req.payload.find({
+              collection: 'resources',
+              where: {
+                codigo: {
+                  equals: newCode,
+                },
+              },
+              limit: 1,
+              depth: 0,
+            })
+
+            if (codeCheck.docs.length > 0) {
+              throw new Error(`El código ${newCode} ya está en uso`)
+            }
+
+            data.codigo = newCode
+            console.log(`[RESOURCES] Código generado automáticamente en update: ${newCode}`)
+          } catch (error) {
+            console.error('[RESOURCES] Error generando código automático en update:', error)
+            throw new Error(`Error generando código automático: ${error}`)
+          }
         }
 
         if (operation === 'create' && (data.type === 'document' || data.type === 'image')) {

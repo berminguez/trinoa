@@ -296,6 +296,14 @@ export interface Resource {
    */
   project: string | Project;
   /**
+   * Empresa a la que pertenece este recurso
+   */
+  empresa: string | Company;
+  /**
+   * Código único autogenerado con formato COD-XXXX (donde COD es el código de empresa)
+   */
+  codigo?: string | null;
+  /**
    * Namespace para organizar contenidos (ej: curso-matematicas, empresa-acme)
    */
   namespace: string;
@@ -1167,6 +1175,8 @@ export interface MediaSelect<T extends boolean = true> {
 export interface ResourcesSelect<T extends boolean = true> {
   title?: T;
   project?: T;
+  empresa?: T;
+  codigo?: T;
   namespace?: T;
   lastUpdatedBy?: T;
   executionId?: T;
