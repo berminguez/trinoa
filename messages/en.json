@@ -323,6 +323,7 @@
     "couldNotDeleteMultiple": "Could not delete documents",
     "editingMetadata": "Metadata editing",
     "fileName": "File name",
+    "code": "Code",
     "image": "Image",
     "uploaded": "Uploaded",
     "deleteSuccess": "Document deleted!",

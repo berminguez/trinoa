@@ -313,6 +313,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
         setColumnVisibility((prev) => ({
           ...prev,
           // Umbrales relativos al ancho disponible del bloque derecho
+          codigo: width > 520, // Mostrar código desde anchuras medias
           type: width > 680,
           createdAt: width > 900,
           status: width > 560,
@@ -557,7 +558,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
           accessorKey: 'title',
           header: ({ column }) => {
             return (
-              <div className='w-[28%] xl:w-[26%]'>
+              <div className='w-[22%] xl:w-[20%]'>
                 <Button
                   variant='ghost'
                   onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
@@ -584,6 +585,33 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
               </div>
             )
           },
+        },
+        // Columna de código
+        {
+          accessorKey: 'codigo',
+          header: ({ column }) => {
+            return (
+              <div className='w-[12%] xl:w-[10%]'>
+                <Button
+                  variant='ghost'
+                  onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                  className='h-auto p-0 hover:bg-transparent'
+                >
+                  {t('documents.code')}
+                  {column.getIsSorted() === 'asc' ? (
+                    <IconArrowUp className='ml-2 h-4 w-4' />
+                  ) : column.getIsSorted() === 'desc' ? (
+                    <IconArrowDown className='ml-2 h-4 w-4' />
+                  ) : null}
+                </Button>
+              </div>
+            )
+          },
+          cell: ({ row }) => {
+            const codigo = (row.getValue('codigo') as string) || '-'
+            return <div className='text-sm font-mono text-muted-foreground'>{codigo}</div>
+          },
+          enableGlobalFilter: true, // Permitir filtrado global en este campo
         },
         // Columna de tipo de documento
         {

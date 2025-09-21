@@ -323,6 +323,7 @@
     "couldNotDeleteMultiple": "No se pudieron borrar los documentos",
     "editingMetadata": "Edición de metadatos",
     "fileName": "Nombre del archivo",
+    "code": "Código",
     "image": "Imagen",
     "uploaded": "Subido",
     "deleteSuccess": "¡Documento eliminado!",
