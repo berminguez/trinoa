@@ -196,6 +196,10 @@ export interface Company {
    */
   cif: string;
   /**
+   * Código único de 3 letras mayúsculas para la empresa
+   */
+  code: string;
+  /**
    * Fecha de creación de la empresa
    */
   createdAt: string;
@@ -1090,6 +1094,7 @@ export interface UsersSelect<T extends boolean = true> {
 export interface CompaniesSelect<T extends boolean = true> {
   name?: T;
   cif?: T;
+  code?: T;
   createdAt?: T;
   updatedAt?: T;
 }

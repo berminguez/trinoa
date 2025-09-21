@@ -17,6 +17,7 @@ import { useLocale, useTranslations } from 'next-intl'
 
 import { updateResourceAction } from '@/actions/resources/updateResource'
 import { useRouter } from 'next/navigation'
+import useResourceVerificationStore from '@/stores/resource-verification-store'
 
 type Fields = Record<string, any>
 
@@ -95,6 +96,7 @@ export default function AnalyzeFieldsPanel({
   const tForms = useTranslations('forms')
   const locale = useLocale()
   const router = useRouter()
+  const checkCanVerify = useResourceVerificationStore((s) => s.checkCanVerify)
   const [loading, setLoading] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [fields, setFields] = React.useState<Fields>({})
@@ -173,6 +175,9 @@ export default function AnalyzeFieldsPanel({
 
       // Refrescar para que el estado de confianza se actualice sin recargar manualmente
       router.refresh()
+
+      // Recalcular estado de verificación
+      await checkCanVerify(resourceId)
     } catch (e) {
       toast.error(String(e))
     } finally {
@@ -343,7 +348,7 @@ export default function AnalyzeFieldsPanel({
     }
   }
 
-  const confirmField = (key: string) => {
+  const confirmField = async (key: string) => {
     setFields((prev) => {
       const cur = (prev as any)[key] || {}
       const value = getValue(cur)
@@ -362,7 +367,7 @@ export default function AnalyzeFieldsPanel({
     pendingKeysRef.current.add(key)
     // Guardar inmediatamente al confirmar
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-    void persistPendingChanges()
+    await persistPendingChanges()
   }
 
   // Función para determinar si un campo obligatorio necesita revisión
@@ -427,7 +432,7 @@ export default function AnalyzeFieldsPanel({
               <Button
                 variant='ghost'
                 size='icon'
-                onClick={() => confirmField(fieldKey)}
+                onClick={() => void confirmField(fieldKey)}
                 aria-label={t('confirm')}
               >
                 <IconCheck className='h-4 w-4' />

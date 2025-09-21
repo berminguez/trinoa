@@ -102,8 +102,8 @@ export const Companies: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'cif', 'createdAt'],
-    listSearchableFields: ['name', 'cif'],
+    defaultColumns: ['name', 'code', 'cif', 'createdAt'],
+    listSearchableFields: ['name', 'code', 'cif'],
     description: 'Gestiona empresas del sistema para asignación a usuarios',
   },
   fields: [
@@ -163,6 +163,45 @@ export const Companies: CollectionConfig = {
         beforeChange: [
           ({ value }) => {
             // Normalizar CIF a mayúsculas
+            if (value && typeof value === 'string') {
+              return value.trim().toUpperCase()
+            }
+            return value
+          },
+        ],
+      },
+    },
+    {
+      name: 'code',
+      type: 'text',
+      required: true,
+      index: true,
+      admin: {
+        description: 'Código único de 3 letras mayúsculas para la empresa',
+      },
+      validate: (value: string | null | undefined) => {
+        if (!value || typeof value !== 'string' || value.trim().length === 0) {
+          return 'El código de la empresa es requerido'
+        }
+
+        const cleanCode = value.trim().toUpperCase()
+
+        // Validar que sean exactamente 3 caracteres
+        if (cleanCode.length !== 3) {
+          return 'El código debe tener exactamente 3 caracteres'
+        }
+
+        // Validar que sean solo letras A-Z
+        if (!/^[A-Z]{3}$/.test(cleanCode)) {
+          return 'El código debe contener solo 3 letras mayúsculas (A-Z)'
+        }
+
+        return true
+      },
+      hooks: {
+        beforeChange: [
+          ({ value }) => {
+            // Normalizar código a mayúsculas y quitar espacios
             if (value && typeof value === 'string') {
               return value.trim().toUpperCase()
             }
@@ -314,6 +353,54 @@ export const Companies: CollectionConfig = {
               error instanceof Error
                 ? error.message
                 : 'Error validando unicidad del CIF de empresa',
+            )
+          }
+        }
+      },
+      // Validar que no existan empresas duplicadas por código
+      async ({ req, data, operation, originalDoc }) => {
+        if (data?.code) {
+          try {
+            const normalizedCode = data.code.trim().toUpperCase()
+            let currentDocId: string | undefined
+
+            if (operation === 'update' && originalDoc) {
+              currentDocId = originalDoc.id
+            }
+
+            const existingCompanies = await req.payload.find({
+              collection: 'companies' as any,
+              where: {
+                and: [
+                  {
+                    code: {
+                      equals: normalizedCode,
+                    },
+                  },
+                  // Excluir el documento actual en caso de update
+                  ...(operation === 'update' && currentDocId
+                    ? [
+                        {
+                          id: {
+                            not_equals: currentDocId,
+                          },
+                        },
+                      ]
+                    : []),
+                ],
+              },
+              limit: 1,
+            })
+
+            if (existingCompanies.docs.length > 0) {
+              throw new Error('Ya existe una empresa con este código')
+            }
+          } catch (error) {
+            console.error('Error validating company code uniqueness:', error)
+            throw new Error(
+              error instanceof Error
+                ? error.message
+                : 'Error validando unicidad del código de empresa',
             )
           }
         }

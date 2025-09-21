@@ -24,6 +24,7 @@ import { verifyResourceAction } from '@/actions/resources/verifyResource'
 import { canBeVerified, getConfidenceThreshold } from '@/lib/utils/calculateResourceConfidence'
 import { useRouter } from 'next/navigation'
 import AnalyzeFieldsPanel from './AnalyzeFieldsPanel'
+import useResourceVerificationStore from '@/stores/resource-verification-store'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,50 +72,34 @@ export default function ResourceForm({
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [documentoErroneo, setDocumentoErroneo] = useState(Boolean(initialDocumentoErroneo))
   const [verifyPopoverOpen, setVerifyPopoverOpen] = useState(false)
-  const [canVerify, setCanVerify] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const [currentConfidence, setCurrentConfidence] = useState(initialConfidence)
   const [isCancelling, setIsCancelling] = useState(false)
+
+  // Estado reactivo de verificación desde el store
+  const canVerify = useResourceVerificationStore((s) => s.verificationStatus[resourceId] || false)
+  const checkCanVerify = useResourceVerificationStore((s) => s.checkCanVerify)
+  const clearResource = useResourceVerificationStore((s) => s.clearResource)
 
   // Establecer estado inicial
   useEffect(() => {
     if (initialStatus === 'processing') setIsProcessing(true)
   }, [initialStatus, setIsProcessing])
 
-  // Verificar si el recurso puede ser verificado
+  // Verificar si el recurso puede ser verificado al montar y cuando cambien las condiciones
   useEffect(() => {
-    const checkCanVerify = async () => {
-      try {
-        // Obtener datos actuales del recurso
-        const response = await fetch(`/api/resources/${resourceId}?depth=0`)
-        const resource = await response.json()
-
-        // Obtener threshold de configuración
-        const configResponse = await fetch('/api/globals/configuracion')
-        const config = await configResponse.json()
-        const threshold = config?.confidenceSettings?.confidenceThreshold ?? 70
-
-        // Obtener campos obligatorios
-        const translationsResponse = await fetch('/api/field-translations?limit=1000&sort=order')
-        const translationsData = await translationsResponse.json()
-        const requiredFieldNames =
-          translationsData?.docs?.filter((d: any) => d?.isRequired)?.map((d: any) => d.key) || []
-
-        const canVerifyResource = canBeVerified(resource, threshold, { requiredFieldNames })
-        setCanVerify(canVerifyResource)
-      } catch (error) {
-        console.error('Error checking if resource can be verified:', error)
-        setCanVerify(false)
-      }
-    }
-
     // Solo verificar si no está procesando y no es documento erróneo
     if (!isProcessing && !documentoErroneo && currentConfidence !== 'verified') {
-      checkCanVerify()
-    } else {
-      setCanVerify(false)
+      checkCanVerify(resourceId)
     }
-  }, [resourceId, isProcessing, documentoErroneo, currentConfidence])
+  }, [resourceId, isProcessing, documentoErroneo, currentConfidence, checkCanVerify])
+
+  // Limpiar estado del store cuando el componente se desmonte
+  useEffect(() => {
+    return () => {
+      clearResource(resourceId)
+    }
+  }, [resourceId, clearResource])
 
   // Función para manejar el cambio del estado de documento erróneo
   const handleDocumentoErroneoChange = async (checked: boolean) => {
@@ -142,8 +127,10 @@ export default function ResourceForm({
       if (result.success) {
         // Actualizar estado local inmediatamente
         setCurrentConfidence('verified')
-        setCanVerify(false)
         setVerifyPopoverOpen(false)
+
+        // Limpiar estado de verificación del store ya que el recurso está verificado
+        clearResource(resourceId)
 
         toast.success(t('documentVerifiedSuccessfully'))
 
