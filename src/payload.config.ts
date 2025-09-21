@@ -79,15 +79,19 @@ export default buildConfig({
               media: {
                 // Configuración específica para documentos (PDFs e imágenes)
                 signedDownloads: {
-                  shouldUseSignedURL: ({ collection, filename, req }) => {
+                  shouldUseSignedURL: ({
+                    collection,
+                    filename,
+                    req,
+                  }: {
+                    collection: any
+                    filename: any
+                    req: any
+                  }) => {
                     // Usar URLs firmadas para archivos PDF (mejor seguridad)
                     return filename.endsWith('.pdf') || filename.endsWith('.PDF')
                   },
                 },
-                // Habilitar operaciones DELETE explícitamente
-                disableLocalStorage: true,
-                // Permitir eliminación de archivos en S3
-                prefix: 'media',
               },
             },
             bucket: process.env.AWS_S3_BUCKET,
