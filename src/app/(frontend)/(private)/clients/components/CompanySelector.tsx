@@ -80,7 +80,7 @@ export function CompanySelector({
     return companies.map((company) => ({
       value: company.id,
       label: company.name,
-      searchLabel: `${company.name} ${company.cif}`, // Para búsqueda por nombre y CIF
+      searchLabel: `${company.name} ${company.code || ''} ${company.cif}`, // Para búsqueda por nombre, código y CIF
     }))
   }, [companies])
 
@@ -141,7 +141,7 @@ export function CompanySelector({
         )}
         <div className='flex items-center justify-center h-10 border border-input rounded-md bg-muted'>
           <IconLoader2 className='h-4 w-4 animate-spin text-muted-foreground' />
-          <span className='ml-2 text-sm text-muted-foreground'>Cargando empresas...</span>
+          <span className='ml-2 text-sm text-muted-foreground'>{t('loading')}</span>
         </div>
       </div>
     )
@@ -162,7 +162,7 @@ export function CompanySelector({
           <AlertDescription className='flex items-center justify-between'>
             <span>{loadError}</span>
             <Button size='sm' variant='outline' onClick={loadCompanies}>
-              Reintentar
+              {t('retry')}
             </Button>
           </AlertDescription>
         </Alert>
@@ -188,13 +188,15 @@ export function CompanySelector({
             <IconBuilding className='h-4 w-4 text-muted-foreground' />
             <div>
               <p className='text-sm font-medium'>{selectedCompany.name}</p>
-              <p className='text-xs text-muted-foreground'>CIF: {selectedCompany.cif}</p>
+              <p className='text-xs text-muted-foreground'>
+                {selectedCompany.code && `${selectedCompany.code} • `}CIF: {selectedCompany.cif}
+              </p>
             </div>
           </div>
           <div className='flex items-center gap-2'>
             <Badge variant='secondary' className='text-xs'>
               <IconCheck className='h-3 w-3 mr-1' />
-              Seleccionada
+              {t('selected')}
             </Badge>
             {!disabled && (
               <Button
@@ -217,8 +219,8 @@ export function CompanySelector({
           value={currentValue}
           onValueChange={handleSelectCompany}
           placeholder={placeholder}
-          searchPlaceholder='Buscar empresa por nombre o CIF...'
-          emptyText='No se encontraron empresas'
+          searchPlaceholder='Buscar empresa por nombre, código o CIF...'
+          emptyText={t('noCompanies')}
           disabled={disabled}
           className={error ? 'border-destructive' : ''}
           footer={
@@ -242,7 +244,7 @@ export function CompanySelector({
               }}
             >
               <IconPlus className='h-4 w-4' />
-              Crear nueva empresa
+              {t('createCompany')}
             </Button>
           }
         />
@@ -258,9 +260,7 @@ export function CompanySelector({
 
       {/* Información adicional */}
       {!selectedCompany && !error && (
-        <p className='text-xs text-muted-foreground'>
-          Selecciona una empresa existente o crea una nueva
-        </p>
+        <p className='text-xs text-muted-foreground'>{t('selectCompany')}</p>
       )}
 
       {/* Dialog para crear nueva empresa */}

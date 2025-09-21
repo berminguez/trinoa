@@ -90,7 +90,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
   const validateCompany = (company?: Company | null): string => {
     const companyToValidate = company !== undefined ? company : selectedCompany
     if (!companyToValidate) {
-      return 'La empresa es requerida'
+      return t('errors.companyRequired')
     }
     return ''
   }
@@ -98,10 +98,10 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
   const validateFilial = (value: string): string => {
     // Filial es opcional, solo validar si se proporciona
     if (value.trim() && value.trim().length < 2) {
-      return 'La filial debe tener al menos 2 caracteres'
+      return t('errors.filialMinLength')
     }
     if (value.trim().length > 100) {
-      return 'La filial no puede exceder 100 caracteres'
+      return t('errors.filialMaxLength')
     }
     return ''
   }
@@ -188,14 +188,14 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
 
       if (result.success && result.data) {
         setCreatedClient(result.data)
-        toast.success(result.message || 'Cliente creado exitosamente')
+        toast.success(result.message || t('success'))
         onSuccess?.(result.data.user)
       } else {
-        toast.error(result.message || 'Error al crear el cliente')
+        toast.error(result.message || t('errors.serverError'))
       }
     } catch (error) {
       console.error('Error creating client:', error)
-      toast.error('Error interno del servidor')
+      toast.error(t('errors.serverError'))
     } finally {
       setIsCreating(false)
     }
@@ -225,10 +225,10 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      toast.success('Copiado al portapapeles')
+      toast.success(t('passwordCopied'))
     } catch (error) {
       console.error('Error copying to clipboard:', error)
-      toast.error('Error al copiar')
+      toast.error(t('errors.copyError'))
     }
   }
 
@@ -259,7 +259,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
               <IconUser className='h-5 w-5 text-green-600' />
-              {t('title')} - Éxito
+              {t('title')} - {t('success')}
             </DialogTitle>
             <DialogDescription>
               El cliente ha sido creado y ya puede acceder al sistema.
@@ -311,7 +311,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
                   <div className='flex items-center gap-2 mb-2'>
                     <IconKey className='h-4 w-4 text-orange-600' />
                     <Label className='text-sm font-medium text-orange-800'>
-                      Contraseña Generada
+                      {t('generatedPassword')}
                     </Label>
                   </div>
                   <div className='flex items-center gap-2'>
@@ -340,16 +340,14 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
                       <IconCopy className='h-4 w-4' />
                     </Button>
                   </div>
-                  <p className='text-xs text-orange-700 mt-2'>
-                    ⚠️ Guarda esta contraseña ya que no se mostrará nuevamente
-                  </p>
+                  <p className='text-xs text-orange-700 mt-2'>⚠️ {t('generatedPasswordWarning')}</p>
                 </CardContent>
               </Card>
             )}
           </div>
 
           <DialogFooter>
-            <Button onClick={() => handleOpenChange(false)}>Cerrar</Button>
+            <Button onClick={() => handleOpenChange(false)}>{t('close')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -390,7 +388,9 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
               maxLength={100}
             />
             {nameError && <p className='text-sm text-destructive'>{nameError}</p>}
-            <p className='text-xs text-muted-foreground'>{name.length}/100 caracteres</p>
+            <p className='text-xs text-muted-foreground'>
+              {name.length}/100 {t('characters')}
+            </p>
           </div>
 
           {/* Email */}
@@ -412,11 +412,11 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
           <CompanySelector
             value={selectedCompany as Company | null}
             onValueChange={handleCompanyChange}
-            placeholder='Seleccionar empresa...'
+            placeholder={t('companyPlaceholder')}
             disabled={isCreating}
             required={true}
             error={companyError}
-            label='Empresa'
+            label={t('company')}
             className='space-y-2'
           />
 
@@ -424,11 +424,11 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
           <div className='space-y-2'>
             <Label htmlFor='filial' className='flex items-center gap-1'>
               <IconBuildingSkyscraper className='h-4 w-4' />
-              Filial/Departamento
+              {t('filial')}
             </Label>
             <Input
               id='filial'
-              placeholder='Ej: Desarrollo, Marketing, Ventas...'
+              placeholder={t('filialPlaceholder')}
               value={filial}
               onChange={(e) => handleFilialChange(e.target.value)}
               className={filialError ? 'border-destructive' : ''}
@@ -437,7 +437,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
             />
             {filialError && <p className='text-sm text-destructive'>{filialError}</p>}
             <p className='text-xs text-muted-foreground'>
-              Opcional - {filial.length}/100 caracteres
+              {t('optional')} - {filial.length}/100 {t('characters')}
             </p>
           </div>
 
@@ -451,18 +451,18 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
                 disabled={isCreating}
               />
               <Label htmlFor='generatePassword' className='text-sm'>
-                Generar contraseña automáticamente
+                {t('generatePassword')}
               </Label>
             </div>
 
             {!generatePassword && (
               <div className='space-y-2'>
-                <Label htmlFor='password'>Contraseña *</Label>
+                <Label htmlFor='password'>{t('password')} *</Label>
                 <div className='flex items-center gap-2'>
                   <Input
                     id='password'
                     type={showPassword ? 'text' : 'password'}
-                    placeholder='Mínimo 8 caracteres...'
+                    placeholder={t('passwordPlaceholder')}
                     value={password}
                     onChange={(e) => handlePasswordChange(e.target.value)}
                     className={passwordError ? 'border-destructive' : ''}
@@ -484,7 +484,9 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
                   </Button>
                 </div>
                 {passwordError && <p className='text-sm text-destructive'>{passwordError}</p>}
-                <p className='text-xs text-muted-foreground'>{password.length}/128 caracteres</p>
+                <p className='text-xs text-muted-foreground'>
+                  {password.length}/128 {t('characters')}
+                </p>
               </div>
             )}
           </div>
@@ -496,7 +498,7 @@ export function CreateClientModal({ trigger, onSuccess }: CreateClientModalProps
               onClick={() => handleOpenChange(false)}
               disabled={isCreating}
             >
-              Cancelar
+              {t('cancel')}
             </Button>
             <Button type='submit' disabled={!isFormValid}>
               {isCreating ? (

@@ -576,6 +576,17 @@
       "client": "cliente",
       "clients": "clientes"
     },
+    "companySelector": {
+      "placeholder": "Seleccionar empresa...",
+      "label": "Empresa",
+      "error": "Error al seleccionar la empresa",
+      "loading": "Cargando empresas...",
+      "retry": "Reintentar",
+      "selected": "Seleccionada",
+      "noCompanies": "No se encontraron empresas",
+      "createCompany": "Crear empresa",
+      "selectCompany": "Selecciona una empresa existente o crea una nueva"
+    },
     "filters": {
       "search": "Buscar clientes...",
       "role": "Filtrar por rol",
@@ -600,6 +611,39 @@
       "delete": "Eliminar",
       "viewProjects": "Ver Proyectos"
     },
+    "createCompanyDialog": {
+      "title": "Crear Empresa",
+      "description": "Crea una nueva empresa.",
+      "name": "Nombre de la empresa",
+      "namePlaceholder": "Nombre de la empresa",
+      "code": "Código de la empresa",
+      "codePlaceholder": "ABC, TEC, INN",
+      "cif": "CIF de la empresa",
+      "cifPlaceholder": "12345678A",
+      "cancel": "Cancelar",
+      "create": "Crear Empresa",
+      "creating": "Creando...",
+      "descriptionContext": "Solo los administradores pueden crear nuevas empresas. Esta empresa estará disponible para todos los usuarios.",
+      "codeUnique": "Código único de 3 letras mayúsculas (A-Z)",
+      "cifDescription": "Solo letras y números",
+      "cifUnique": "CIF único",
+      "success": "Empresa creada exitosamente",
+      "characters": "caracteres",
+      "company": "Empresa",
+      "companyPlaceholder": "Nombre de la empresa",
+      "errors": {
+        "nameRequired": "El nombre es requerido",
+        "nameMinLength": "El nombre debe tener al menos 2 caracteres",
+        "nameMaxLength": "El nombre no puede exceder 100 caracteres",
+        "codeRequired": "El código es requerido",
+        "codeMinLength": "El código debe tener al menos 2 caracteres",
+        "codeMaxLength": "El código no puede exceder 3 caracteres",
+        "cifRequired": "El CIF es requerido",
+        "cifMinLength": "El CIF debe tener al menos 2 caracteres",
+        "cifMaxLength": "El CIF no puede exceder 9 caracteres",
+        "serverError": "Error interno del servidor. Intenta nuevamente."
+      }
+    },
     "createModal": {
       "title": "Crear Nuevo Cliente",
       "description": "Completa la información del nuevo cliente. Los campos marcados con * son obligatorios.",
@@ -619,6 +663,13 @@
       "cancel": "Cancelar",
       "create": "Crear Cliente",
       "creating": "Creando...",
+      "filial": "Filial/Departamento",
+      "filialPlaceholder": "Ej: Desarrollo, Marketing, Ventas...",
+      "optional": "Opcional",
+      "characters": "caracteres",
+      "generatedPassword": "Contraseña generada",
+      "generatedPasswordWarning": "Guarda esta contraseña ya que no se mostrará nuevamente",
+      "copyError": "Error al copiar la contraseña",
       "errors": {
         "nameRequired": "El nombre es requerido",
         "nameMinLength": "El nombre debe tener al menos 2 caracteres",

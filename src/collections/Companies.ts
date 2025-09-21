@@ -345,7 +345,10 @@ export const Companies: CollectionConfig = {
             })
 
             if (existingCompanies.docs.length > 0) {
-              throw new Error('Ya existe una empresa con este CIF')
+              const existingCompany = existingCompanies.docs[0]
+              throw new Error(
+                `El CIF "${normalizedCif}" ya está en uso por la empresa "${existingCompany.name}" (ID: ${existingCompany.id})`,
+              )
             }
           } catch (error) {
             console.error('Error validating company CIF uniqueness:', error)
@@ -393,7 +396,10 @@ export const Companies: CollectionConfig = {
             })
 
             if (existingCompanies.docs.length > 0) {
-              throw new Error('Ya existe una empresa con este código')
+              const existingCompany = existingCompanies.docs[0]
+              throw new Error(
+                `El código "${normalizedCode}" ya está en uso por la empresa "${existingCompany.name}" (ID: ${existingCompany.id})`,
+              )
             }
           } catch (error) {
             console.error('Error validating company code uniqueness:', error)

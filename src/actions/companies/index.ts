@@ -6,18 +6,13 @@
 export { createCompanyAction } from './createCompanyAction'
 export { getCompaniesAction } from './getCompaniesAction'
 export { validateCompanyAction } from './validateCompanyAction'
+export { checkCompanyCodeAction } from './checkCompanyCodeAction'
 
 // Tipos relacionados con empresas
-export type {
-  CreateCompanyData,
-  CreateCompanyResult,
-} from './createCompanyAction'
+export type { CreateCompanyData, CreateCompanyResult } from './createCompanyAction'
 
-export type {
-  GetCompaniesResult,
-} from './getCompaniesAction'
+export type { GetCompaniesResult } from './getCompaniesAction'
 
-export type {
-  ValidateCompanyData,
-  ValidateCompanyResult,
-} from './validateCompanyAction'
+export type { ValidateCompanyData, ValidateCompanyResult } from './validateCompanyAction'
+
+export type { CheckCompanyCodeResult } from './checkCompanyCodeAction'

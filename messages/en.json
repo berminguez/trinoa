@@ -572,6 +572,17 @@
       "admin": "Admin",
       "clients": "Clients"
     },
+    "companySelector": {
+      "placeholder": "Select company...",
+      "label": "Company",
+      "error": "Error selecting company",
+      "loading": "Loading companies...",
+      "retry": "Retry",
+      "selected": "Selected",
+      "noCompanies": "No companies found",
+      "createCompany": "Create company",
+      "selectCompany": "Select a company or create a new one"
+    },
     "stats": {
       "client": "client",
       "clients": "clients"
@@ -600,6 +611,38 @@
       "delete": "Delete",
       "viewProjects": "View Projects"
     },
+    "createCompanyDialog": {
+      "title": "Create Company",
+      "description": "Create a new company.",
+      "name": "Company name",
+      "namePlaceholder": "Company name",
+      "code": "Company code",
+      "codePlaceholder": "ABC, TEC, INN",
+      "cif": "Company CIF",
+      "cifPlaceholder": "12345678A",
+      "cancel": "Cancel",
+      "create": "Create Company",
+      "creating": "Creating...",
+      "descriptionContext": "Only administrators can create new companies. This company will be available to all users.",
+      "codeUnique": "Unique 3 letter code (A-Z)",
+      "cifDescription": "Only letters and numbers",
+      "cifUnique": "Unique CIF",
+      "success": "Company created successfully",
+      "characters": "characters",
+      "company": "Company",
+      "errors": {
+        "nameRequired": "Name is required",
+        "nameMinLength": "Name must be at least 2 characters",
+        "nameMaxLength": "Name cannot exceed 100 characters",
+        "codeRequired": "Code is required",
+        "codeMinLength": "Code must be at least 2 characters",
+        "codeMaxLength": "Code cannot exceed 3 characters",
+        "cifRequired": "CIF is required",
+        "cifMinLength": "CIF must be at least 2 characters",
+        "cifMaxLength": "CIF cannot exceed 9 characters",
+        "serverError": "Internal server error. Please try again."
+      }
+    },
     "createModal": {
       "title": "Create New Client",
       "description": "Complete the information for the new client. Fields marked with * are required.",
@@ -619,6 +662,13 @@
       "cancel": "Cancel",
       "create": "Create Client",
       "creating": "Creating...",
+      "filial": "Filial/Department",
+      "filialPlaceholder": "e.g. Development, Marketing, Sales...",
+      "optional": "Optional",
+      "characters": "characters",
+      "generatedPassword": "Generated password",
+      "generatedPasswordWarning": "Save this password as it will not be shown again",
+      "copyError": "Error copying password",
       "errors": {
         "nameRequired": "Name is required",
         "nameMinLength": "Name must be at least 2 characters",
@@ -630,6 +680,7 @@
         "companyMaxLength": "Company cannot exceed 100 characters",
         "passwordRequired": "Password is required",
         "passwordMinLength": "Password must be at least 8 characters",
+        "passwordMaxLength": "Password cannot exceed 128 characters",
         "serverError": "Internal server error. Please try again."
       }
     },

@@ -8,6 +8,7 @@ import type { Company } from '@/payload-types'
 
 export interface CreateCompanyData {
   name: string
+  code: string
   cif: string
 }
 
@@ -19,10 +20,10 @@ export interface CreateCompanyResult {
 
 /**
  * Server action para crear nuevas empresas
- * 
+ *
  * Solo usuarios admin pueden ejecutar esta función
  * Valida que no existan duplicados por nombre o CIF
- * 
+ *
  * @param data - Datos de la nueva empresa
  * @returns Promise<CreateCompanyResult> - Resultado con empresa creada
  */
@@ -32,6 +33,7 @@ export async function createCompanyAction(data: CreateCompanyData): Promise<Crea
     const adminUser = await requireAdminAccess()
     console.log(`createCompanyAction: Admin ${adminUser.email} creando empresa ${data.name}`, {
       name: data.name,
+      code: data.code,
       cif: data.cif,
     })
 
@@ -57,6 +59,32 @@ export async function createCompanyAction(data: CreateCompanyData): Promise<Crea
       }
     }
 
+    // Validar parámetros de entrada - Código
+    if (!data.code?.trim()) {
+      return {
+        success: false,
+        message: 'El código de la empresa es requerido',
+      }
+    }
+
+    const cleanCode = data.code.trim().toUpperCase()
+
+    // Validar que sean exactamente 3 caracteres
+    if (cleanCode.length !== 3) {
+      return {
+        success: false,
+        message: 'El código debe tener exactamente 3 caracteres',
+      }
+    }
+
+    // Validar que sean solo letras A-Z
+    if (!/^[A-Z]{3}$/.test(cleanCode)) {
+      return {
+        success: false,
+        message: 'El código debe contener solo 3 letras mayúsculas (A-Z)',
+      }
+    }
+
     // Validar parámetros de entrada - CIF
     if (!data.cif?.trim()) {
       return {
@@ -66,7 +94,7 @@ export async function createCompanyAction(data: CreateCompanyData): Promise<Crea
     }
 
     const cleanCif = data.cif.trim().toUpperCase()
-    
+
     if (cleanCif.length < 9 || cleanCif.length > 20) {
       return {
         success: false,
@@ -102,6 +130,26 @@ export async function createCompanyAction(data: CreateCompanyData): Promise<Crea
       }
     }
 
+    // Verificar que el código no esté ya en uso
+    const existingCompanyByCode = await payload.find({
+      collection: 'companies',
+      where: {
+        code: { equals: cleanCode },
+      },
+      limit: 1,
+    })
+
+    if (existingCompanyByCode.docs.length > 0) {
+      const existingCompany = existingCompanyByCode.docs[0]
+      console.log(
+        `createCompanyAction: Código ${cleanCode} ya está en uso por empresa ${existingCompany.name}`,
+      )
+      return {
+        success: false,
+        message: `El código "${cleanCode}" ya está en uso por la empresa "${existingCompany.name}"`,
+      }
+    }
+
     // Verificar que el CIF no esté ya en uso
     const existingCompanyByCif = await payload.find({
       collection: 'companies',
@@ -112,21 +160,26 @@ export async function createCompanyAction(data: CreateCompanyData): Promise<Crea
     })
 
     if (existingCompanyByCif.docs.length > 0) {
-      console.log(`createCompanyAction: CIF ${cleanCif} ya está en uso`)
+      const existingCompany = existingCompanyByCif.docs[0]
+      console.log(
+        `createCompanyAction: CIF ${cleanCif} ya está en uso por empresa ${existingCompany.name}`,
+      )
       return {
         success: false,
-        message: 'Ya existe una empresa con este CIF',
+        message: `El CIF "${cleanCif}" ya está en uso por la empresa "${existingCompany.name}"`,
       }
     }
 
     // Preparar datos de la empresa
     const companyData = {
       name: data.name.trim(),
+      code: cleanCode, // Ya normalizado a mayúsculas
       cif: cleanCif, // Ya normalizado a mayúsculas
     }
 
     console.log(`createCompanyAction: Creando empresa con datos:`, {
       name: companyData.name,
+      code: companyData.code,
       cif: companyData.cif,
       adminEmail: adminUser.email,
     })
@@ -140,6 +193,7 @@ export async function createCompanyAction(data: CreateCompanyData): Promise<Crea
     console.log(`createCompanyAction: Empresa creada exitosamente:`, {
       companyId: company.id,
       name: company.name,
+      code: company.code,
       cif: company.cif,
       adminEmail: adminUser.email,
     })
