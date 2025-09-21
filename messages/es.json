@@ -37,7 +37,7 @@
     "verifiedResourcesDesc": "Recursos verificados",
     "needsReviewDesc": "Necesitan revisión",
     "administrativeDashboard": "Dashboard Administrativo",
-    "globalSystemView": "Vista global del sistema - Bienvenido, {name}",
+    "globalSystemView": "Vista global del sistema - Bienvenido, {{name}}",
     "administrator": "Administrador",
     "fullSystemAccess": "Acceso completo al sistema",
     "clients": "Clientes",
@@ -60,7 +60,7 @@
   },
   "dashboardUser": {
     "myDashboard": "Mi Dashboard",
-    "welcomeBack": "Bienvenido de vuelta, {name}",
+    "welcomeBack": "Bienvenido de vuelta, {{name}}",
     "user": "Usuario",
     "personalView": "Vista personal"
   },
