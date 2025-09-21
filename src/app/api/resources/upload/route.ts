@@ -157,6 +157,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const projectId = formData.get('projectId') as string
     const filtersStr = formData.get('filters') as string
     const userMetadataStr = formData.get('user_metadata') as string
+    const preAssignedCode = formData.get('preAssignedCode') as string | null // 🚀 Código pre-asignado
     const file = formData.get('file') as File
 
     // Validaciones básicas
@@ -460,6 +461,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         ...(projectRecord && { project: projectRecord.id }),
         // Campo requerido: empresa del usuario
         empresa: empresaId,
+        // 🚀 Usar código pre-asignado si está disponible (sin race conditions)
+        ...(preAssignedCode && { codigo: preAssignedCode }),
+      }
+
+      // Log si se está usando código pre-asignado
+      if (preAssignedCode) {
+        console.log(`🎯 [UPLOAD] Using pre-assigned code: ${preAssignedCode}`)
+      } else {
+        console.log(`🔄 [UPLOAD] No pre-assigned code, will be auto-generated in beforeChange hook`)
       }
 
       resourceRecord = (await payload.create({

@@ -9,18 +9,6 @@ export const Media: CollectionConfig = {
     read: ({ req: { user } }) => {
       return Boolean(user)
     },
-    delete: ({ req: { user } }) => {
-      if (user?.role === 'admin') {
-        return true
-      }
-      return false
-    },
-    update: ({ req: { user } }) => {
-      return Boolean(user)
-    },
-    create: ({ req: { user } }) => {
-      return Boolean(user)
-    },
   },
 
   upload: {

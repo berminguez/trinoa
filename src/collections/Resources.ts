@@ -10,6 +10,156 @@ import {
 } from '../lib/utils/calculateResourceConfidence'
 import type { CollectionConfig } from 'payload'
 
+// Función auxiliar para generar códigos únicos sin race conditions
+async function generateUniqueCode(empresaId: string, payload: any): Promise<string> {
+  // Obtener información de la empresa
+  const empresa = await payload.findByID({
+    collection: 'companies',
+    id: empresaId,
+    depth: 0,
+  })
+
+  if (!empresa || !empresa.code) {
+    throw new Error('No se pudo obtener el código de la empresa')
+  }
+
+  const empresaCode = empresa.code.toUpperCase()
+
+  // NUEVA LÓGICA: Buscar TODOS los códigos existentes para esta empresa
+  const existingCodes = await payload.find({
+    collection: 'resources',
+    where: {
+      empresa: {
+        equals: empresaId,
+      },
+      codigo: {
+        like: `${empresaCode}-`,
+      },
+    },
+    select: {
+      codigo: true,
+    },
+    limit: 0, // Sin límite para obtener todos los códigos
+    sort: 'codigo',
+    depth: 0,
+  })
+
+  // Extraer números de secuencia y convertir a decimal
+  const usedNumbers = existingCodes.docs
+    .map((doc: any) => doc.codigo?.split('-')[1])
+    .filter(Boolean)
+    .map((seq: string) => parseInt(seq, 36))
+    .filter((num: number) => !isNaN(num))
+    .sort((a: number, b: number) => a - b)
+
+  // Encontrar el primer número disponible (manejo de huecos)
+  let nextNumber = 1
+  for (const num of usedNumbers) {
+    if (num === nextNumber) {
+      nextNumber++
+    } else {
+      // Encontramos un hueco o llegamos al final
+      break
+    }
+  }
+
+  // Convertir de vuelta a base 36 y generar código
+  const nextSequence = nextNumber.toString(36).toUpperCase().padStart(4, '0')
+  const newCode = `${empresaCode}-${nextSequence}`
+
+  console.log(
+    `[RESOURCES] Código generado automáticamente: ${newCode} (número: ${nextNumber}, empresa: ${empresaCode})`,
+  )
+  return newCode
+}
+
+// Función para generar múltiples códigos únicos en lote (sin race conditions)
+export async function generateMultipleCodes(
+  empresaId: string,
+  count: number,
+  payload: any,
+): Promise<string[]> {
+  if (count <= 0) return []
+
+  // Obtener información de la empresa
+  const empresa = await payload.findByID({
+    collection: 'companies',
+    id: empresaId,
+    depth: 0,
+  })
+
+  if (!empresa || !empresa.code) {
+    throw new Error('No se pudo obtener el código de la empresa')
+  }
+
+  const empresaCode = empresa.code.toUpperCase()
+
+  // Buscar TODOS los códigos existentes para esta empresa
+  const existingCodes = await payload.find({
+    collection: 'resources',
+    where: {
+      empresa: {
+        equals: empresaId,
+      },
+      codigo: {
+        like: `${empresaCode}-`,
+      },
+    },
+    select: {
+      codigo: true,
+    },
+    limit: 0, // Sin límite para obtener todos los códigos
+    sort: 'codigo',
+    depth: 0,
+  })
+
+  // Extraer números de secuencia y convertir a decimal
+  const usedNumbers = existingCodes.docs
+    .map((doc: any) => doc.codigo?.split('-')[1])
+    .filter(Boolean)
+    .map((seq: string) => parseInt(seq, 36))
+    .filter((num: number) => !isNaN(num))
+    .sort((a: number, b: number) => a - b)
+
+  // Generar secuencia de códigos consecutivos
+  const newCodes: string[] = []
+  let nextNumber = 1
+
+  // Encontrar el primer número disponible
+  for (const num of usedNumbers) {
+    if (num === nextNumber) {
+      nextNumber++
+    } else {
+      break
+    }
+  }
+
+  // Generar los códigos solicitados de forma consecutiva
+  for (let i = 0; i < count; i++) {
+    // Verificar que el número no esté en uso (por si acaso)
+    while (usedNumbers.includes(nextNumber)) {
+      nextNumber++
+    }
+
+    const nextSequence = nextNumber.toString(36).toUpperCase().padStart(4, '0')
+    const newCode = `${empresaCode}-${nextSequence}`
+    newCodes.push(newCode)
+
+    // Añadir este número a la lista de usados para evitar duplicados en el lote
+    usedNumbers.push(nextNumber)
+    usedNumbers.sort((a: number, b: number) => a - b)
+
+    nextNumber++
+  }
+
+  console.log(
+    `[RESOURCES] Generados ${count} códigos automáticamente para empresa ${empresaCode}:`,
+    newCodes,
+  )
+
+  return newCodes
+}
+
 export const Resources: CollectionConfig = {
   slug: 'resources',
   access: {
@@ -1504,153 +1654,31 @@ export const Resources: CollectionConfig = {
           data.filters = data.filters || {}
           data.user_metadata = data.user_metadata || {}
 
-          // Generar código único automáticamente
-          try {
-            // Obtener información de la empresa
-            const empresaId = typeof data.empresa === 'object' ? data.empresa.id : data.empresa
-            const empresa = await req.payload.findByID({
-              collection: 'companies',
-              id: empresaId,
-              depth: 0,
-            })
-
-            if (!empresa || !empresa.code) {
-              throw new Error('No se pudo obtener el código de la empresa')
+          // Generar código único automáticamente (solo si no viene pre-asignado)
+          if (!data.codigo) {
+            try {
+              const empresaId = typeof data.empresa === 'object' ? data.empresa.id : data.empresa
+              data.codigo = await generateUniqueCode(empresaId, req.payload)
+            } catch (error) {
+              console.error('[RESOURCES] Error generando código automático:', error)
+              throw new Error(`Error generando código automático: ${error}`)
             }
-
-            const empresaCode = empresa.code.toUpperCase()
-
-            // Buscar el último código generado para esta empresa
-            const existingResources = await req.payload.find({
-              collection: 'resources',
-              where: {
-                empresa: {
-                  equals: empresaId,
-                },
-                codigo: {
-                  like: `${empresaCode}-`,
-                },
-              },
-              sort: '-codigo',
-              limit: 1,
-              depth: 0,
-            })
-
-            let nextSequence = '0001' // Valor por defecto
-
-            if (existingResources.docs.length > 0) {
-              const lastCode = existingResources.docs[0].codigo
-              if (!lastCode) {
-                throw new Error('Código del último recurso no encontrado')
-              }
-              const lastSequence = lastCode.split('-')[1] // Obtener la parte XXXX
-
-              // Convertir de base 36 a decimal, incrementar, y volver a base 36
-              const lastNumber = parseInt(lastSequence, 36)
-              const nextNumber = lastNumber + 1
-              nextSequence = nextNumber.toString(36).toUpperCase().padStart(4, '0')
-            }
-
-            // Generar el código final
-            const newCode = `${empresaCode}-${nextSequence}`
-
-            // Verificar que el código no existe (doble verificación)
-            const codeCheck = await req.payload.find({
-              collection: 'resources',
-              where: {
-                codigo: {
-                  equals: newCode,
-                },
-              },
-              limit: 1,
-              depth: 0,
-            })
-
-            if (codeCheck.docs.length > 0) {
-              throw new Error(`El código ${newCode} ya está en uso`)
-            }
-
-            data.codigo = newCode
-            console.log(`[RESOURCES] Código generado automáticamente: ${newCode}`)
-          } catch (error) {
-            console.error('[RESOURCES] Error generando código automático:', error)
-            throw new Error(`Error generando código automático: ${error}`)
+          } else {
+            console.log(`[RESOURCES] Using pre-assigned code: ${data.codigo}`)
           }
         }
 
         // Generar código automáticamente en updates cuando hay empresa pero no código
         if (operation === 'update' && data.empresa && !data.codigo) {
           try {
-            // Obtener información de la empresa
             const empresaId = typeof data.empresa === 'object' ? data.empresa.id : data.empresa
-            const empresa = await req.payload.findByID({
-              collection: 'companies',
-              id: empresaId,
-              depth: 0,
-            })
-
-            if (!empresa || !empresa.code) {
-              throw new Error('No se pudo obtener el código de la empresa')
-            }
-
-            const empresaCode = empresa.code.toUpperCase()
-
-            // Buscar el último código generado para esta empresa
-            const existingResources = await req.payload.find({
-              collection: 'resources',
-              where: {
-                empresa: {
-                  equals: empresaId,
-                },
-                codigo: {
-                  like: `${empresaCode}-`,
-                },
-              },
-              sort: '-codigo',
-              limit: 1,
-              depth: 0,
-            })
-
-            let nextSequence = '0001' // Valor por defecto
-
-            if (existingResources.docs.length > 0) {
-              const lastCode = existingResources.docs[0].codigo
-              if (!lastCode) {
-                throw new Error('Código del último recurso no encontrado')
-              }
-              const lastSequence = lastCode.split('-')[1] // Obtener la parte XXXX
-
-              // Convertir de base 36 a decimal, incrementar, y volver a base 36
-              const lastNumber = parseInt(lastSequence, 36)
-              const nextNumber = lastNumber + 1
-              nextSequence = nextNumber.toString(36).toUpperCase().padStart(4, '0')
-            }
-
-            // Generar el código final
-            const newCode = `${empresaCode}-${nextSequence}`
-
-            // Verificar que el código no existe (doble verificación)
-            const codeCheck = await req.payload.find({
-              collection: 'resources',
-              where: {
-                codigo: {
-                  equals: newCode,
-                },
-              },
-              limit: 1,
-              depth: 0,
-            })
-
-            if (codeCheck.docs.length > 0) {
-              throw new Error(`El código ${newCode} ya está en uso`)
-            }
-
-            data.codigo = newCode
-            console.log(`[RESOURCES] Código generado automáticamente en update: ${newCode}`)
+            data.codigo = await generateUniqueCode(empresaId, req.payload)
           } catch (error) {
             console.error('[RESOURCES] Error generando código automático en update:', error)
             throw new Error(`Error generando código automático: ${error}`)
           }
+        } else if (operation === 'update' && data.codigo) {
+          console.log(`[RESOURCES] Update using existing/pre-assigned code: ${data.codigo}`)
         }
 
         if (operation === 'create' && (data.type === 'document' || data.type === 'image')) {

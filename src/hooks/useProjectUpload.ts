@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import axios, { type AxiosProgressEvent } from 'axios'
 import { runSplitterPipeline } from '@/actions/splitter/runPipeline'
 import { revalidateProjectPages } from '@/actions/projects/revalidateProjectPages'
+import { pregenerateCodes } from '@/actions/documents/uploadFromUrls'
 import { toast } from 'sonner'
 import { addFileId } from '@/lib/utils/fileUtils'
 import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
@@ -233,7 +234,7 @@ export function useProjectUpload({
 
   // Función para subir un archivo individual
   const uploadSingleFile = useCallback(
-    async (file: UploadFile): Promise<UploadFile> => {
+    async (file: UploadFile, preAssignedCode?: string): Promise<UploadFile> => {
       console.log('🚀 [UPLOAD SINGLE] FUNCTION CALLED for file:', file?.name || 'undefined')
       console.log('🚀 [UPLOAD SINGLE] File object:', file)
       console.log('🚀 [UPLOAD SINGLE] ProjectId:', projectId)
@@ -259,6 +260,12 @@ export function useProjectUpload({
       formData.append('namespace', `project-${projectId}-documents`) // Namespace único por proyecto
       formData.append('type', fileType)
       formData.append('description', `Document uploaded: ${uniqueFileName}`)
+
+      // 🚀 Añadir código pre-asignado si está disponible (sin race conditions)
+      if (preAssignedCode) {
+        formData.append('preAssignedCode', preAssignedCode)
+        console.log('🎯 [UPLOAD] Using pre-assigned code:', preAssignedCode)
+      }
 
       // Generar ID temporal para optimistic update
       const tempResourceId = `temp-${file.id}-${Date.now()}`
@@ -715,12 +722,36 @@ export function useProjectUpload({
         `Starting upload of ${validFiles.length} file${validFiles.length !== 1 ? 's' : ''}...`,
       )
 
+      // 🚀 PRE-GENERAR CÓDIGOS PARA TODOS LOS ARCHIVOS (sin race conditions)
+      let pregeneratedCodes: string[] = []
+      try {
+        console.log('[UPLOAD MAIN] Pre-generating codes for', validFiles.length, 'files')
+        const codesResult = await pregenerateCodes(validFiles.length)
+
+        if (!codesResult.success || !codesResult.codes) {
+          throw new Error(codesResult.error || 'Error pre-generando códigos')
+        }
+
+        pregeneratedCodes = codesResult.codes
+        console.log('🎯 [UPLOAD MAIN] Códigos pre-generados:', pregeneratedCodes)
+      } catch (error) {
+        console.error('❌ [UPLOAD MAIN] Error pre-generando códigos:', error)
+        toast.error('Error pre-generando códigos únicos')
+        return
+      }
+
       console.log('[UPLOAD MAIN] Creating upload promises for', validFiles.length, 'files')
 
-      // Subir archivos de forma simultánea (Promise.allSettled para no fallar si uno falla)
+      // Subir archivos de forma simultánea con códigos pre-asignados
       const uploadPromises = validFiles.map((file, index) => {
-        console.log(`[UPLOAD MAIN] Creating promise ${index + 1} for file:`, file.name)
-        return uploadSingleFile(file)
+        const preAssignedCode = pregeneratedCodes[index]
+        console.log(
+          `[UPLOAD MAIN] Creating promise ${index + 1} for file:`,
+          file.name,
+          'with code:',
+          preAssignedCode,
+        )
+        return uploadSingleFile(file, preAssignedCode)
       })
 
       console.log('[UPLOAD MAIN] Waiting for all upload promises to settle')

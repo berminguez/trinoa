@@ -5,7 +5,45 @@ import config from '@payload-config'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { revalidatePath } from 'next/cache'
 import { addFileId } from '@/lib/utils/fileUtils'
+import { generateMultipleCodes } from '@/collections/Resources'
 import type { Resource, Media } from '@/payload-types'
+
+// Server action para pre-generar códigos (usable desde cliente)
+export async function pregenerateCodes(
+  count: number,
+): Promise<{ success: boolean; codes?: string[]; error?: string }> {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return { success: false, error: 'Usuario no autenticado' }
+    }
+
+    // Obtener la empresa del usuario actual
+    let empresaId: string | null = null
+    if (user.empresa) {
+      if (typeof user.empresa === 'object' && user.empresa.id) {
+        empresaId = user.empresa.id
+      } else if (typeof user.empresa === 'string') {
+        empresaId = user.empresa
+      }
+    }
+
+    if (!empresaId) {
+      return { success: false, error: 'El usuario no tiene una empresa asignada' }
+    }
+
+    const payload = await getPayload({ config })
+    const codes = await generateMultipleCodes(empresaId, count, payload)
+
+    return { success: true, codes }
+  } catch (error) {
+    console.error('[PREGENERATE-CODES] Error:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Error generando códigos',
+    }
+  }
+}
 
 interface UploadFromUrlsData {
   urls: string[]
@@ -47,9 +85,39 @@ export async function uploadFromUrls(data: UploadFromUrlsData): Promise<UploadFr
       projectId: data.projectId,
     })
 
+    // 🚀 PRE-GENERAR CÓDIGOS PARA TODAS LAS URLs (sin race conditions)
+    let pregeneratedCodes: string[] = []
+    try {
+      // Obtener la empresa del usuario actual
+      let empresaId: string | null = null
+      if (user.empresa) {
+        if (typeof user.empresa === 'object' && user.empresa.id) {
+          empresaId = user.empresa.id
+        } else if (typeof user.empresa === 'string') {
+          empresaId = user.empresa
+        }
+      }
+
+      if (!empresaId) {
+        throw new Error('El usuario no tiene una empresa asignada')
+      }
+
+      // Pre-generar códigos para todas las URLs
+      pregeneratedCodes = await generateMultipleCodes(empresaId, data.urls.length, payload)
+      console.log('🎯 [URL-UPLOAD] Códigos pre-generados:', pregeneratedCodes)
+    } catch (error) {
+      console.error('❌ [URL-UPLOAD] Error pre-generando códigos:', error)
+      return {
+        success: false,
+        error: `Error pre-generando códigos: ${error}`,
+      }
+    }
+
     const results = []
 
-    for (const url of data.urls) {
+    for (let index = 0; index < data.urls.length; index++) {
+      const url = data.urls[index]
+      const preAssignedCode = pregeneratedCodes[index] // Código ya asignado para esta URL
       const urlTrimmed = url.trim()
       if (!urlTrimmed) continue
 
@@ -195,6 +263,7 @@ export async function uploadFromUrls(data: UploadFromUrlsData): Promise<UploadFr
             title: filename.replace(/\.[^/.]+$/, ''), // Sin extensión
             project: data.projectId, // Campo requerido: relación con proyecto
             empresa: empresaId, // Campo requerido: empresa del usuario
+            codigo: preAssignedCode, // 🚀 Código pre-asignado (sin race conditions)
             namespace,
             type: contentType.includes('pdf') ? 'document' : 'image',
             file: mediaDoc.id,
