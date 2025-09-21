@@ -84,6 +84,10 @@ export default buildConfig({
                     return filename.endsWith('.pdf') || filename.endsWith('.PDF')
                   },
                 },
+                // Habilitar operaciones DELETE explícitamente
+                disableLocalStorage: true,
+                // Permitir eliminación de archivos en S3
+                prefix: 'media',
               },
             },
             bucket: process.env.AWS_S3_BUCKET,

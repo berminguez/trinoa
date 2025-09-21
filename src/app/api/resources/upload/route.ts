@@ -406,6 +406,41 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       console.log('[UPLOAD] Creating resource record...')
 
+      // Obtener la empresa del usuario actual
+      let empresaId: string | null = null
+      if (authenticatedUser.empresa) {
+        // Si la empresa viene como objeto, usar su ID
+        if (typeof authenticatedUser.empresa === 'object' && authenticatedUser.empresa.id) {
+          empresaId = authenticatedUser.empresa.id
+        }
+        // Si viene como string (ID), usarlo directamente
+        else if (typeof authenticatedUser.empresa === 'string') {
+          empresaId = authenticatedUser.empresa
+        }
+      }
+
+      if (!empresaId) {
+        // ROLLBACK: Eliminar archivo de S3 si el usuario no tiene empresa
+        try {
+          await payload.delete({
+            collection: 'media',
+            id: mediaRecord.id,
+          })
+          console.log('[UPLOAD] Rollback: Deleted file from S3 (no empresa)')
+        } catch (rollbackError) {
+          console.error('[UPLOAD] Rollback failed:', rollbackError)
+        }
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'User has no assigned company',
+            details: 'El usuario no tiene una empresa asignada',
+          },
+          { status: 400 },
+        )
+      }
+
       // Crear objeto de datos con nuevos campos
       const resourceData = {
         title: title.trim(),
@@ -423,6 +458,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         user_metadata: userMetadata,
         // Asignar proyecto si se proporcionó
         ...(projectRecord && { project: projectRecord.id }),
+        // Campo requerido: empresa del usuario
+        empresa: empresaId,
       }
 
       resourceRecord = (await payload.create({

@@ -28,6 +28,23 @@ export async function createDerivedResources(
     const user = await getCurrentUser()
     if (!user) return { success: false, error: 'Usuario no autenticado' }
 
+    // Obtener la empresa del usuario actual
+    let empresaId: string | null = null
+    if (user.empresa) {
+      // Si la empresa viene como objeto, usar su ID
+      if (typeof user.empresa === 'object' && user.empresa.id) {
+        empresaId = user.empresa.id
+      }
+      // Si viene como string (ID), usarlo directamente
+      else if (typeof user.empresa === 'string') {
+        empresaId = user.empresa
+      }
+    }
+
+    if (!empresaId) {
+      return { success: false, error: 'El usuario no tiene una empresa asignada' }
+    }
+
     const payload = await getPayload({ config })
 
     const pre = (await payload.findByID({
@@ -108,6 +125,7 @@ export async function createDerivedResources(
         data: {
           title: `${baseName} - Segmento ${partIndex}`,
           project: projectId,
+          empresa: empresaId, // Campo requerido: empresa del usuario
           namespace,
           type: 'document',
           file: partMedia.id,

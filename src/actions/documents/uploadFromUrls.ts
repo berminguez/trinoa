@@ -170,6 +170,23 @@ export async function uploadFromUrls(data: UploadFromUrlsData): Promise<UploadFr
 
         console.log(`✅ [URL-UPLOAD] Media created: ${mediaDoc.id}`)
 
+        // Obtener la empresa del usuario actual
+        let empresaId: string | null = null
+        if (user.empresa) {
+          // Si la empresa viene como objeto, usar su ID
+          if (typeof user.empresa === 'object' && user.empresa.id) {
+            empresaId = user.empresa.id
+          }
+          // Si viene como string (ID), usarlo directamente
+          else if (typeof user.empresa === 'string') {
+            empresaId = user.empresa
+          }
+        }
+
+        if (!empresaId) {
+          throw new Error('El usuario no tiene una empresa asignada')
+        }
+
         // Crear el recurso
         const namespace = `project-${data.projectId}-documents`
         const resource = await payload.create({
@@ -177,6 +194,7 @@ export async function uploadFromUrls(data: UploadFromUrlsData): Promise<UploadFr
           data: {
             title: filename.replace(/\.[^/.]+$/, ''), // Sin extensión
             project: data.projectId, // Campo requerido: relación con proyecto
+            empresa: empresaId, // Campo requerido: empresa del usuario
             namespace,
             type: contentType.includes('pdf') ? 'document' : 'image',
             file: mediaDoc.id,
