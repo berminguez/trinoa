@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/actions/auth/getUser'
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { Project, Resource, User } from '@/payload-types'
+import { parseAndFormatDate } from '@/utils/dateParser'
 
 export interface UpdateResourceResult {
   success: boolean
@@ -96,9 +97,70 @@ export async function updateResourceAction(
       updateData.tipo = updates.tipo
     }
 
-    // analyzeResult (permitir edición directa de JSON)
+    // analyzeResult (permitir edición directa de JSON) + normalización de fechas según field-translations
     if (typeof updates?.analyzeResult !== 'undefined') {
-      ;(updateData as any).analyzeResult = updates.analyzeResult
+      let normalizedAnalyze = updates.analyzeResult
+      try {
+        const fieldsObj = updates?.analyzeResult?.fields
+        if (fieldsObj && typeof fieldsObj === 'object') {
+          const keys = Object.keys(fieldsObj)
+          if (keys.length > 0) {
+            const translations = await payload.find({
+              collection: 'field-translations' as any,
+              where: { key: { in: keys } },
+              limit: 1000,
+              depth: 0,
+              user,
+            } as any)
+            const docs = Array.isArray((translations as any)?.docs)
+              ? (translations as any).docs
+              : []
+            const dateKeysArray: string[] = (docs as any[])
+              .filter(
+                (d: any) =>
+                  typeof d?.valueType === 'string' && d.valueType.trim().toLowerCase() === 'date',
+              )
+              .map((d: any) => String(d.key))
+              .filter((s: string) => !!s)
+            const dateKeys = new Set<string>(dateKeysArray)
+            if (dateKeys.size > 0) {
+              // Log de depuración
+              console.log('[UPDATE_RESOURCE] date valueType keys:', Array.from(dateKeys))
+              const f: Record<string, any> = (fieldsObj as Record<string, any>) || {}
+              let changed = false
+              for (const dk of dateKeys) {
+                const field = f[dk]
+                if (field && typeof field === 'object') {
+                  const candidates = [
+                    typeof field.value === 'string' ? field.value : '',
+                    typeof field.valueString === 'string' ? field.valueString : '',
+                    typeof field.content === 'string' ? field.content : '',
+                  ].filter((s) => s && s.trim()) as string[]
+                  const original = candidates.length > 0 ? candidates[0] : ''
+                  if (original) {
+                    const formatted = parseAndFormatDate(original)
+                    console.log('[UPDATE_RESOURCE] Normalizing field', dk, { original, formatted })
+                    if (formatted && formatted !== original) {
+                      const updatedField: Record<string, any> = { ...(field || {}) }
+                      updatedField.value = formatted
+                      updatedField.valueString = formatted
+                      updatedField.content = formatted
+                      f[dk] = updatedField
+                      changed = true
+                    }
+                  }
+                }
+              }
+              if (changed) {
+                normalizedAnalyze = { ...(updates.analyzeResult || {}), fields: f }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('[UPDATE_RESOURCE] Date normalization step failed:', e)
+      }
+      ;(updateData as any).analyzeResult = normalizedAnalyze
     }
 
     // Campo de documento erróneo
