@@ -9,6 +9,7 @@ import {
   getConfidenceThreshold,
 } from '../lib/utils/calculateResourceConfidence'
 import type { CollectionConfig } from 'payload'
+import { parseAndFormatDate } from '../utils/dateParser'
 
 // Función auxiliar para generar códigos únicos sin race conditions
 async function generateUniqueCode(empresaId: string, payload: any): Promise<string> {
@@ -1111,19 +1112,87 @@ export const Resources: CollectionConfig = {
 
           // Sin mapeo automático: ahora el JSON ya llega filtrado desde n8n y se edita desde Admin
 
-          // Auto-registro de nuevas keys en field-translations
+          // Auto-registro de nuevas keys en field-translations y normalización de fechas según valueType
           try {
             const fieldsObj = (mergedAnalyzeResult as any)?.fields
             if (fieldsObj && typeof fieldsObj === 'object') {
               const keys = Object.keys(fieldsObj)
               for (const k of keys) {
                 try {
+                  // Crear traducción si no existe (ignorar error por duplicado)
                   await req.payload.create({
                     collection: 'field-translations' as any,
                     data: { key: k, label: k },
                   })
                 } catch {}
               }
+
+              // Cargar traducciones para detectar cuáles son de tipo fecha
+              try {
+                const translations = await req.payload.find({
+                  collection: 'field-translations' as any,
+                  where: {
+                    key: { in: keys },
+                  },
+                  limit: 1000,
+                  depth: 0,
+                } as any)
+                const docs = Array.isArray((translations as any)?.docs)
+                  ? (translations as any).docs
+                  : []
+                const dateKeysArray: string[] = (docs as any[])
+                  .filter(
+                    (d: any) =>
+                      typeof d?.valueType === 'string' &&
+                      d.valueType.trim().toLowerCase() === 'date',
+                  )
+                  .map((d: any) => String(d.key))
+                  .filter((s: string) => !!s)
+                const dateKeys: Set<string> = new Set<string>(dateKeysArray)
+
+                if (dateKeys.size > 0) {
+                  console.log('[RESOURCES_WEBHOOK:ID] date valueType keys:', Array.from(dateKeys))
+                  const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
+                    {}) as Record<string, any>
+                  let changed = false
+                  for (const dk of dateKeys) {
+                    const field = f[dk]
+                    if (field && typeof field === 'object') {
+                      const original =
+                        typeof (field as any).value === 'string' && (field as any).value.trim()
+                          ? (field as any).value
+                          : typeof (field as any).valueString === 'string' &&
+                              (field as any).valueString.trim()
+                            ? (field as any).valueString
+                            : typeof (field as any).content === 'string' &&
+                                (field as any).content.trim()
+                              ? (field as any).content
+                              : ''
+                      if (original) {
+                        const formatted = parseAndFormatDate(original)
+                        console.log('[RESOURCES_WEBHOOK:ID] Normalizing field', dk, {
+                          original,
+                          formatted,
+                        })
+                        if (formatted && formatted !== original) {
+                          const updatedField: Record<string, any> = { ...(field || {}) }
+                          updatedField.value = formatted
+                          updatedField.valueString = formatted
+                          updatedField.content = formatted
+                          f[dk] = updatedField
+                          changed = true
+                        }
+                      }
+                    }
+                  }
+                  if (changed) {
+                    mergedAnalyzeResult = {
+                      ...(mergedAnalyzeResult || {}),
+                      fields: f,
+                    }
+                  }
+                }
+              } catch {}
             }
           } catch {}
 
@@ -1386,7 +1455,7 @@ export const Resources: CollectionConfig = {
 
           // Sin mapeo automático: ahora el JSON ya llega filtrado desde n8n y se edita desde Admin
 
-          // Auto-registro de nuevas keys en field-translations
+          // Auto-registro de nuevas keys en field-translations y normalización de fechas según valueType
           try {
             const fieldsObj = (mergedAnalyzeResult as any)?.fields
             if (fieldsObj && typeof fieldsObj === 'object') {
@@ -1399,6 +1468,58 @@ export const Resources: CollectionConfig = {
                   })
                 } catch {}
               }
+
+              // Cargar traducciones y normalizar fechas para keys con valueType 'date'
+              try {
+                const translations = await req.payload.find({
+                  collection: 'field-translations' as any,
+                  where: { key: { in: keys } },
+                  limit: 1000,
+                  depth: 0,
+                } as any)
+                const docs = Array.isArray((translations as any)?.docs)
+                  ? (translations as any).docs
+                  : []
+                const dateKeysArray: string[] = (docs as any[])
+                  .filter(
+                    (d: any) =>
+                      typeof d?.valueType === 'string' &&
+                      d.valueType.trim().toLowerCase() === 'date',
+                  )
+                  .map((d: any) => String(d.key))
+                  .filter((s: string) => !!s)
+                const dateKeys: Set<string> = new Set<string>(dateKeysArray)
+
+                if (dateKeys.size > 0) {
+                  const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
+                    {}) as Record<string, any>
+                  let changed = false
+                  for (const dk of dateKeys) {
+                    const field = f[dk]
+                    if (field && typeof field === 'object') {
+                      const original = (field as any).value
+                      if (typeof original === 'string' && original.trim()) {
+                        const formatted = parseAndFormatDate(original)
+                        if (formatted && formatted !== original) {
+                          const updatedField: Record<string, any> = { ...(field || {}) }
+                          updatedField.value = formatted
+                          updatedField.valueString = formatted
+                          updatedField.content = formatted
+                          f[dk] = updatedField
+                          changed = true
+                        }
+                      }
+                    }
+                  }
+                  if (changed) {
+                    mergedAnalyzeResult = {
+                      ...(mergedAnalyzeResult || {}),
+                      fields: f,
+                    }
+                    updateData.analyzeResult = mergedAnalyzeResult
+                  }
+                }
+              } catch {}
             }
           } catch {}
 
@@ -1472,6 +1593,73 @@ export const Resources: CollectionConfig = {
     },
   ],
   hooks: {
+    afterRead: [
+      async ({ req, doc }) => {
+        try {
+          const analyzeResult = (doc as any)?.analyzeResult
+          const fieldsObj = analyzeResult?.fields
+          if (!fieldsObj || typeof fieldsObj !== 'object') return doc
+
+          const keys = Object.keys(fieldsObj)
+          if (keys.length === 0) return doc
+
+          const translations = await req.payload.find({
+            collection: 'field-translations' as any,
+            where: { key: { in: keys } },
+            limit: 1000,
+            depth: 0,
+          } as any)
+          const docs = Array.isArray((translations as any)?.docs) ? (translations as any).docs : []
+          const dateKeysArray: string[] = (docs as any[])
+            .filter(
+              (d: any) =>
+                typeof d?.valueType === 'string' && d.valueType.trim().toLowerCase() === 'date',
+            )
+            .map((d: any) => String(d.key))
+            .filter((s: string) => !!s)
+          const dateKeys = new Set<string>(dateKeysArray)
+
+          if (dateKeys.size === 0) return doc
+
+          // Log de depuración
+          console.log('[RESOURCES afterRead] date valueType keys:', Array.from(dateKeys))
+
+          const f: Record<string, any> = (fieldsObj as Record<string, any>) || {}
+          let changed = false
+          for (const dk of dateKeys) {
+            const field = f[dk]
+            if (!field || typeof field !== 'object') continue
+
+            const candidates = [
+              typeof field.value === 'string' ? field.value : '',
+              typeof field.valueString === 'string' ? field.valueString : '',
+              typeof field.content === 'string' ? field.content : '',
+            ].filter((s) => s && s.trim()) as string[]
+
+            const original = candidates.length > 0 ? candidates[0] : ''
+            if (!original) continue
+
+            const formatted = parseAndFormatDate(original)
+            console.log('[RESOURCES afterRead] Normalizing field', dk, { original, formatted })
+            if (formatted && formatted !== original) {
+              const updatedField: Record<string, any> = { ...(field || {}) }
+              updatedField.value = formatted
+              updatedField.valueString = formatted
+              updatedField.content = formatted
+              f[dk] = updatedField
+              changed = true
+            }
+          }
+
+          if (changed) {
+            ;(doc as any).analyzeResult = { ...(analyzeResult || {}), fields: f }
+          }
+        } catch (e) {
+          console.warn('[RESOURCES afterRead] Date normalization step failed:', e)
+        }
+        return doc
+      },
+    ],
     beforeDelete: [
       async ({ req, id }) => {
         // Descomentar para activar el hook de limpieza
@@ -1728,6 +1916,74 @@ export const Resources: CollectionConfig = {
 
             // NO recalcular si se está estableciendo explícitamente a 'verified'
             if (currentAnalyzeResult && explicitConfidence !== 'verified') {
+              // 1) Normalización de fechas según field-translations (valueType === 'date')
+              try {
+                const fieldsObj = currentAnalyzeResult?.fields
+                if (fieldsObj && typeof fieldsObj === 'object') {
+                  const keys = Object.keys(fieldsObj)
+                  if (keys.length > 0) {
+                    const translations = await req.payload.find({
+                      collection: 'field-translations' as any,
+                      where: { key: { in: keys } },
+                      limit: 1000,
+                      depth: 0,
+                    } as any)
+                    const docs = Array.isArray((translations as any)?.docs)
+                      ? (translations as any).docs
+                      : []
+                    const dateKeys: Set<string> = new Set<string>(
+                      (docs as any[])
+                        .filter(
+                          (d: any) =>
+                            typeof d?.valueType === 'string' &&
+                            d.valueType.trim().toLowerCase() === 'date',
+                        )
+                        .map((d: any) => String(d.key))
+                        .filter((s: string) => !!s),
+                    )
+
+                    if (dateKeys.size > 0) {
+                      const f: Record<string, any> = (fieldsObj || {}) as Record<string, any>
+                      let changed = false
+                      for (const dk of dateKeys) {
+                        const field = f[dk]
+                        if (field && typeof field === 'object') {
+                          const original =
+                            typeof (field as any).value === 'string' && (field as any).value.trim()
+                              ? (field as any).value
+                              : typeof (field as any).valueString === 'string' &&
+                                  (field as any).valueString.trim()
+                                ? (field as any).valueString
+                                : typeof (field as any).content === 'string' &&
+                                    (field as any).content.trim()
+                                  ? (field as any).content
+                                  : ''
+                          if (original) {
+                            const formatted = parseAndFormatDate(original)
+                            if (formatted && formatted !== original) {
+                              const updatedField: Record<string, any> = { ...(field || {}) }
+                              updatedField.value = formatted
+                              updatedField.valueString = formatted
+                              updatedField.content = formatted
+                              f[dk] = updatedField
+                              changed = true
+                            }
+                          }
+                        }
+                      }
+                      if (changed) {
+                        ;(data as any).analyzeResult = {
+                          ...(currentAnalyzeResult || {}),
+                          fields: f,
+                        }
+                      }
+                    }
+                  }
+                }
+              } catch (normError) {
+                console.warn('[RESOURCES_BEFORECHANGE] Date normalization failed:', normError)
+              }
+
               console.log(
                 `[RESOURCES_BEFORECHANGE] analyzeResult being updated, recalculating confidence...`,
               )

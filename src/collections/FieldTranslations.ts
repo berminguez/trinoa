@@ -4,7 +4,7 @@ export const FieldTranslations: CollectionConfig = {
   slug: 'field-translations',
   admin: {
     useAsTitle: 'key',
-    defaultColumns: ['order', 'key', 'label', 'createdAt'],
+    defaultColumns: ['order', 'key', 'label', 'valueType', 'createdAt'],
   },
   defaultSort: 'order',
   access: {
@@ -48,6 +48,20 @@ export const FieldTranslations: CollectionConfig = {
       defaultValue: false,
       required: false,
       admin: { description: 'Indica si el campo es obligatorio' },
+    },
+    {
+      name: 'valueType',
+      label: 'Tipo de dato',
+      type: 'select',
+      options: [
+        { label: 'Texto', value: 'text' },
+        { label: 'Numérico', value: 'numeric' },
+        { label: 'Booleano', value: 'boolean' },
+        { label: 'Fecha', value: 'date' },
+      ],
+      defaultValue: 'text',
+      required: false,
+      admin: { description: 'Tipo informativo del dato. Por defecto "text".' },
     },
   ],
 }

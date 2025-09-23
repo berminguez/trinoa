@@ -621,6 +621,10 @@ export interface FieldTranslation {
    * Indica si el campo es obligatorio
    */
   isRequired?: boolean | null;
+  /**
+   * Tipo informativo del dato. Por defecto "text".
+   */
+  valueType?: ('text' | 'numeric' | 'boolean' | 'date') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1256,6 +1260,7 @@ export interface FieldTranslationsSelect<T extends boolean = true> {
   label?: T;
   labelEn?: T;
   isRequired?: T;
+  valueType?: T;
   updatedAt?: T;
   createdAt?: T;
 }
