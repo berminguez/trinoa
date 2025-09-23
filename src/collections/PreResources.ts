@@ -168,6 +168,70 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
       // 7) Crear resources derivados para cada segmento
       const derivedResourceIds: string[] = []
 
+      // Obtener la empresa del usuario que subió el pre-resource
+      // Usar el campo user del pre-resource en lugar de req.user (que no está disponible en hooks background)
+      let empresaId: string | null = null
+
+      const preResourceUserId = typeof pre.user === 'object' ? pre.user.id : pre.user
+
+      console.log('[PRE-RESOURCES] DEBUG - Iniciando extracción de empresa:', {
+        hasReqUser: !!req.user,
+        reqUserId: req.user?.id,
+        preResourceUserId: preResourceUserId,
+        preUserType: typeof pre.user,
+      })
+
+      if (preResourceUserId) {
+        try {
+          console.log(
+            '[PRE-RESOURCES] DEBUG - Buscando usuario del pre-resource con ID:',
+            preResourceUserId,
+          )
+
+          const fullUser = (await req.payload.findByID({
+            collection: 'users',
+            id: preResourceUserId,
+            depth: 1, // Profundidad necesaria para obtener la relación empresa
+          })) as any // Cast para evitar errores de tipos con relaciones
+
+          console.log('[PRE-RESOURCES] Usuario completo obtenido:', {
+            userId: fullUser?.id,
+            email: fullUser?.email,
+            hasEmpresa: !!fullUser?.empresa,
+            empresaType: typeof fullUser?.empresa,
+            empresaData: fullUser?.empresa,
+            empresaId:
+              typeof fullUser?.empresa === 'object' ? fullUser?.empresa?.id : fullUser?.empresa,
+          })
+
+          if (fullUser?.empresa) {
+            // Si la empresa viene como objeto, usar su ID
+            if (typeof fullUser.empresa === 'object' && fullUser.empresa.id) {
+              empresaId = fullUser.empresa.id
+              console.log('[PRE-RESOURCES] ✅ Empresa extraída como objeto:', empresaId)
+            }
+            // Si viene como string (ID), usarlo directamente
+            else if (typeof fullUser.empresa === 'string') {
+              empresaId = fullUser.empresa
+              console.log('[PRE-RESOURCES] ✅ Empresa extraída como string:', empresaId)
+            }
+          } else {
+            console.log('[PRE-RESOURCES] ❌ Usuario no tiene campo empresa')
+          }
+        } catch (error) {
+          console.error('[PRE-RESOURCES] ❌ Error obteniendo usuario completo:', error)
+        }
+      } else {
+        console.log('[PRE-RESOURCES] ❌ No hay preResourceUserId disponible')
+      }
+
+      console.log('[PRE-RESOURCES] DEBUG - Resultado final empresaId:', empresaId)
+
+      if (!empresaId) {
+        console.error('[PRE-RESOURCES] ❌ FALLA FINAL: No se pudo extraer empresaId')
+        throw new Error('El usuario no tiene una empresa asignada para crear recursos')
+      }
+
       for (let i = 0; i < segmentMediaRecords.length; i++) {
         const segmentMedia = segmentMediaRecords[i]
         const segmentTitle = `${originalName} - Segmento ${i + 1}`
@@ -182,6 +246,7 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
             title: segmentTitle,
             project: pre.project,
             user: pre.user,
+            empresa: empresaId, // Campo requerido: empresa del usuario
             file: segmentMedia.id,
             status: 'pending',
             namespace: namespace,
