@@ -670,6 +670,8 @@
       "generatedPassword": "Generated password",
       "generatedPasswordWarning": "Save this password as it will not be shown again",
       "copyError": "Error copying password",
+      "close": "Close",
+      "success": "Client created successfully",
       "errors": {
         "nameRequired": "Name is required",
         "nameMinLength": "Name must be at least 2 characters",
