@@ -671,6 +671,8 @@
       "generatedPassword": "Contraseña generada",
       "generatedPasswordWarning": "Guarda esta contraseña ya que no se mostrará nuevamente",
       "copyError": "Error al copiar la contraseña",
+      "close": "Cerrar",
+      "success": "Cliente creado exitosamente",
       "errors": {
         "nameRequired": "El nombre es requerido",
         "nameMinLength": "El nombre debe tener al menos 2 caracteres",

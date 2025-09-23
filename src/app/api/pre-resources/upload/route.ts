@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { processPreResource } from '@/actions/splitter/processPreResource'
 
 // Crea Media + PreResource a partir de multipart/form-data
 // Campos requeridos: projectId, file (PDF)
@@ -108,21 +107,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       overrideAccess: true,
     } as any)
 
-    // Llamar al Splitter inmediatamente para obtener pages y guardarlas en el pre-resource
-    let pages: number[] | undefined
-    try {
-      const splitRes = await processPreResource({ preResourceId: String((pre as any).id) })
-      if (splitRes.success) {
-        pages = splitRes.data?.pages
-      }
-    } catch {}
+    // El procesamiento del splitter se ejecuta automáticamente via hook afterChange
+    // que usa OpenAI para analizar el PDF y dividirlo en segmentos
 
     return NextResponse.json({
       success: true,
-      data: { preResourceId: String((pre as any).id), pages },
-      message: pages
-        ? 'Pre-resource creado y páginas detectadas'
-        : 'Pre-resource creado; procesamiento iniciado',
+      data: { preResourceId: String((pre as any).id) },
+      message: 'Pre-resource creado; procesamiento con OpenAI iniciado automáticamente',
     })
   } catch (e) {
     console.error('[PRE-RESOURCES UPLOAD] Error:', e)
