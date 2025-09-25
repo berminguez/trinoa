@@ -1593,73 +1593,7 @@ export const Resources: CollectionConfig = {
     },
   ],
   hooks: {
-    afterRead: [
-      async ({ req, doc }) => {
-        try {
-          const analyzeResult = (doc as any)?.analyzeResult
-          const fieldsObj = analyzeResult?.fields
-          if (!fieldsObj || typeof fieldsObj !== 'object') return doc
-
-          const keys = Object.keys(fieldsObj)
-          if (keys.length === 0) return doc
-
-          const translations = await req.payload.find({
-            collection: 'field-translations' as any,
-            where: { key: { in: keys } },
-            limit: 1000,
-            depth: 0,
-          } as any)
-          const docs = Array.isArray((translations as any)?.docs) ? (translations as any).docs : []
-          const dateKeysArray: string[] = (docs as any[])
-            .filter(
-              (d: any) =>
-                typeof d?.valueType === 'string' && d.valueType.trim().toLowerCase() === 'date',
-            )
-            .map((d: any) => String(d.key))
-            .filter((s: string) => !!s)
-          const dateKeys = new Set<string>(dateKeysArray)
-
-          if (dateKeys.size === 0) return doc
-
-          // Log de depuración
-          console.log('[RESOURCES afterRead] date valueType keys:', Array.from(dateKeys))
-
-          const f: Record<string, any> = (fieldsObj as Record<string, any>) || {}
-          let changed = false
-          for (const dk of dateKeys) {
-            const field = f[dk]
-            if (!field || typeof field !== 'object') continue
-
-            const candidates = [
-              typeof field.value === 'string' ? field.value : '',
-              typeof field.valueString === 'string' ? field.valueString : '',
-              typeof field.content === 'string' ? field.content : '',
-            ].filter((s) => s && s.trim()) as string[]
-
-            const original = candidates.length > 0 ? candidates[0] : ''
-            if (!original) continue
-
-            const formatted = parseAndFormatDate(original)
-            console.log('[RESOURCES afterRead] Normalizing field', dk, { original, formatted })
-            if (formatted && formatted !== original) {
-              const updatedField: Record<string, any> = { ...(field || {}) }
-              updatedField.value = formatted
-              updatedField.valueString = formatted
-              updatedField.content = formatted
-              f[dk] = updatedField
-              changed = true
-            }
-          }
-
-          if (changed) {
-            ;(doc as any).analyzeResult = { ...(analyzeResult || {}), fields: f }
-          }
-        } catch (e) {
-          console.warn('[RESOURCES afterRead] Date normalization step failed:', e)
-        }
-        return doc
-      },
-    ],
+    // afterRead eliminado: la normalización se realiza en escritura y vía backfill
     beforeDelete: [
       async ({ req, id }) => {
         // Descomentar para activar el hook de limpieza

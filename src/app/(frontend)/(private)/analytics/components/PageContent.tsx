@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Filters from './Filters'
 import AdminClientSelector from './AdminClientSelector'
+import ConfirmBeforeDownload from '@/app/(frontend)/(private)/analytics/components/ConfirmBeforeDownload'
 import {
   Table,
   TableBody,
@@ -84,18 +85,14 @@ export default async function PageContent({
       <div className='flex items-center justify-between'>
         <h1 className='text-xl font-semibold'>{t('title')}</h1>
         <div className='flex gap-2'>
-          <form action='/api/analytics/export' method='POST' className='inline'>
-            <input type='hidden' name='documentIds' value={JSON.stringify(data.allDocumentIds)} />
-            <input type='hidden' name='format' value='csv' />
-            <Button type='submit' variant='outline'>
-              {t('downloadCSV')}
-            </Button>
-          </form>
-          <form action='/api/analytics/export' method='POST' className='inline'>
-            <input type='hidden' name='documentIds' value={JSON.stringify(data.allDocumentIds)} />
-            <input type='hidden' name='format' value='xlsx' />
-            <Button type='submit'>{t('download')}</Button>
-          </form>
+          {/* Descargas con confirmación si hay documentos en "necesita revisión" */}
+          <ConfirmBeforeDownload
+            ids={data.allDocumentIds}
+            format='csv'
+            label={t('downloadCSV')}
+            variant='outline'
+          />
+          <ConfirmBeforeDownload ids={data.allDocumentIds} format='xlsx' label={t('download')} />
         </div>
       </div>
 
