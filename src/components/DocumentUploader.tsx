@@ -19,6 +19,8 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { Toggle } from '@/components/ui/toggle'
 
 interface DocumentUploaderProps {
   files: UploadFile[]
@@ -26,6 +28,8 @@ interface DocumentUploaderProps {
   onRemove?: (fileId: string) => void
   estimatePages?: boolean
   onToggleMultiInvoice?: (fileId: string, value: boolean) => void
+  onSetSplitMode?: (fileId: string, mode: 'auto' | 'manual') => void
+  onSetManualPages?: (fileId: string, pages: string) => void
   showHeader?: boolean
 }
 
@@ -50,6 +54,8 @@ export function DocumentUploader({
   onRemove,
   estimatePages = true,
   onToggleMultiInvoice,
+  onSetSplitMode,
+  onSetManualPages,
   showHeader = true,
 }: DocumentUploaderProps) {
   const [pagesById, setPagesById] = useState<Record<string, number | null>>({})
@@ -144,14 +150,68 @@ export function DocumentUploader({
                     )}
                     {/* Switch por archivo: Documento con varias facturas */}
                     {isPdf && (
-                      <div className='flex items-center gap-2'>
-                        <Switch
-                          id={`multi-${file.id}`}
-                          checked={!!file.isMultiInvoice}
-                          onCheckedChange={(val) => onToggleMultiInvoice?.(file.id, !!val)}
-                          disabled={file.status !== 'pending'}
-                        />
-                        <Label htmlFor={`multi-${file.id}`}>Documento con varias facturas</Label>
+                      <div className='space-y-2'>
+                        <div className='flex items-center gap-2'>
+                          <Switch
+                            id={`multi-${file.id}`}
+                            checked={!!file.isMultiInvoice}
+                            onCheckedChange={(val) => onToggleMultiInvoice?.(file.id, !!val)}
+                            disabled={file.status !== 'pending'}
+                          />
+                          <Label htmlFor={`multi-${file.id}`}>Documento con varias facturas</Label>
+                        </div>
+
+                        {/* Switcher Auto/Manual y input de páginas - solo visible si isMultiInvoice está activado */}
+                        {file.isMultiInvoice && (
+                          <div className='ml-4 space-y-2 p-2 bg-gray-50 rounded border'>
+                            <div className='flex items-center gap-2'>
+                              <Label className='text-xs font-medium'>Modo de división:</Label>
+                              <div className='flex items-center border rounded'>
+                                <Toggle
+                                  pressed={file.splitMode === 'auto'}
+                                  onPressedChange={(pressed) =>
+                                    onSetSplitMode?.(file.id, pressed ? 'auto' : 'manual')
+                                  }
+                                  disabled={file.status !== 'pending'}
+                                  className='h-6 px-2 text-xs rounded-r-none data-[state=on]:bg-blue-500 data-[state=on]:text-white'
+                                >
+                                  Auto
+                                </Toggle>
+                                <Toggle
+                                  pressed={file.splitMode === 'manual'}
+                                  onPressedChange={(pressed) =>
+                                    onSetSplitMode?.(file.id, pressed ? 'manual' : 'auto')
+                                  }
+                                  disabled={file.status !== 'pending'}
+                                  className='h-6 px-2 text-xs rounded-l-none data-[state=on]:bg-blue-500 data-[state=on]:text-white'
+                                >
+                                  Manual
+                                </Toggle>
+                              </div>
+                            </div>
+
+                            {/* Input para números de página manuales */}
+                            {file.splitMode === 'manual' && (
+                              <div className='space-y-1'>
+                                <Label htmlFor={`pages-${file.id}`} className='text-xs'>
+                                  Números de página (separados por comas):
+                                </Label>
+                                <Input
+                                  id={`pages-${file.id}`}
+                                  type='text'
+                                  placeholder='Ej: 1,3,5,7'
+                                  value={file.manualPages || ''}
+                                  onChange={(e) => onSetManualPages?.(file.id, e.target.value)}
+                                  disabled={file.status !== 'pending'}
+                                  className='h-6 text-xs'
+                                />
+                                <p className='text-xs text-gray-500'>
+                                  Ingresa los números de la primera página de cada factura
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                     {file.status === 'uploading' && (

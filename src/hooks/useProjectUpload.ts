@@ -20,6 +20,9 @@ export interface UploadFile extends File {
   validationComplete?: boolean
   tempResourceId?: string // ID temporal para optimistic updates
   _originalFile?: File // Referencia al File original para APIs que lo requieren
+  // Nuevos campos para modo manual de multi-factura
+  splitMode?: 'auto' | 'manual'
+  manualPages?: string // Números de página separados por comas
 }
 
 interface UseProjectUploadOptions {
@@ -40,6 +43,8 @@ interface UseProjectUploadReturn {
   uploadFiles: () => Promise<{ successful: number; failed: number; total: number } | undefined>
   validateFile: (file: UploadFile) => Promise<UploadFile>
   toggleMultiInvoice: (fileId: string, value: boolean) => void
+  setSplitMode: (fileId: string, mode: 'auto' | 'manual') => void
+  setManualPages: (fileId: string, pages: string) => void
 }
 
 export function useProjectUpload({
@@ -353,6 +358,14 @@ export function useProjectUpload({
           splitterForm.append('file', uniqueFile)
           splitterForm.append('projectId', projectId)
 
+          // Agregar información de modo manual si está disponible
+          if (file.splitMode === 'manual' && file.manualPages) {
+            splitterForm.append('splitMode', 'manual')
+            splitterForm.append('manualPages', file.manualPages)
+          } else {
+            splitterForm.append('splitMode', 'auto')
+          }
+
           // Enviar a API propia
           const res = await axios.post('/api/pre-resources/upload', splitterForm, {
             headers: { 'Content-Type': 'multipart/form-data' },
@@ -639,6 +652,9 @@ export function useProjectUpload({
           validationComplete: false,
           // ¡IMPORTANTE! Mantener referencia al File original para APIs que lo requieren
           _originalFile: file,
+          // Valores por defecto para multi-facturas
+          splitMode: 'auto',
+          manualPages: '',
         } as unknown as UploadFile
 
         console.log('📁 [FILE CREATION] Created UploadFile:', {
@@ -689,7 +705,25 @@ export function useProjectUpload({
 
   // Marcar/unmarcar un archivo como multi-factura
   const toggleMultiInvoice = useCallback((fileId: string, value: boolean) => {
-    setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, isMultiInvoice: value } : f)))
+    setFiles((prev) =>
+      prev.map((f) => (f.id === fileId ? { ...f, isMultiInvoice: value, splitMode: 'auto' } : f)),
+    )
+  }, [])
+
+  // Cambiar el modo de división (auto/manual)
+  const setSplitMode = useCallback((fileId: string, mode: 'auto' | 'manual') => {
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === fileId
+          ? { ...f, splitMode: mode, manualPages: mode === 'auto' ? '' : f.manualPages }
+          : f,
+      ),
+    )
+  }, [])
+
+  // Establecer las páginas manuales
+  const setManualPages = useCallback((fileId: string, pages: string) => {
+    setFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, manualPages: pages } : f)))
   }, [])
 
   // Función para limpiar todos los archivos
@@ -833,5 +867,7 @@ export function useProjectUpload({
     uploadFiles,
     validateFile,
     toggleMultiInvoice,
+    setSplitMode,
+    setManualPages,
   }
 }

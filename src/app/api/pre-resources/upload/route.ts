@@ -46,6 +46,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const formData = await request.formData()
     const projectId = String(formData.get('projectId') || '')
     const file = formData.get('file') as File | null
+    const splitMode = String(formData.get('splitMode') || 'auto')
+    const manualPages = String(formData.get('manualPages') || '')
+
     if (!projectId || !file) {
       return NextResponse.json(
         { success: false, error: 'projectId and file are required' },
@@ -55,6 +58,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!file.type?.includes('pdf')) {
       return NextResponse.json({ success: false, error: 'Only PDF is allowed' }, { status: 400 })
+    }
+
+    // Validar modo manual si está seleccionado
+    if (splitMode === 'manual') {
+      if (!manualPages || !manualPages.trim()) {
+        return NextResponse.json(
+          { success: false, error: 'Los números de página son requeridos para el modo manual' },
+          { status: 400 },
+        )
+      }
+
+      // Validar formato de números de página (números separados por comas)
+      const pageNumbers = manualPages
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p)
+      const validPages = pageNumbers.every((p) => /^\d+$/.test(p) && parseInt(p) > 0)
+
+      if (!validPages) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Los números de página deben ser números positivos separados por comas (ej: 1,3,5)',
+          },
+          { status: 400 },
+        )
+      }
+
+      if (pageNumbers.length < 2) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Debe especificar al menos 2 números de página para dividir el documento',
+          },
+          { status: 400 },
+        )
+      }
     }
 
     // Validar proyecto y ownership (mismo patrón que upload)
@@ -102,6 +143,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         user: authUser.id,
         file: (media as any).id,
         originalName: originalNameWithoutExtension,
+        splitMode: splitMode as 'auto' | 'manual',
+        manualPageNumbers: splitMode === 'manual' ? manualPages : undefined,
         status: 'pending',
       },
       overrideAccess: true,
