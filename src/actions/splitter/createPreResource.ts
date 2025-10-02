@@ -49,6 +49,8 @@ export async function createPreResource(
         user: user.id,
         file: media.id,
         originalName: originalNameWithoutExtension,
+        splitMode: 'auto', // Por defecto modo automático (este endpoint no recibe parámetros de usuario)
+        manualPageNumbers: undefined, // No hay números manuales para este flujo
         status: 'pending',
         lastUpdatedBy: user.id,
       },

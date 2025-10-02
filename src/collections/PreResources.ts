@@ -27,6 +27,7 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
 
     // 2) Verificar si usar análisis manual o OpenAI
     let pages: number[]
+    let openaiResult: any = null // Declarar a nivel superior
 
     if (pre.splitMode === 'manual' && pre.manualPageNumbers) {
       console.log('[PRE-RESOURCES] Using manual page numbers:', pre.manualPageNumbers)
@@ -46,7 +47,7 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
     } else {
       // Modo automático: Analizar PDF con OpenAI GPT-4V
       console.log('[PRE-RESOURCES] Using automatic OpenAI analysis...')
-      const openaiResult = await analyzeInvoicePagesWithOpenAI(fileUrl)
+      openaiResult = await analyzeInvoicePagesWithOpenAI(fileUrl)
 
       if (!openaiResult.success) {
         throw new Error(`OpenAI analysis failed: ${openaiResult.error}`)
