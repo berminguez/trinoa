@@ -70,7 +70,15 @@ export async function backfillNormalizeDatesAction(params?: {
           .map((d: any) => String(d.key))
           .filter((s: string) => !!s)
         const dateKeys = new Set<string>(dateKeysArray)
-        if (!dateKeys.size) continue
+        const numericKeysArray: string[] = (tdocs as any[])
+          .filter(
+            (d: any) =>
+              typeof d?.valueType === 'string' && d.valueType.trim().toLowerCase() === 'numeric',
+          )
+          .map((d: any) => String(d.key))
+          .filter((s: string) => !!s)
+        const numericKeys = new Set<string>(numericKeysArray)
+        if (!dateKeys.size && !numericKeys.size) continue
 
         const f: Record<string, any> = fieldsObj || {}
         let changed = false
@@ -94,6 +102,28 @@ export async function backfillNormalizeDatesAction(params?: {
             updatedField.valueString = formatted
             updatedField.content = formatted
             f[dk] = updatedField
+            changed = true
+          }
+        }
+
+        // Numéricos: eliminar todo lo que no sea dígito 0-9
+        for (const nk of numericKeys) {
+          const field = f[nk]
+          if (!field || typeof field !== 'object') continue
+          const candidates = [
+            typeof field.value === 'string' ? field.value : '',
+            typeof field.valueString === 'string' ? field.valueString : '',
+            typeof field.content === 'string' ? field.content : '',
+          ].filter((s) => s && s.trim()) as string[]
+          const original = candidates.length > 0 ? candidates[0] : ''
+          if (!original) continue
+          const cleaned = original.replace(/[^0-9]/g, '')
+          if (cleaned !== original) {
+            const updatedField: Record<string, any> = { ...(field || {}) }
+            updatedField.value = cleaned
+            updatedField.valueString = cleaned
+            updatedField.content = cleaned
+            f[nk] = updatedField
             changed = true
           }
         }

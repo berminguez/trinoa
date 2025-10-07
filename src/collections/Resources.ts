@@ -1140,22 +1140,103 @@ export const Resources: CollectionConfig = {
                 const docs = Array.isArray((translations as any)?.docs)
                   ? (translations as any).docs
                   : []
-                const dateKeysArray: string[] = (docs as any[])
-                  .filter(
-                    (d: any) =>
-                      typeof d?.valueType === 'string' &&
-                      d.valueType.trim().toLowerCase() === 'date',
-                  )
-                  .map((d: any) => String(d.key))
-                  .filter((s: string) => !!s)
-                const dateKeys: Set<string> = new Set<string>(dateKeysArray)
+                const dateKeysLower: Set<string> = new Set<string>(
+                  (docs as any[])
+                    .filter(
+                      (d: any) =>
+                        typeof d?.valueType === 'string' &&
+                        d.valueType.trim().toLowerCase() === 'date',
+                    )
+                    .map((d: any) => String(d.key).toLowerCase())
+                    .filter((s: string) => !!s),
+                )
 
-                if (dateKeys.size > 0) {
-                  console.log('[RESOURCES_WEBHOOK:ID] date valueType keys:', Array.from(dateKeys))
-                  const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
-                    {}) as Record<string, any>
-                  let changed = false
-                  for (const dk of dateKeys) {
+                const numericKeysLower: Set<string> = new Set<string>(
+                  (docs as any[])
+                    .filter(
+                      (d: any) =>
+                        typeof d?.valueType === 'string' &&
+                        d.valueType.trim().toLowerCase() === 'numeric',
+                    )
+                    .map((d: any) => String(d.key).toLowerCase())
+                    .filter((s: string) => !!s),
+                )
+
+                const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
+                  {}) as Record<string, any>
+                const lowerToRealKey: Record<string, string> = {}
+                for (const k of Object.keys(f)) lowerToRealKey[k.toLowerCase()] = k
+                console.log('[RESOURCES_WEBHOOK:ID] fields keys present:', Object.keys(f))
+                let changed = false
+
+                if (dateKeysLower.size > 0) {
+                  const mapped = Array.from(dateKeysLower).map((lk) => lowerToRealKey[lk] || lk)
+                  const missing = Array.from(dateKeysLower).filter((lk) => !lowerToRealKey[lk])
+                  console.log('[RESOURCES_WEBHOOK:ID] date valueType keys (mapped):', mapped)
+                  if (missing.length > 0) {
+                    console.log(
+                      '[RESOURCES_WEBHOOK:ID] date keys not present in fields (lower):',
+                      missing,
+                    )
+                  }
+                }
+                if (numericKeysLower.size > 0) {
+                  const mapped = Array.from(numericKeysLower).map((lk) => lowerToRealKey[lk] || lk)
+                  const missing = Array.from(numericKeysLower).filter((lk) => !lowerToRealKey[lk])
+                  console.log('[RESOURCES_WEBHOOK:ID] numeric valueType keys (mapped):', mapped)
+                  if (missing.length > 0) {
+                    console.log(
+                      '[RESOURCES_WEBHOOK:ID] numeric keys not present in fields (lower):',
+                      missing,
+                    )
+                  }
+                }
+
+                const normalizeNumericString = (orig: string): string => {
+                  let s = (orig || '').replace(/[\s€$]/g, '')
+                  let sign = ''
+                  if (s.startsWith('-')) {
+                    sign = '-'
+                    s = s.slice(1)
+                  }
+                  const hasComma = s.includes(',')
+                  const hasDot = s.includes('.')
+                  if (hasComma && hasDot) {
+                    const decPos = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'))
+                    const intPart = s
+                      .slice(0, decPos)
+                      .replace(/[\.,]/g, '')
+                      .replace(/[^0-9]/g, '')
+                    const fracPart = s
+                      .slice(decPos + 1)
+                      .replace(/[\.,]/g, '')
+                      .replace(/[^0-9]/g, '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                  } else if (hasComma) {
+                    const parts = s.split(',')
+                    const intPart = parts[0].replace(/\./g, '').replace(/[^0-9]/g, '')
+                    const fracPart = parts
+                      .slice(1)
+                      .join('')
+                      .replace(/[^0-9]/g, '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                  } else if (hasDot) {
+                    const parts = s.split('.')
+                    const intPart = [parts[0], ...parts.slice(1, -1)]
+                      .join('')
+                      .replace(/[^0-9]/g, '')
+                    const fracPart = parts.slice(-1)[0].replace(/[^0-9]/g, '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                  } else {
+                    const digits = s.replace(/[^0-9]/g, '')
+                    return sign + digits
+                  }
+                }
+
+                if (dateKeysLower.size > 0 || numericKeysLower.size > 0) {
+                  // Fechas
+                  for (const dkLower of dateKeysLower) {
+                    const dk = lowerToRealKey[dkLower] || dkLower
                     const field = f[dk]
                     if (field && typeof field === 'object') {
                       const original =
@@ -1185,11 +1266,50 @@ export const Resources: CollectionConfig = {
                       }
                     }
                   }
+                  // Numéricos
+                  for (const nkLower of numericKeysLower) {
+                    const nk = lowerToRealKey[nkLower] || nkLower
+                    const field = f[nk]
+                    if (field && typeof field === 'object') {
+                      const candidates = [
+                        typeof (field as any).value === 'string' ? (field as any).value : '',
+                        typeof (field as any).valueString === 'string'
+                          ? (field as any).valueString
+                          : '',
+                        typeof (field as any).content === 'string' ? (field as any).content : '',
+                      ].filter((s) => s && s.trim()) as string[]
+                      const original = candidates.length > 0 ? candidates[0] : ''
+                      if (original) {
+                        console.log('[RESOURCES_WEBHOOK:ID] Numeric candidate before clean', nk, {
+                          original,
+                        })
+                        const cleaned = normalizeNumericString(original)
+                        if (cleaned !== original) {
+                          const updatedField: Record<string, any> = { ...(field || {}) }
+                          updatedField.value = cleaned
+                          updatedField.valueString = cleaned
+                          updatedField.content = cleaned
+                          f[nk] = updatedField
+                          changed = true
+                          console.log('[RESOURCES_WEBHOOK:ID] Cleaned numeric field', nk, {
+                            original,
+                            cleaned,
+                          })
+                        }
+                      }
+                    }
+                  }
+
                   if (changed) {
                     mergedAnalyzeResult = {
                       ...(mergedAnalyzeResult || {}),
                       fields: f,
                     }
+                    // Asegurar que el analyzeResult normalizado se persiste en la actualización
+                    ;(updateData as any).analyzeResult = mergedAnalyzeResult
+                    console.log(
+                      '[RESOURCES_WEBHOOK:ID] analyzeResult updated and will be persisted (changed=true)',
+                    )
                   }
                 }
               } catch {}
@@ -1844,80 +1964,25 @@ export const Resources: CollectionConfig = {
         // PERO SOLO si no se está estableciendo manualmente a 'verified'
         if (operation === 'update' && data && req) {
           try {
+            const dbgFields = (data as any)?.analyzeResult?.fields
+            console.log(
+              '[RESOURCES_BEFORECHANGE] op=update hasAnalyze:',
+              !!(data as any)?.analyzeResult,
+              'fieldKeys:',
+              Array.isArray(dbgFields)
+                ? dbgFields.length
+                : typeof dbgFields === 'object' && dbgFields
+                  ? Object.keys(dbgFields).length
+                  : 0,
+            )
+          } catch {}
+          try {
             // Si el update contiene analyzeResult, recalcular confidence
             const currentAnalyzeResult = (data as any)?.analyzeResult
             const explicitConfidence = (data as any)?.confidence
 
             // NO recalcular si se está estableciendo explícitamente a 'verified'
             if (currentAnalyzeResult && explicitConfidence !== 'verified') {
-              // 1) Normalización de fechas según field-translations (valueType === 'date')
-              try {
-                const fieldsObj = currentAnalyzeResult?.fields
-                if (fieldsObj && typeof fieldsObj === 'object') {
-                  const keys = Object.keys(fieldsObj)
-                  if (keys.length > 0) {
-                    const translations = await req.payload.find({
-                      collection: 'field-translations' as any,
-                      where: { key: { in: keys } },
-                      limit: 1000,
-                      depth: 0,
-                    } as any)
-                    const docs = Array.isArray((translations as any)?.docs)
-                      ? (translations as any).docs
-                      : []
-                    const dateKeys: Set<string> = new Set<string>(
-                      (docs as any[])
-                        .filter(
-                          (d: any) =>
-                            typeof d?.valueType === 'string' &&
-                            d.valueType.trim().toLowerCase() === 'date',
-                        )
-                        .map((d: any) => String(d.key))
-                        .filter((s: string) => !!s),
-                    )
-
-                    if (dateKeys.size > 0) {
-                      const f: Record<string, any> = (fieldsObj || {}) as Record<string, any>
-                      let changed = false
-                      for (const dk of dateKeys) {
-                        const field = f[dk]
-                        if (field && typeof field === 'object') {
-                          const original =
-                            typeof (field as any).value === 'string' && (field as any).value.trim()
-                              ? (field as any).value
-                              : typeof (field as any).valueString === 'string' &&
-                                  (field as any).valueString.trim()
-                                ? (field as any).valueString
-                                : typeof (field as any).content === 'string' &&
-                                    (field as any).content.trim()
-                                  ? (field as any).content
-                                  : ''
-                          if (original) {
-                            const formatted = parseAndFormatDate(original)
-                            if (formatted && formatted !== original) {
-                              const updatedField: Record<string, any> = { ...(field || {}) }
-                              updatedField.value = formatted
-                              updatedField.valueString = formatted
-                              updatedField.content = formatted
-                              f[dk] = updatedField
-                              changed = true
-                            }
-                          }
-                        }
-                      }
-                      if (changed) {
-                        ;(data as any).analyzeResult = {
-                          ...(currentAnalyzeResult || {}),
-                          fields: f,
-                        }
-                      }
-                    }
-                  }
-                }
-              } catch (normError) {
-                console.warn('[RESOURCES_BEFORECHANGE] Date normalization failed:', normError)
-              }
-
               console.log(
                 `[RESOURCES_BEFORECHANGE] analyzeResult being updated, recalculating confidence...`,
               )
@@ -2320,6 +2385,19 @@ export const Resources: CollectionConfig = {
               console.log(
                 `[RESOURCES_HOOK] analyzeResult changed for resource ${doc.id} - confidence should be recalculated on next load`,
               )
+              try {
+                const { ensureNormalization } = await import(
+                  '@/actions/resources/ensureNormalization'
+                )
+                const res = await ensureNormalization(String(doc.id))
+                console.log('🧹 [RESOURCES] Normalization after update:', {
+                  resourceId: doc.id,
+                  updated: res?.updated,
+                  changes: res?.changes,
+                })
+              } catch (e) {
+                console.warn('⚠️ [RESOURCES] Failed to ensure normalization after update:', e)
+              }
             }
           } catch (logError) {
             console.warn('[RESOURCES_HOOK] Error logging analyzeResult changes:', logError)

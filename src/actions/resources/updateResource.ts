@@ -99,6 +99,14 @@ export async function updateResourceAction(
 
     // analyzeResult (permitir edición directa de JSON) + normalización de fechas según field-translations
     if (typeof updates?.analyzeResult !== 'undefined') {
+      try {
+        console.log(
+          '[UPDATE_RESOURCE] analyzeResult keys:',
+          updates?.analyzeResult?.fields
+            ? Object.keys(updates.analyzeResult.fields || {}).length
+            : 0,
+        )
+      } catch {}
       let normalizedAnalyze = updates.analyzeResult
       try {
         const fieldsObj = updates?.analyzeResult?.fields
@@ -123,11 +131,62 @@ export async function updateResourceAction(
               .map((d: any) => String(d.key))
               .filter((s: string) => !!s)
             const dateKeys = new Set<string>(dateKeysArray)
-            if (dateKeys.size > 0) {
+            const numericKeysArray: string[] = (docs as any[])
+              .filter(
+                (d: any) =>
+                  typeof d?.valueType === 'string' &&
+                  d.valueType.trim().toLowerCase() === 'numeric',
+              )
+              .map((d: any) => String(d.key))
+              .filter((s: string) => !!s)
+            const numericKeys = new Set<string>(numericKeysArray)
+            if (dateKeys.size > 0 || numericKeys.size > 0) {
               // Log de depuración
-              console.log('[UPDATE_RESOURCE] date valueType keys:', Array.from(dateKeys))
+              if (dateKeys.size > 0)
+                console.log('[UPDATE_RESOURCE] date valueType keys:', Array.from(dateKeys))
+              if (numericKeys.size > 0)
+                console.log('[UPDATE_RESOURCE] numeric valueType keys:', Array.from(numericKeys))
               const f: Record<string, any> = (fieldsObj as Record<string, any>) || {}
               let changed = false
+              const normalizeNumericString = (orig: string): string => {
+                let s = (orig || '').replace(/[\s€$]/g, '')
+                let sign = ''
+                if (s.startsWith('-')) {
+                  sign = '-'
+                  s = s.slice(1)
+                }
+                const hasComma = s.includes(',')
+                const hasDot = s.includes('.')
+                if (hasComma && hasDot) {
+                  const decPos = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'))
+                  const intPart = s
+                    .slice(0, decPos)
+                    .replace(/[\.,]/g, '')
+                    .replace(/[^0-9]/g, '')
+                  const fracPart = s
+                    .slice(decPos + 1)
+                    .replace(/[\.,]/g, '')
+                    .replace(/[^0-9]/g, '')
+                  return sign + intPart + (fracPart ? '.' + fracPart : '')
+                } else if (hasComma) {
+                  const parts = s.split(',')
+                  const intPart = parts[0].replace(/\./g, '').replace(/[^0-9]/g, '')
+                  const fracPart = parts
+                    .slice(1)
+                    .join('')
+                    .replace(/[^0-9]/g, '')
+                  return sign + intPart + (fracPart ? '.' + fracPart : '')
+                } else if (hasDot) {
+                  const parts = s.split('.')
+                  const intPart = [parts[0], ...parts.slice(1, -1)].join('').replace(/[^0-9]/g, '')
+                  const fracPart = parts.slice(-1)[0].replace(/[^0-9]/g, '')
+                  return sign + intPart + (fracPart ? '.' + fracPart : '')
+                } else {
+                  const digits = s.replace(/[^0-9]/g, '')
+                  return sign + digits
+                }
+              }
+              // Fechas
               for (const dk of dateKeys) {
                 const field = f[dk]
                 if (field && typeof field === 'object') {
@@ -146,6 +205,29 @@ export async function updateResourceAction(
                       updatedField.valueString = formatted
                       updatedField.content = formatted
                       f[dk] = updatedField
+                      changed = true
+                    }
+                  }
+                }
+              }
+              // Numéricos: limpiar todo lo que no sea dígito
+              for (const nk of numericKeys) {
+                const field = f[nk]
+                if (field && typeof field === 'object') {
+                  const candidates = [
+                    typeof field.value === 'string' ? field.value : '',
+                    typeof field.valueString === 'string' ? field.valueString : '',
+                    typeof field.content === 'string' ? field.content : '',
+                  ].filter((s) => s && s.trim()) as string[]
+                  const original = candidates.length > 0 ? candidates[0] : ''
+                  if (original) {
+                    const cleaned = normalizeNumericString(original)
+                    if (cleaned !== original) {
+                      const updatedField: Record<string, any> = { ...(field || {}) }
+                      updatedField.value = cleaned
+                      updatedField.valueString = cleaned
+                      updatedField.content = cleaned
+                      f[nk] = updatedField
                       changed = true
                     }
                   }
