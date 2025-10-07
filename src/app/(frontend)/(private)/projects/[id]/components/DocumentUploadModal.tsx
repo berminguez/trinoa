@@ -75,47 +75,56 @@ export function DocumentUploadModal({
   })
 
   // Usar el hook personalizado para manejar toda la lógica de upload
-  const { files, isUploading, addFiles, removeFile, clearFiles, uploadFiles, toggleMultiInvoice } =
-    useProjectUpload({
-      projectId: project?.id,
-      onUploadComplete: () => {
-        if (onUploadComplete) {
-          onUploadComplete()
+  const {
+    files,
+    isUploading,
+    addFiles,
+    removeFile,
+    clearFiles,
+    uploadFiles,
+    toggleMultiInvoice,
+    setSplitMode,
+    setManualPages,
+  } = useProjectUpload({
+    projectId: project?.id,
+    onUploadComplete: () => {
+      if (onUploadComplete) {
+        onUploadComplete()
+      }
+      // Auto-cerrar modal tras éxito total si no hay errores
+      setTimeout(() => {
+        const hasErrors = files.some((f) => f.status === 'error')
+        if (!hasErrors) {
+          clearFiles()
+          setIsOpen(false)
         }
-        // Auto-cerrar modal tras éxito total si no hay errores
-        setTimeout(() => {
-          const hasErrors = files.some((f) => f.status === 'error')
-          if (!hasErrors) {
-            clearFiles()
-            setIsOpen(false)
-          }
-        }, 1500)
-      },
-      onResourceUploaded,
-      onResourceUploadFailed,
-      onMultiInvoiceUploadStarted,
-      onPreResourceCreated: (preResource) => {
-        // Cuando se crea un pre-resource exitosamente, agregarlo al DocumentTable
-        console.log('✅ [MODAL] Pre-resource created, adding to DocumentTable:', preResource)
-        console.log('🔍 [MODAL] DocumentTable ref status:', {
+      }, 1500)
+    },
+    onResourceUploaded,
+    onResourceUploadFailed,
+    onMultiInvoiceUploadStarted,
+    onPreResourceCreated: (preResource) => {
+      // Cuando se crea un pre-resource exitosamente, agregarlo al DocumentTable
+      console.log('✅ [MODAL] Pre-resource created, adding to DocumentTable:', preResource)
+      console.log('🔍 [MODAL] DocumentTable ref status:', {
+        refExists: !!documentTableRef,
+        currentExists: !!documentTableRef?.current,
+        addPreResourceExists: !!documentTableRef?.current?.addPreResource,
+      })
+
+      if (documentTableRef?.current?.addPreResource) {
+        console.log('📋 [MODAL] Calling documentTableRef.current.addPreResource...')
+        documentTableRef.current.addPreResource(preResource)
+        console.log('✅ [MODAL] addPreResource called successfully')
+      } else {
+        console.error('❌ [MODAL] DocumentTable ref or addPreResource method not available:', {
           refExists: !!documentTableRef,
           currentExists: !!documentTableRef?.current,
           addPreResourceExists: !!documentTableRef?.current?.addPreResource,
         })
-
-        if (documentTableRef?.current?.addPreResource) {
-          console.log('📋 [MODAL] Calling documentTableRef.current.addPreResource...')
-          documentTableRef.current.addPreResource(preResource)
-          console.log('✅ [MODAL] addPreResource called successfully')
-        } else {
-          console.error('❌ [MODAL] DocumentTable ref or addPreResource method not available:', {
-            refExists: !!documentTableRef,
-            currentExists: !!documentTableRef?.current,
-            addPreResourceExists: !!documentTableRef?.current?.addPreResource,
-          })
-        }
-      },
-    })
+      }
+    },
+  })
 
   // Configuración de react-dropzone
   const { getRootProps, getInputProps, isDragActive, isDragReject, fileRejections } = useDropzone({
@@ -429,6 +438,8 @@ export function DocumentUploadModal({
                     isUploading={isUploading}
                     onRemove={removeFile}
                     onToggleMultiInvoice={(id, val) => toggleMultiInvoice(id, val)}
+                    onSetSplitMode={(id, mode) => setSplitMode(id, mode)}
+                    onSetManualPages={(id, pages) => setManualPages(id, pages)}
                     showHeader={false}
                   />
                 </div>

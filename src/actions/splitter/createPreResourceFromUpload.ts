@@ -21,6 +21,8 @@ export async function createPreResourceFromUpload(
 
     const projectId = String(formData.get('projectId') || '')
     const file = formData.get('file') as File | null
+    const splitMode = String(formData.get('splitMode') || 'auto')
+    const manualPages = String(formData.get('manualPages') || '')
 
     if (!projectId) return { success: false, error: 'projectId es requerido' }
     if (!file) return { success: false, error: 'Archivo requerido' }
@@ -32,6 +34,35 @@ export async function createPreResourceFromUpload(
     const maxSize = 100 * 1024 * 1024
     if (file.size > maxSize)
       return { success: false, error: 'Archivo demasiado grande (max 100MB)' }
+
+    // Validar modo manual si está seleccionado
+    if (splitMode === 'manual') {
+      if (!manualPages || !manualPages.trim()) {
+        return { success: false, error: 'Los números de página son requeridos para el modo manual' }
+      }
+
+      // Validar formato de números de página (números separados por comas)
+      const pageNumbers = manualPages
+        .split(',')
+        .map((p) => p.trim())
+        .filter((p) => p)
+      const validPages = pageNumbers.every((p) => /^\d+$/.test(p) && parseInt(p) > 0)
+
+      if (!validPages) {
+        return {
+          success: false,
+          error:
+            'Los números de página deben ser números positivos separados por comas (ej: 1,3,5)',
+        }
+      }
+
+      if (pageNumbers.length < 2) {
+        return {
+          success: false,
+          error: 'Debe especificar al menos 2 números de página para dividir el documento',
+        }
+      }
+    }
 
     const payload = await getPayload({ config })
 
@@ -73,6 +104,8 @@ export async function createPreResourceFromUpload(
         user: user.id,
         file: media.id,
         originalName: originalNameWithoutExtension,
+        splitMode: splitMode as 'auto' | 'manual',
+        manualPageNumbers: splitMode === 'manual' ? manualPages : undefined,
         status: 'pending',
         lastUpdatedBy: user.id,
       },

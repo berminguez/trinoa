@@ -674,6 +674,14 @@ export interface PreResource {
    */
   originalName?: string | null;
   /**
+   * Modo de división del PDF multi-factura
+   */
+  splitMode: 'auto' | 'manual';
+  /**
+   * Números de página manuales separados por comas (ej: 1,3,5)
+   */
+  manualPageNumbers?: string | null;
+  /**
    * Estado de procesamiento del pre‑resource
    */
   status: 'pending' | 'processing' | 'splitting' | 'error' | 'done';
@@ -1296,6 +1304,8 @@ export interface PreResourcesSelect<T extends boolean = true> {
   user?: T;
   file?: T;
   originalName?: T;
+  splitMode?: T;
+  manualPageNumbers?: T;
   status?: T;
   splitterResponse?:
     | T

@@ -25,17 +25,39 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
     }
     const fileUrl = await StorageManager.getSignedUrl(s3Key, 1800) // 30 min
 
-    // 2) Analizar PDF con OpenAI GPT-4V (nuevo sistema)
-    console.log('[PRE-RESOURCES] Starting OpenAI analysis...')
-    const openaiResult = await analyzeInvoicePagesWithOpenAI(fileUrl)
+    // 2) Verificar si usar análisis manual o OpenAI
+    let pages: number[]
+    let openaiResult: any = null // Declarar a nivel superior
 
-    if (!openaiResult.success) {
-      throw new Error(`OpenAI analysis failed: ${openaiResult.error}`)
-    }
+    if (pre.splitMode === 'manual' && pre.manualPageNumbers) {
+      console.log('[PRE-RESOURCES] Using manual page numbers:', pre.manualPageNumbers)
+      // Convertir números de página manuales a array de números
+      const manualPages = pre.manualPageNumbers
+        .split(',')
+        .map((p: string) => parseInt(p.trim()))
+        .filter((n: number) => Number.isFinite(n) && n > 0)
+        .sort((a: number, b: number) => a - b) // Ordenar ascendente
 
-    const pages = openaiResult.pages!
-    if (!pages || pages.length === 0) {
-      throw new Error('OpenAI no detectó páginas de facturas válidas')
+      if (manualPages.length === 0) {
+        throw new Error('Los números de página manuales no son válidos')
+      }
+
+      pages = manualPages
+      console.log('[PRE-RESOURCES] Manual pages validated:', pages)
+    } else {
+      // Modo automático: Analizar PDF con OpenAI GPT-4V
+      console.log('[PRE-RESOURCES] Using automatic OpenAI analysis...')
+      openaiResult = await analyzeInvoicePagesWithOpenAI(fileUrl)
+
+      if (!openaiResult.success) {
+        throw new Error(`OpenAI analysis failed: ${openaiResult.error}`)
+      }
+
+      pages = openaiResult.pages!
+      if (!pages || pages.length === 0) {
+        throw new Error('OpenAI no detectó páginas de facturas válidas')
+      }
+      console.log('[PRE-RESOURCES] OpenAI analysis completed:', pages)
     }
 
     /* 
@@ -94,23 +116,33 @@ async function processSplitterPipeline(doc: any, req: any): Promise<void> {
     }
     */
 
-    console.log('[PRE-RESOURCES] OpenAI analysis success:', {
+    console.log('[PRE-RESOURCES] Page analysis success:', {
       pages,
-      usage: openaiResult.usage,
+      mode: pre.splitMode || 'auto',
+      usage: pre.splitMode === 'manual' ? 'N/A (manual)' : 'OpenAI usage data available',
     })
 
     // 4) Actualizar pre-resource con logs y pages
     const currentLogs = Array.isArray(pre.logs) ? pre.logs : []
     const newLog = {
-      step: 'openai-analysis',
+      step: pre.splitMode === 'manual' ? 'manual-page-split' : 'openai-analysis',
       status: 'success' as const,
       at: new Date().toISOString(),
-      details: `Análisis con OpenAI completado - ${pages.length} páginas detectadas`,
+      details:
+        pre.splitMode === 'manual'
+          ? `División manual completada - ${pages.length} páginas especificadas por el usuario`
+          : `Análisis con OpenAI completado - ${pages.length} páginas detectadas`,
       data: {
-        model: 'gpt-4o',
+        model: pre.splitMode === 'manual' ? 'manual-input' : 'gpt-4o',
         pages,
-        usage: openaiResult.usage,
-        method: 'vision-analysis',
+        usage:
+          pre.splitMode === 'manual'
+            ? null
+            : typeof openaiResult !== 'undefined'
+              ? openaiResult.usage
+              : null,
+        method: pre.splitMode === 'manual' ? 'manual-specification' : 'vision-analysis',
+        splitMode: pre.splitMode || 'auto',
       },
     }
 
@@ -473,6 +505,29 @@ export const PreResources: CollectionConfig = {
         description:
           'Nombre original del archivo sin extensión para usar en los recursos derivados',
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'splitMode',
+      type: 'select',
+      required: true,
+      defaultValue: 'auto',
+      options: [
+        { label: 'Automático (IA)', value: 'auto' },
+        { label: 'Manual', value: 'manual' },
+      ],
+      admin: {
+        description: 'Modo de división del PDF multi-factura',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'manualPageNumbers',
+      type: 'text',
+      admin: {
+        description: 'Números de página manuales separados por comas (ej: 1,3,5)',
+        position: 'sidebar',
+        condition: (data) => data?.splitMode === 'manual',
       },
     },
     {
