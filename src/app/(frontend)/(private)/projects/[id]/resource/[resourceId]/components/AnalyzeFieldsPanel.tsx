@@ -227,6 +227,7 @@ export default function AnalyzeFieldsPanel({
   const [translations, setTranslations] = React.useState<Record<string, Translation>>({})
   const [requiredFields, setRequiredFields] = React.useState<Set<string>>(new Set())
   const [currencyFields, setCurrencyFields] = React.useState<Set<string>>(new Set())
+  const [numericFields, setNumericFields] = React.useState<Set<string>>(new Set())
   const [confidenceThreshold, setConfidenceThreshold] = React.useState<number>(70)
 
   React.useEffect(() => {
@@ -237,6 +238,7 @@ export default function AnalyzeFieldsPanel({
         const map: Record<string, Translation> = {}
         const requiredSet = new Set<string>()
         const currencySet = new Set<string>()
+        const numericSet = new Set<string>()
         const docs = Array.isArray(data?.docs) ? data.docs : []
         for (const d of docs) {
           if (d?.key) {
@@ -253,11 +255,16 @@ export default function AnalyzeFieldsPanel({
             if (typeof d.label === 'string' && d.label.trim().toLowerCase() === 'moneda') {
               currencySet.add(d.key)
             }
+            // Detectar campos numéricos por valueType
+            if (typeof d.valueType === 'string' && d.valueType.trim().toLowerCase() === 'numeric') {
+              numericSet.add(d.key)
+            }
           }
         }
         setTranslations(map)
         setRequiredFields(requiredSet)
         setCurrencyFields(currencySet)
+        setNumericFields(numericSet)
       } catch {}
     })()
   }, [])
@@ -513,6 +520,68 @@ export default function AnalyzeFieldsPanel({
     )
   }
 
+  const NumericInput = ({ fieldKey }: { fieldKey: string }) => {
+    const val = (fields as any)[fieldKey]
+    const conf = typeof (val as any)?.confidence === 'number' ? (val as any).confidence : undefined
+    const isManual = Boolean((val as any)?.manual)
+    const saved = Boolean(savedAt[fieldKey])
+    const currentValue = draftsRef.current[fieldKey] ?? getValue(val) ?? ''
+
+    const isRequired = requiredFields.has(fieldKey)
+    const needsRevision = isRequiredFieldNeedsRevision(fieldKey)
+    const hasValue = Boolean(currentValue)
+    const showConfirmButton = hasValue && !isManual && !(typeof conf === 'number' && conf >= 0.8)
+
+    return (
+      <div>
+        <div className='relative'>
+          <Input
+            type='number'
+            step='0.01'
+            lang='es'
+            className={`pr-10 ${needsRevision ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
+            defaultValue={currentValue}
+            placeholder='0,00'
+            onChange={(e) => {
+              const v = e.target.value
+              // Convertir punto a coma para formato español
+              const formattedValue = v.replace('.', ',')
+              handleChange(fieldKey, formattedValue)
+            }}
+            onBlur={() => {
+              // Guardar al perder foco si hay cambios pendientes
+              if (pendingKeysRef.current.has(fieldKey)) {
+                if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+                void persistPendingChanges()
+              }
+            }}
+          />
+          <div className='absolute inset-y-0 right-1 flex items-center'>
+            {saved ? (
+              <IconCheck className='h-4 w-4 text-green-600 mr-2' />
+            ) : showConfirmButton ? (
+              <Button
+                variant='ghost'
+                size='icon'
+                onClick={() => void confirmField(fieldKey)}
+                aria-label={t('confirm')}
+              >
+                <IconCheck className='h-4 w-4' />
+              </Button>
+            ) : null}
+          </div>
+        </div>
+        {isManual ? (
+          <div className='mt-1 text-[10px] text-green-600'>{t('manual')}</div>
+        ) : conf !== undefined && currentValue ? (
+          <div className={`mt-1 text-[10px] ${getColor(conf)}`}>
+            {t('confidenceIndex')}: {Math.round(conf * 100)}%
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
   const ConfirmableInput = ({
     fieldKey,
     placeholder,
@@ -728,6 +797,8 @@ export default function AnalyzeFieldsPanel({
               </div>
               {currencyFields.has(key) ? (
                 <CurrencySelector fieldKey={key} />
+              ) : numericFields.has(key) ? (
+                <NumericInput fieldKey={key} />
               ) : (
                 <ConfirmableInput fieldKey={key} />
               )}

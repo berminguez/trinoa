@@ -1228,7 +1228,7 @@ export const Resources: CollectionConfig = {
                 }
 
                 const normalizeNumericString = (orig: string): string => {
-                  let s = (orig || '').replace(/[\s€$]/g, '')
+                  let s = (orig || '').replace(/[\s€$£¥₹₽₩₦₴₱₪₫฿]/g, '')
                   let sign = ''
                   if (s.startsWith('-')) {
                     sign = '-'
@@ -1237,7 +1237,10 @@ export const Resources: CollectionConfig = {
                   const hasComma = s.includes(',')
                   const hasDot = s.includes('.')
                   if (hasComma && hasDot) {
-                    const decPos = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'))
+                    // Determinar cuál es el separador decimal (el último)
+                    const lastCommaPos = s.lastIndexOf(',')
+                    const lastDotPos = s.lastIndexOf('.')
+                    const decPos = Math.max(lastCommaPos, lastDotPos)
                     const intPart = s
                       .slice(0, decPos)
                       .replace(/[\.,]/g, '')
@@ -1246,22 +1249,34 @@ export const Resources: CollectionConfig = {
                       .slice(decPos + 1)
                       .replace(/[\.,]/g, '')
                       .replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                    return sign + intPart + (fracPart ? ',' + fracPart : '')
                   } else if (hasComma) {
+                    // Si solo hay comas, la última es decimal
                     const parts = s.split(',')
-                    const intPart = parts[0].replace(/\./g, '').replace(/[^0-9]/g, '')
-                    const fracPart = parts
-                      .slice(1)
-                      .join('')
-                      .replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                    if (parts.length === 2 && parts[1].length <= 3) {
+                      // Formato: 1234,56 (coma decimal)
+                      const intPart = parts[0].replace(/[^0-9]/g, '')
+                      const fracPart = parts[1].replace(/[^0-9]/g, '')
+                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                    } else {
+                      // Formato: 1,234,567 (comas como separadores de miles)
+                      const intPart = parts.join('').replace(/[^0-9]/g, '')
+                      return sign + intPart
+                    }
                   } else if (hasDot) {
+                    // Si solo hay puntos, el último es decimal si hay 1-3 dígitos después
                     const parts = s.split('.')
-                    const intPart = [parts[0], ...parts.slice(1, -1)]
-                      .join('')
-                      .replace(/[^0-9]/g, '')
-                    const fracPart = parts.slice(-1)[0].replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                    const lastPart = parts[parts.length - 1]
+                    if (parts.length === 2 && lastPart.length <= 3) {
+                      // Formato: 1234.56 (punto decimal) → convertir a coma
+                      const intPart = parts[0].replace(/[^0-9]/g, '')
+                      const fracPart = lastPart.replace(/[^0-9]/g, '')
+                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                    } else {
+                      // Formato: 1.234.567 (puntos como separadores de miles)
+                      const intPart = parts.join('').replace(/[^0-9]/g, '')
+                      return sign + intPart
+                    }
                   } else {
                     const digits = s.replace(/[^0-9]/g, '')
                     return sign + digits
@@ -1754,7 +1769,7 @@ export const Resources: CollectionConfig = {
                 const numericKeys: Set<string> = new Set<string>(numericKeysArray)
                 console.log('[RESOURCES_WEBHOOK] Numeric fields detected:', Array.from(numericKeys))
 
-                // Función de normalización numérica
+                // Función de normalización numérica (formato español con coma decimal)
                 const normalizeNumericString = (orig: string): string => {
                   let s = (orig || '').replace(/[\s€$£¥₹₽₩₦₴₱₪₫฿]/g, '')
                   let sign = ''
@@ -1765,7 +1780,10 @@ export const Resources: CollectionConfig = {
                   const hasComma = s.includes(',')
                   const hasDot = s.includes('.')
                   if (hasComma && hasDot) {
-                    const decPos = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'))
+                    // Determinar cuál es el separador decimal (el último)
+                    const lastCommaPos = s.lastIndexOf(',')
+                    const lastDotPos = s.lastIndexOf('.')
+                    const decPos = Math.max(lastCommaPos, lastDotPos)
                     const intPart = s
                       .slice(0, decPos)
                       .replace(/[\.,]/g, '')
@@ -1774,22 +1792,34 @@ export const Resources: CollectionConfig = {
                       .slice(decPos + 1)
                       .replace(/[\.,]/g, '')
                       .replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                    return sign + intPart + (fracPart ? ',' + fracPart : '')
                   } else if (hasComma) {
+                    // Si solo hay comas, la última es decimal
                     const parts = s.split(',')
-                    const intPart = parts[0].replace(/\./g, '').replace(/[^0-9]/g, '')
-                    const fracPart = parts
-                      .slice(1)
-                      .join('')
-                      .replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                    if (parts.length === 2 && parts[1].length <= 3) {
+                      // Formato: 1234,56 (coma decimal)
+                      const intPart = parts[0].replace(/[^0-9]/g, '')
+                      const fracPart = parts[1].replace(/[^0-9]/g, '')
+                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                    } else {
+                      // Formato: 1,234,567 (comas como separadores de miles)
+                      const intPart = parts.join('').replace(/[^0-9]/g, '')
+                      return sign + intPart
+                    }
                   } else if (hasDot) {
+                    // Si solo hay puntos, el último es decimal si hay 1-3 dígitos después
                     const parts = s.split('.')
-                    const intPart = [parts[0], ...parts.slice(1, -1)]
-                      .join('')
-                      .replace(/[^0-9]/g, '')
-                    const fracPart = parts.slice(-1)[0].replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                    const lastPart = parts[parts.length - 1]
+                    if (parts.length === 2 && lastPart.length <= 3) {
+                      // Formato: 1234.56 (punto decimal) → convertir a coma
+                      const intPart = parts[0].replace(/[^0-9]/g, '')
+                      const fracPart = lastPart.replace(/[^0-9]/g, '')
+                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                    } else {
+                      // Formato: 1.234.567 (puntos como separadores de miles)
+                      const intPart = parts.join('').replace(/[^0-9]/g, '')
+                      return sign + intPart
+                    }
                   } else {
                     const digits = s.replace(/[^0-9]/g, '')
                     return sign + digits
