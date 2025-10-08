@@ -8,6 +8,7 @@ import {
   calculateResourceConfidence,
   getConfidenceThreshold,
 } from '../lib/utils/calculateResourceConfidence'
+import { normalizeCurrencyString } from '../lib/utils/currency-normalization'
 import type { CollectionConfig } from 'payload'
 import { parseAndFormatDate } from '../utils/dateParser'
 
@@ -1267,33 +1268,6 @@ export const Resources: CollectionConfig = {
                   }
                 }
 
-                const normalizeCurrencyString = (orig: string): string => {
-                  const s = (orig || '').trim().toLowerCase()
-
-                  // Arrays de variantes para cada moneda
-                  const eurVariants = ['eur', 'euro', 'euros', '€', 'eur.']
-                  const usdVariants = ['usd', 'dollar', 'dollars', '$', 'usd.']
-                  const gbpVariants = ['gbp', 'pound', 'pounds', '£', 'gbp.', 'sterling']
-
-                  // Verificar EUR
-                  if (eurVariants.some((variant) => s === variant || s.includes(variant))) {
-                    return 'EUR'
-                  }
-
-                  // Verificar USD
-                  if (usdVariants.some((variant) => s === variant || s.includes(variant))) {
-                    return 'USD'
-                  }
-
-                  // Verificar GBP
-                  if (gbpVariants.some((variant) => s === variant || s.includes(variant))) {
-                    return 'GBP'
-                  }
-
-                  // Si no coincide con ninguna variante conocida, devolver EUR como moneda por defecto
-                  return 'EUR'
-                }
-
                 if (
                   dateKeysLower.size > 0 ||
                   numericKeysLower.size > 0 ||
@@ -1758,34 +1732,6 @@ export const Resources: CollectionConfig = {
                   '[RESOURCES_WEBHOOK] Currency fields detected:',
                   Array.from(currencyKeys),
                 )
-
-                // Función de normalización de monedas
-                const normalizeCurrencyString = (orig: string): string => {
-                  const s = (orig || '').trim().toLowerCase()
-
-                  // Arrays de variantes para cada moneda
-                  const eurVariants = ['eur', 'euro', 'euros', '€', 'eur.']
-                  const usdVariants = ['usd', 'dollar', 'dollars', '$', 'usd.']
-                  const gbpVariants = ['gbp', 'pound', 'pounds', '£', 'gbp.', 'sterling']
-
-                  // Verificar EUR
-                  if (eurVariants.some((variant) => s === variant || s.includes(variant))) {
-                    return 'EUR'
-                  }
-
-                  // Verificar USD
-                  if (usdVariants.some((variant) => s === variant || s.includes(variant))) {
-                    return 'USD'
-                  }
-
-                  // Verificar GBP
-                  if (gbpVariants.some((variant) => s === variant || s.includes(variant))) {
-                    return 'GBP'
-                  }
-
-                  // Si no coincide con ninguna variante conocida, devolver EUR como moneda por defecto
-                  return 'EUR'
-                }
 
                 if (dateKeys.size > 0 || currencyKeys.size > 0) {
                   const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||

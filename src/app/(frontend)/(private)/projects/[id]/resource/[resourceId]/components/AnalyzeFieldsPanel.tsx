@@ -11,6 +11,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import {
   Table,
   TableBody,
   TableCell,
@@ -18,9 +27,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { IconCheck, IconPlus } from '@tabler/icons-react'
+import { IconCheck, IconPlus, IconChevronDown } from '@tabler/icons-react'
 import { toast } from 'sonner'
 import { useLocale, useTranslations } from 'next-intl'
+import { getCurrencySelectOptions } from '@/lib/utils/currency-normalization'
 
 import { updateResourceAction } from '@/actions/resources/updateResource'
 import { useRouter } from 'next/navigation'
@@ -412,45 +422,82 @@ export default function AnalyzeFieldsPanel({
     const isRequired = requiredFields.has(fieldKey)
     const needsRevision = isRequiredFieldNeedsRevision(fieldKey)
 
-    const currencyOptions = [
-      { value: 'EUR', label: 'EUR - Euro' },
-      { value: 'USD', label: 'USD - Dólar' },
-      { value: 'GBP', label: 'GBP - Libra' },
-    ]
+    const [open, setOpen] = React.useState(false)
+    const currencyOptions = React.useMemo(() => getCurrencySelectOptions(), [])
+
+    const selectedOption = currencyOptions.find((option) => option.value === currentValue)
 
     return (
       <div>
         <div className='relative'>
-          <Select
-            value={currentValue}
-            onValueChange={(value) => {
-              handleChange(fieldKey, value)
-              // Auto-guardar después de seleccionar
-              setTimeout(() => {
-                if (pendingKeysRef.current.has(fieldKey)) {
-                  if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
-                  void persistPendingChanges()
-                }
-              }, 100)
-            }}
-          >
-            <SelectTrigger
-              className={
-                needsRevision
-                  ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-500 bg-red-50'
-                  : ''
-              }
-            >
-              <SelectValue placeholder='Seleccionar moneda' />
-            </SelectTrigger>
-            <SelectContent>
-              {currencyOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant='outline'
+                role='combobox'
+                aria-expanded={open}
+                className={`w-full justify-between ${
+                  needsRevision
+                    ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-500 bg-red-50'
+                    : ''
+                }`}
+              >
+                {selectedOption ? (
+                  <span className='flex items-center gap-2'>
+                    {selectedOption.symbol && (
+                      <span className='text-muted-foreground'>{selectedOption.symbol}</span>
+                    )}
+                    {locale?.startsWith('en') ? selectedOption.labelEn : selectedOption.label}
+                  </span>
+                ) : (
+                  'Seleccionar moneda...'
+                )}
+                <IconChevronDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className='w-full p-0' align='start'>
+              <Command>
+                <CommandInput placeholder='Buscar moneda...' />
+                <CommandList>
+                  <CommandEmpty>No se encontró ninguna moneda.</CommandEmpty>
+                  <CommandGroup>
+                    {currencyOptions.map((option) => (
+                      <CommandItem
+                        key={option.value}
+                        value={option.searchTerms}
+                        onSelect={() => {
+                          const newValue = option.value
+                          handleChange(fieldKey, newValue)
+                          setOpen(false)
+                          // Auto-guardar después de seleccionar
+                          setTimeout(() => {
+                            if (pendingKeysRef.current.has(fieldKey)) {
+                              if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+                              void persistPendingChanges()
+                            }
+                          }, 100)
+                        }}
+                      >
+                        <div className='flex items-center gap-2 w-full'>
+                          {option.symbol && (
+                            <span className='text-muted-foreground w-6'>{option.symbol}</span>
+                          )}
+                          <span className='flex-1'>
+                            {locale?.startsWith('en') ? option.labelEn : option.label}
+                          </span>
+                          <IconCheck
+                            className={`ml-auto h-4 w-4 ${
+                              currentValue === option.value ? 'opacity-100' : 'opacity-0'
+                            }`}
+                          />
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <div className='absolute inset-y-0 right-8 flex items-center pointer-events-none'>
             {saved && <IconCheck className='h-4 w-4 text-green-600' />}
           </div>
