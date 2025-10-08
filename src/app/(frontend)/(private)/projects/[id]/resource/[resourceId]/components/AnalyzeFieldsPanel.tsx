@@ -4,6 +4,13 @@ import * as React from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Table,
   TableBody,
   TableCell,
@@ -209,6 +216,7 @@ export default function AnalyzeFieldsPanel({
   type Translation = { label: string; labelEn?: string; order?: number; isRequired?: boolean }
   const [translations, setTranslations] = React.useState<Record<string, Translation>>({})
   const [requiredFields, setRequiredFields] = React.useState<Set<string>>(new Set())
+  const [currencyFields, setCurrencyFields] = React.useState<Set<string>>(new Set())
   const [confidenceThreshold, setConfidenceThreshold] = React.useState<number>(70)
 
   React.useEffect(() => {
@@ -218,6 +226,7 @@ export default function AnalyzeFieldsPanel({
         const data = await res.json()
         const map: Record<string, Translation> = {}
         const requiredSet = new Set<string>()
+        const currencySet = new Set<string>()
         const docs = Array.isArray(data?.docs) ? data.docs : []
         for (const d of docs) {
           if (d?.key) {
@@ -230,10 +239,15 @@ export default function AnalyzeFieldsPanel({
             if (d.isRequired) {
               requiredSet.add(d.key)
             }
+            // Detectar campos de moneda por etiqueta
+            if (typeof d.label === 'string' && d.label.trim().toLowerCase() === 'moneda') {
+              currencySet.add(d.key)
+            }
           }
         }
         setTranslations(map)
         setRequiredFields(requiredSet)
+        setCurrencyFields(currencySet)
       } catch {}
     })()
   }, [])
@@ -386,6 +400,70 @@ export default function AnalyzeFieldsPanel({
 
     // Si no tiene confianza o está por debajo del umbral, necesita revisión
     return typeof confidence !== 'number' || confidence < thresholdDecimal
+  }
+
+  const CurrencySelector = ({ fieldKey }: { fieldKey: string }) => {
+    const val = (fields as any)[fieldKey]
+    const conf = typeof (val as any)?.confidence === 'number' ? (val as any).confidence : undefined
+    const isManual = Boolean((val as any)?.manual)
+    const saved = Boolean(savedAt[fieldKey])
+    const currentValue = draftsRef.current[fieldKey] ?? getValue(val) ?? ''
+
+    const isRequired = requiredFields.has(fieldKey)
+    const needsRevision = isRequiredFieldNeedsRevision(fieldKey)
+
+    const currencyOptions = [
+      { value: 'EUR', label: 'EUR - Euro' },
+      { value: 'USD', label: 'USD - Dólar' },
+      { value: 'GBP', label: 'GBP - Libra' },
+    ]
+
+    return (
+      <div>
+        <div className='relative'>
+          <Select
+            value={currentValue}
+            onValueChange={(value) => {
+              handleChange(fieldKey, value)
+              // Auto-guardar después de seleccionar
+              setTimeout(() => {
+                if (pendingKeysRef.current.has(fieldKey)) {
+                  if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current)
+                  void persistPendingChanges()
+                }
+              }, 100)
+            }}
+          >
+            <SelectTrigger
+              className={
+                needsRevision
+                  ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-500 bg-red-50'
+                  : ''
+              }
+            >
+              <SelectValue placeholder='Seleccionar moneda' />
+            </SelectTrigger>
+            <SelectContent>
+              {currencyOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className='absolute inset-y-0 right-8 flex items-center pointer-events-none'>
+            {saved && <IconCheck className='h-4 w-4 text-green-600' />}
+          </div>
+        </div>
+        {isManual ? (
+          <div className='mt-1 text-[10px] text-green-600'>{t('manual')}</div>
+        ) : conf !== undefined && currentValue ? (
+          <div className={`mt-1 text-[10px] ${getColor(conf)}`}>
+            {t('confidenceIndex')}: {Math.round(conf * 100)}%
+          </div>
+        ) : null}
+      </div>
+    )
   }
 
   const ConfirmableInput = ({
@@ -601,7 +679,11 @@ export default function AnalyzeFieldsPanel({
                   {savedAt[key] ? <IconCheck size={12} className='text-green-600' /> : null}
                 </label>
               </div>
-              <ConfirmableInput fieldKey={key} />
+              {currencyFields.has(key) ? (
+                <CurrencySelector fieldKey={key} />
+              ) : (
+                <ConfirmableInput fieldKey={key} />
+              )}
             </div>
           )
         })}
