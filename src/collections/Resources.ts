@@ -1736,10 +1736,62 @@ export const Resources: CollectionConfig = {
                   .filter((s: string) => !!s)
                 const dateKeys: Set<string> = new Set<string>(dateKeysArray)
 
-                if (dateKeys.size > 0) {
+                // Detectar campos de moneda por etiqueta "Moneda"
+                const currencyKeysArray: string[] = (docs as any[])
+                  .filter((d: any) => {
+                    const isMoneda =
+                      typeof d?.label === 'string' && d.label.trim().toLowerCase() === 'moneda'
+                    if (isMoneda) {
+                      console.log(
+                        '[RESOURCES_WEBHOOK] Found currency field:',
+                        d.key,
+                        'with label:',
+                        d.label,
+                      )
+                    }
+                    return isMoneda
+                  })
+                  .map((d: any) => String(d.key))
+                  .filter((s: string) => !!s)
+                const currencyKeys: Set<string> = new Set<string>(currencyKeysArray)
+                console.log(
+                  '[RESOURCES_WEBHOOK] Currency fields detected:',
+                  Array.from(currencyKeys),
+                )
+
+                // Función de normalización de monedas
+                const normalizeCurrencyString = (orig: string): string => {
+                  const s = (orig || '').trim().toLowerCase()
+
+                  // Arrays de variantes para cada moneda
+                  const eurVariants = ['eur', 'euro', 'euros', '€', 'eur.']
+                  const usdVariants = ['usd', 'dollar', 'dollars', '$', 'usd.']
+                  const gbpVariants = ['gbp', 'pound', 'pounds', '£', 'gbp.', 'sterling']
+
+                  // Verificar EUR
+                  if (eurVariants.some((variant) => s === variant || s.includes(variant))) {
+                    return 'EUR'
+                  }
+
+                  // Verificar USD
+                  if (usdVariants.some((variant) => s === variant || s.includes(variant))) {
+                    return 'USD'
+                  }
+
+                  // Verificar GBP
+                  if (gbpVariants.some((variant) => s === variant || s.includes(variant))) {
+                    return 'GBP'
+                  }
+
+                  // Si no coincide con ninguna variante conocida, devolver EUR como moneda por defecto
+                  return 'EUR'
+                }
+
+                if (dateKeys.size > 0 || currencyKeys.size > 0) {
                   const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
                     {}) as Record<string, any>
                   let changed = false
+                  // Procesar campos de fecha
                   for (const dk of dateKeys) {
                     const field = f[dk]
                     if (field && typeof field === 'object') {
@@ -1755,6 +1807,61 @@ export const Resources: CollectionConfig = {
                           changed = true
                         }
                       }
+                    }
+                  }
+
+                  // Procesar campos de moneda
+                  console.log(
+                    '[RESOURCES_WEBHOOK] Processing currency fields, count:',
+                    currencyKeys.size,
+                  )
+                  for (const ck of currencyKeys) {
+                    console.log('[RESOURCES_WEBHOOK] Processing currency field:', ck)
+                    const field = f[ck]
+                    if (field && typeof field === 'object') {
+                      const original =
+                        typeof (field as any).value === 'string' && (field as any).value.trim()
+                          ? (field as any).value
+                          : typeof (field as any).valueString === 'string' &&
+                              (field as any).valueString.trim()
+                            ? (field as any).valueString
+                            : typeof (field as any).content === 'string' &&
+                                (field as any).content.trim()
+                              ? (field as any).content
+                              : ''
+                      console.log(
+                        '[RESOURCES_WEBHOOK] Currency field',
+                        ck,
+                        'original value:',
+                        original,
+                      )
+                      if (original) {
+                        const normalized = normalizeCurrencyString(original)
+                        console.log('[RESOURCES_WEBHOOK] Normalizing currency field', ck, {
+                          original,
+                          normalized,
+                        })
+                        if (normalized !== original) {
+                          const updatedField: Record<string, any> = { ...(field || {}) }
+                          updatedField.value = normalized
+                          updatedField.valueString = normalized
+                          updatedField.content = normalized
+                          f[ck] = updatedField
+                          changed = true
+                          console.log(
+                            '[RESOURCES_WEBHOOK] Currency field updated:',
+                            ck,
+                            'changed to:',
+                            normalized,
+                          )
+                        }
+                      }
+                    } else {
+                      console.log(
+                        '[RESOURCES_WEBHOOK] Currency field',
+                        ck,
+                        'not found or invalid in fields',
+                      )
                     }
                   }
                   if (changed) {
