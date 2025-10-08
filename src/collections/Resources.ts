@@ -1733,7 +1733,70 @@ export const Resources: CollectionConfig = {
                   Array.from(currencyKeys),
                 )
 
-                if (dateKeys.size > 0 || currencyKeys.size > 0) {
+                // Detectar campos numéricos por valueType "numeric"
+                const numericKeysArray: string[] = (docs as any[])
+                  .filter((d: any) => {
+                    const isNumeric =
+                      typeof d?.valueType === 'string' &&
+                      d.valueType.trim().toLowerCase() === 'numeric'
+                    if (isNumeric) {
+                      console.log(
+                        '[RESOURCES_WEBHOOK] Found numeric field:',
+                        d.key,
+                        'with valueType:',
+                        d.valueType,
+                      )
+                    }
+                    return isNumeric
+                  })
+                  .map((d: any) => String(d.key))
+                  .filter((s: string) => !!s)
+                const numericKeys: Set<string> = new Set<string>(numericKeysArray)
+                console.log('[RESOURCES_WEBHOOK] Numeric fields detected:', Array.from(numericKeys))
+
+                // Función de normalización numérica
+                const normalizeNumericString = (orig: string): string => {
+                  let s = (orig || '').replace(/[\s€$£¥₹₽₩₦₴₱₪₫฿]/g, '')
+                  let sign = ''
+                  if (s.startsWith('-')) {
+                    sign = '-'
+                    s = s.slice(1)
+                  }
+                  const hasComma = s.includes(',')
+                  const hasDot = s.includes('.')
+                  if (hasComma && hasDot) {
+                    const decPos = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'))
+                    const intPart = s
+                      .slice(0, decPos)
+                      .replace(/[\.,]/g, '')
+                      .replace(/[^0-9]/g, '')
+                    const fracPart = s
+                      .slice(decPos + 1)
+                      .replace(/[\.,]/g, '')
+                      .replace(/[^0-9]/g, '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                  } else if (hasComma) {
+                    const parts = s.split(',')
+                    const intPart = parts[0].replace(/\./g, '').replace(/[^0-9]/g, '')
+                    const fracPart = parts
+                      .slice(1)
+                      .join('')
+                      .replace(/[^0-9]/g, '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                  } else if (hasDot) {
+                    const parts = s.split('.')
+                    const intPart = [parts[0], ...parts.slice(1, -1)]
+                      .join('')
+                      .replace(/[^0-9]/g, '')
+                    const fracPart = parts.slice(-1)[0].replace(/[^0-9]/g, '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
+                  } else {
+                    const digits = s.replace(/[^0-9]/g, '')
+                    return sign + digits
+                  }
+                }
+
+                if (dateKeys.size > 0 || currencyKeys.size > 0 || numericKeys.size > 0) {
                   const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
                     {}) as Record<string, any>
                   let changed = false
@@ -1810,6 +1873,60 @@ export const Resources: CollectionConfig = {
                       )
                     }
                   }
+
+                  // Procesar campos numéricos
+                  console.log(
+                    '[RESOURCES_WEBHOOK] Processing numeric fields, count:',
+                    numericKeys.size,
+                  )
+                  for (const nk of numericKeys) {
+                    console.log('[RESOURCES_WEBHOOK] Processing numeric field:', nk)
+                    const field = f[nk]
+                    if (field && typeof field === 'object') {
+                      const candidates = [
+                        typeof (field as any).value === 'string' ? (field as any).value : '',
+                        typeof (field as any).valueString === 'string'
+                          ? (field as any).valueString
+                          : '',
+                        typeof (field as any).content === 'string' ? (field as any).content : '',
+                      ].filter((s) => s && s.trim()) as string[]
+                      const original = candidates.length > 0 ? candidates[0] : ''
+                      console.log(
+                        '[RESOURCES_WEBHOOK] Numeric field',
+                        nk,
+                        'original value:',
+                        original,
+                      )
+                      if (original) {
+                        const cleaned = normalizeNumericString(original)
+                        console.log('[RESOURCES_WEBHOOK] Normalizing numeric field', nk, {
+                          original,
+                          cleaned,
+                        })
+                        if (cleaned !== original) {
+                          const updatedField: Record<string, any> = { ...(field || {}) }
+                          updatedField.value = cleaned
+                          updatedField.valueString = cleaned
+                          updatedField.content = cleaned
+                          f[nk] = updatedField
+                          changed = true
+                          console.log(
+                            '[RESOURCES_WEBHOOK] Numeric field updated:',
+                            nk,
+                            'changed to:',
+                            cleaned,
+                          )
+                        }
+                      }
+                    } else {
+                      console.log(
+                        '[RESOURCES_WEBHOOK] Numeric field',
+                        nk,
+                        'not found or invalid in fields',
+                      )
+                    }
+                  }
+
                   if (changed) {
                     mergedAnalyzeResult = {
                       ...(mergedAnalyzeResult || {}),
