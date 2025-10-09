@@ -532,23 +532,18 @@ export default function AnalyzeFieldsPanel({
     const hasValue = Boolean(currentValue)
     const showConfirmButton = hasValue && !isManual && !(typeof conf === 'number' && conf >= 0.8)
 
-    // Convertir formato español (coma) a formato HTML (punto) para el input
-    const inputValue = currentValue.replace(',', '.')
-
     return (
       <div>
         <div className='relative'>
           <Input
             type='number'
             step='0.01'
+            min='0'
             className={`pr-10 ${needsRevision ? 'border-red-300 ring-red-200 focus:border-red-500 focus:ring-red-500 bg-red-50' : ''}`}
-            value={inputValue}
-            placeholder='0.00'
+            defaultValue={currentValue}
+            placeholder='0,00'
             onChange={(e) => {
-              const v = e.target.value
-              // Convertir punto a coma para formato español al guardar
-              const formattedValue = v.replace('.', ',')
-              handleChange(fieldKey, formattedValue)
+              handleChange(fieldKey, e.target.value)
             }}
             onBlur={() => {
               // Guardar al perder foco si hay cambios pendientes
@@ -580,10 +575,6 @@ export default function AnalyzeFieldsPanel({
             {t('confidenceIndex')}: {Math.round(conf * 100)}%
           </div>
         ) : null}
-        {/* Mostrar el valor en formato español debajo del input */}
-        {currentValue && currentValue !== inputValue && (
-          <div className='mt-1 text-[10px] text-muted-foreground'>Valor: {currentValue}</div>
-        )}
       </div>
     )
   }
