@@ -1186,6 +1186,39 @@ export const Resources: CollectionConfig = {
                   Array.from(currencyKeysLower),
                 )
 
+                // Detectar campos CIF y CUPS por key específica
+                const cifCupsKeysLower: Set<string> = new Set<string>(
+                  (docs as any[])
+                    .filter((d: any) => {
+                      const isCifOrCups = d?.key === 'VendorTaxId' || d?.key === 'CUPS'
+                      if (isCifOrCups) {
+                        console.log(
+                          '[RESOURCES_WEBHOOK:ID] Found CIF/CUPS field:',
+                          d.key,
+                          'with label:',
+                          d.label,
+                        )
+                      }
+                      return isCifOrCups
+                    })
+                    .map((d: any) => String(d.key).toLowerCase())
+                    .filter((s: string) => !!s),
+                )
+                console.log(
+                  '[RESOURCES_WEBHOOK:ID] CIF/CUPS fields detected:',
+                  Array.from(cifCupsKeysLower),
+                )
+
+                // Función de normalización para CIF y CUPS
+                const normalizeCifCupsString = (orig: string): string => {
+                  // Eliminar puntos, paréntesis, comillas y espacios extra
+                  return (orig || '')
+                    .replace(/[\.\(\)\"\']/g, '') // Eliminar . ( ) " '
+                    .replace(/\s+/g, ' ') // Normalizar espacios múltiples a uno solo
+                    .trim() // Eliminar espacios al inicio y final
+                    .toUpperCase() // Convertir a mayúsculas para consistencia
+                }
+
                 const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
                   {}) as Record<string, any>
                 const lowerToRealKey: Record<string, string> = {}
@@ -1286,7 +1319,8 @@ export const Resources: CollectionConfig = {
                 if (
                   dateKeysLower.size > 0 ||
                   numericKeysLower.size > 0 ||
-                  currencyKeysLower.size > 0
+                  currencyKeysLower.size > 0 ||
+                  cifCupsKeysLower.size > 0
                 ) {
                   // Fechas
                   for (const dkLower of dateKeysLower) {
@@ -1409,6 +1443,67 @@ export const Resources: CollectionConfig = {
                     } else {
                       console.log(
                         '[RESOURCES_WEBHOOK:ID] Currency field',
+                        ck,
+                        'not found or invalid in fields',
+                      )
+                    }
+                  }
+
+                  // Procesar campos CIF y CUPS
+                  console.log(
+                    '[RESOURCES_WEBHOOK:ID] Processing CIF/CUPS fields, count:',
+                    cifCupsKeysLower.size,
+                  )
+                  for (const ckLower of cifCupsKeysLower) {
+                    const ck = lowerToRealKey[ckLower] || ckLower
+                    console.log(
+                      '[RESOURCES_WEBHOOK:ID] Processing CIF/CUPS field:',
+                      ckLower,
+                      '→',
+                      ck,
+                    )
+                    const field = f[ck]
+                    if (field && typeof field === 'object') {
+                      const original =
+                        typeof (field as any).value === 'string' && (field as any).value.trim()
+                          ? (field as any).value
+                          : typeof (field as any).valueString === 'string' &&
+                              (field as any).valueString.trim()
+                            ? (field as any).valueString
+                            : typeof (field as any).content === 'string' &&
+                                (field as any).content.trim()
+                              ? (field as any).content
+                              : ''
+                      console.log(
+                        '[RESOURCES_WEBHOOK:ID] CIF/CUPS field',
+                        ck,
+                        'original value:',
+                        original,
+                      )
+                      if (original) {
+                        const normalized = normalizeCifCupsString(original)
+                        console.log('[RESOURCES_WEBHOOK:ID] Normalizing CIF/CUPS field', ck, {
+                          original,
+                          normalized,
+                        })
+                        if (normalized !== original) {
+                          const updatedField: Record<string, any> = { ...(field || {}) }
+                          updatedField.value = normalized
+                          updatedField.valueString = normalized
+                          updatedField.content = normalized
+                          f[ck] = updatedField
+                          changed = true
+                          console.log(
+                            '[RESOURCES_WEBHOOK:ID] CIF/CUPS field updated:',
+                            ck,
+                            'changed to:',
+                            normalized,
+                          )
+                        }
+                      }
+                    } else {
+                      console.log(
+                        '[RESOURCES_WEBHOOK:ID] CIF/CUPS field',
                         ck,
                         'not found or invalid in fields',
                       )
@@ -1769,6 +1864,38 @@ export const Resources: CollectionConfig = {
                 const numericKeys: Set<string> = new Set<string>(numericKeysArray)
                 console.log('[RESOURCES_WEBHOOK] Numeric fields detected:', Array.from(numericKeys))
 
+                // Detectar campos CIF y CUPS por key específica
+                const cifCupsKeysArray: string[] = (docs as any[])
+                  .filter((d: any) => {
+                    const isCifOrCups = d?.key === 'VendorTaxId' || d?.key === 'CUPS'
+                    if (isCifOrCups) {
+                      console.log(
+                        '[RESOURCES_WEBHOOK] Found CIF/CUPS field:',
+                        d.key,
+                        'with label:',
+                        d.label,
+                      )
+                    }
+                    return isCifOrCups
+                  })
+                  .map((d: any) => String(d.key))
+                  .filter((s: string) => !!s)
+                const cifCupsKeys: Set<string> = new Set<string>(cifCupsKeysArray)
+                console.log(
+                  '[RESOURCES_WEBHOOK] CIF/CUPS fields detected:',
+                  Array.from(cifCupsKeys),
+                )
+
+                // Función de normalización para CIF y CUPS
+                const normalizeCifCupsString = (orig: string): string => {
+                  // Eliminar puntos, paréntesis, comillas y espacios extra
+                  return (orig || '')
+                    .replace(/[\.\(\)\"\']/g, '') // Eliminar . ( ) " '
+                    .replace(/\s+/g, ' ') // Normalizar espacios múltiples a uno solo
+                    .trim() // Eliminar espacios al inicio y final
+                    .toUpperCase() // Convertir a mayúsculas para consistencia
+                }
+
                 // Función de normalización numérica (formato estándar con punto decimal)
                 const normalizeNumericString = (orig: string): string => {
                   let s = (orig || '').replace(/[\s€$£¥₹₽₩₦₴₱₪₫฿]/g, '')
@@ -1826,7 +1953,12 @@ export const Resources: CollectionConfig = {
                   }
                 }
 
-                if (dateKeys.size > 0 || currencyKeys.size > 0 || numericKeys.size > 0) {
+                if (
+                  dateKeys.size > 0 ||
+                  currencyKeys.size > 0 ||
+                  numericKeys.size > 0 ||
+                  cifCupsKeys.size > 0
+                ) {
                   const f: Record<string, any> = ((mergedAnalyzeResult as any).fields ||
                     {}) as Record<string, any>
                   let changed = false
@@ -1952,6 +2084,61 @@ export const Resources: CollectionConfig = {
                       console.log(
                         '[RESOURCES_WEBHOOK] Numeric field',
                         nk,
+                        'not found or invalid in fields',
+                      )
+                    }
+                  }
+
+                  // Procesar campos CIF y CUPS
+                  console.log(
+                    '[RESOURCES_WEBHOOK] Processing CIF/CUPS fields, count:',
+                    cifCupsKeys.size,
+                  )
+                  for (const ck of cifCupsKeys) {
+                    console.log('[RESOURCES_WEBHOOK] Processing CIF/CUPS field:', ck)
+                    const field = f[ck]
+                    if (field && typeof field === 'object') {
+                      const original =
+                        typeof (field as any).value === 'string' && (field as any).value.trim()
+                          ? (field as any).value
+                          : typeof (field as any).valueString === 'string' &&
+                              (field as any).valueString.trim()
+                            ? (field as any).valueString
+                            : typeof (field as any).content === 'string' &&
+                                (field as any).content.trim()
+                              ? (field as any).content
+                              : ''
+                      console.log(
+                        '[RESOURCES_WEBHOOK] CIF/CUPS field',
+                        ck,
+                        'original value:',
+                        original,
+                      )
+                      if (original) {
+                        const normalized = normalizeCifCupsString(original)
+                        console.log('[RESOURCES_WEBHOOK] Normalizing CIF/CUPS field', ck, {
+                          original,
+                          normalized,
+                        })
+                        if (normalized !== original) {
+                          const updatedField: Record<string, any> = { ...(field || {}) }
+                          updatedField.value = normalized
+                          updatedField.valueString = normalized
+                          updatedField.content = normalized
+                          f[ck] = updatedField
+                          changed = true
+                          console.log(
+                            '[RESOURCES_WEBHOOK] CIF/CUPS field updated:',
+                            ck,
+                            'changed to:',
+                            normalized,
+                          )
+                        }
+                      }
+                    } else {
+                      console.log(
+                        '[RESOURCES_WEBHOOK] CIF/CUPS field',
+                        ck,
                         'not found or invalid in fields',
                       )
                     }
