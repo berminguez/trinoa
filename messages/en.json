@@ -357,13 +357,16 @@
     "case": "Case",
     "caseLabels": {
       "factura_suministros": "Utilities invoice",
+      "desplazamientos": "Travel",
       "otros": "Other"
     },
     "typeLabels": {
       "electricidad": "Electricity",
       "agua": "Water",
       "gas": "Gas",
-      "combustible": "Fuel"
+      "combustible": "Fuel",
+      "taxi_vtc": "Taxi / VTC",
+      "otros": "Other"
     },
     "selectResource": "Select a resource",
     "selectionSummary": "{selected} of {total} rows selected.",

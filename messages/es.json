@@ -357,13 +357,15 @@
     "case": "Caso",
     "caseLabels": {
       "factura_suministros": "Factura de suministros",
+      "desplazamientos": "Desplazamientos",
       "otros": "Otros"
     },
     "typeLabels": {
       "electricidad": "Electricidad",
       "agua": "Agua",
       "gas": "Gas",
-      "combustible": "Combustible"
+      "taxi_vtc": "Taxi / VTC",
+      "otros": "Otros"
     },
     "selectResource": "Selecciona un recurso",
     "selectionSummary": "{selected} de {total} filas seleccionadas.",
