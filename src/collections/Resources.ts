@@ -1249,15 +1249,15 @@ export const Resources: CollectionConfig = {
                       .slice(decPos + 1)
                       .replace(/[\.,]/g, '')
                       .replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? ',' + fracPart : '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
                   } else if (hasComma) {
                     // Si solo hay comas, la última es decimal
                     const parts = s.split(',')
                     if (parts.length === 2 && parts[1].length <= 3) {
-                      // Formato: 1234,56 (coma decimal)
+                      // Formato: 1234,56 (coma decimal) → convertir a punto
                       const intPart = parts[0].replace(/[^0-9]/g, '')
                       const fracPart = parts[1].replace(/[^0-9]/g, '')
-                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                      return sign + intPart + (fracPart ? '.' + fracPart : '')
                     } else {
                       // Formato: 1,234,567 (comas como separadores de miles)
                       const intPart = parts.join('').replace(/[^0-9]/g, '')
@@ -1268,10 +1268,10 @@ export const Resources: CollectionConfig = {
                     const parts = s.split('.')
                     const lastPart = parts[parts.length - 1]
                     if (parts.length === 2 && lastPart.length <= 3) {
-                      // Formato: 1234.56 (punto decimal) → convertir a coma
+                      // Formato: 1234.56 (punto decimal) → mantener punto
                       const intPart = parts[0].replace(/[^0-9]/g, '')
                       const fracPart = lastPart.replace(/[^0-9]/g, '')
-                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                      return sign + intPart + (fracPart ? '.' + fracPart : '')
                     } else {
                       // Formato: 1.234.567 (puntos como separadores de miles)
                       const intPart = parts.join('').replace(/[^0-9]/g, '')
@@ -1769,7 +1769,7 @@ export const Resources: CollectionConfig = {
                 const numericKeys: Set<string> = new Set<string>(numericKeysArray)
                 console.log('[RESOURCES_WEBHOOK] Numeric fields detected:', Array.from(numericKeys))
 
-                // Función de normalización numérica (formato español con coma decimal)
+                // Función de normalización numérica (formato estándar con punto decimal)
                 const normalizeNumericString = (orig: string): string => {
                   let s = (orig || '').replace(/[\s€$£¥₹₽₩₦₴₱₪₫฿]/g, '')
                   let sign = ''
@@ -1792,15 +1792,15 @@ export const Resources: CollectionConfig = {
                       .slice(decPos + 1)
                       .replace(/[\.,]/g, '')
                       .replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? ',' + fracPart : '')
+                    return sign + intPart + (fracPart ? '.' + fracPart : '')
                   } else if (hasComma) {
                     // Si solo hay comas, la última es decimal
                     const parts = s.split(',')
                     if (parts.length === 2 && parts[1].length <= 3) {
-                      // Formato: 1234,56 (coma decimal)
+                      // Formato: 1234,56 (coma decimal) → convertir a punto
                       const intPart = parts[0].replace(/[^0-9]/g, '')
                       const fracPart = parts[1].replace(/[^0-9]/g, '')
-                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                      return sign + intPart + (fracPart ? '.' + fracPart : '')
                     } else {
                       // Formato: 1,234,567 (comas como separadores de miles)
                       const intPart = parts.join('').replace(/[^0-9]/g, '')
@@ -1811,10 +1811,10 @@ export const Resources: CollectionConfig = {
                     const parts = s.split('.')
                     const lastPart = parts[parts.length - 1]
                     if (parts.length === 2 && lastPart.length <= 3) {
-                      // Formato: 1234.56 (punto decimal) → convertir a coma
+                      // Formato: 1234.56 (punto decimal) → mantener punto
                       const intPart = parts[0].replace(/[^0-9]/g, '')
                       const fracPart = lastPart.replace(/[^0-9]/g, '')
-                      return sign + intPart + (fracPart ? ',' + fracPart : '')
+                      return sign + intPart + (fracPart ? '.' + fracPart : '')
                     } else {
                       // Formato: 1.234.567 (puntos como separadores de miles)
                       const intPart = parts.join('').replace(/[^0-9]/g, '')
