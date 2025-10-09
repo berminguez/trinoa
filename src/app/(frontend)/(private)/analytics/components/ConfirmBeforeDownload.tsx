@@ -18,11 +18,13 @@ export default function ConfirmBeforeDownload({
   format,
   label,
   variant,
+  transposed,
 }: {
   ids: string[]
   format: 'csv' | 'xlsx' | 'xls' | 'excel'
   label: React.ReactNode
   variant?: 'outline' | 'default' | 'secondary' | 'destructive' | null
+  transposed?: boolean
 }) {
   const formRef = React.useRef<HTMLFormElement>(null)
   const [open, setOpen] = React.useState(false)
@@ -53,7 +55,12 @@ export default function ConfirmBeforeDownload({
 
   return (
     <>
-      <form ref={formRef} action='/api/analytics/export' method='POST' className='inline'>
+      <form
+        ref={formRef}
+        action={transposed ? '/api/analytics/export-transposed' : '/api/analytics/export'}
+        method='POST'
+        className='inline'
+      >
         <input type='hidden' name='documentIds' value={JSON.stringify(ids || [])} />
         <input type='hidden' name='format' value={format} />
         <Button type='button' variant={variant as any} onClick={onClick}>

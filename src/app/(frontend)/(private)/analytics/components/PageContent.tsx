@@ -85,14 +85,36 @@ export default async function PageContent({
       <div className='flex items-center justify-between'>
         <h1 className='text-xl font-semibold'>{t('title')}</h1>
         <div className='flex gap-2'>
-          {/* Descargas con confirmación si hay documentos en "necesita revisión" */}
+          {/* Descargas con confirmación si hay documentos en "necesita revisión" - SOLO Admin: originales */}
+          {user.role === 'admin' && (
+            <>
+              <ConfirmBeforeDownload
+                ids={data.allDocumentIds}
+                format='csv'
+                label={t('downloadCSV')}
+                variant='outline'
+              />
+              <ConfirmBeforeDownload
+                ids={data.allDocumentIds}
+                format='xlsx'
+                label={t('download')}
+              />
+            </>
+          )}
+          {/* Nuevas descargas transpuestas: visibles para todos */}
           <ConfirmBeforeDownload
             ids={data.allDocumentIds}
             format='csv'
-            label={t('downloadCSV')}
+            label={`${t('downloadCSV')} (Transpuesto)`}
             variant='outline'
+            transposed
           />
-          <ConfirmBeforeDownload ids={data.allDocumentIds} format='xlsx' label={t('download')} />
+          <ConfirmBeforeDownload
+            ids={data.allDocumentIds}
+            format='xlsx'
+            label={`${t('download')} (Transpuesto)`}
+            transposed
+          />
         </div>
       </div>
 
