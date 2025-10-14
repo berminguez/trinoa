@@ -168,7 +168,32 @@ export const Resources: CollectionConfig = {
     read: () => true,
     create: () => true,
     update: () => true,
-    delete: () => true,
+    delete: async ({ req, id }) => {
+      const user = (req as any)?.user as { role?: string } | undefined
+      if (!user) return false
+      if (user.role === 'admin') return true
+
+      // Si hay id, comprobar el estado de confianza del documento
+      if (id) {
+        try {
+          const resource = await req.payload.findByID({
+            collection: 'resources',
+            id: String(id),
+            depth: 0,
+          })
+
+          const confidence = (resource as any)?.confidence
+          if (confidence === 'verified') {
+            return false
+          }
+        } catch {
+          // Si no se puede leer el recurso, negar por seguridad
+          return false
+        }
+      }
+
+      return true
+    },
   },
   admin: {
     useAsTitle: 'title',
@@ -2229,6 +2254,26 @@ export const Resources: CollectionConfig = {
     // afterRead eliminado: la normalización se realiza en escritura y vía backfill
     beforeDelete: [
       async ({ req, id }) => {
+        // Bloqueo: usuarios no admin no pueden borrar documentos verificados
+        try {
+          const currentUser = (req as any)?.user as { role?: string } | undefined
+          if (!currentUser || currentUser.role !== 'admin') {
+            const resource = await req.payload.findByID({
+              collection: 'resources',
+              id: String(id),
+              depth: 0,
+            })
+            if ((resource as any)?.confidence === 'verified') {
+              throw new Error(
+                'Este documento está verificado y solo puede ser eliminado por administradores.',
+              )
+            }
+          }
+        } catch (e) {
+          // Re-lanzar para bloquear la operación si corresponde
+          throw e
+        }
+
         // Descomentar para activar el hook de limpieza
 
         // Hook para limpiar archivos S3 y vectores Pinecone antes de eliminar el recurso

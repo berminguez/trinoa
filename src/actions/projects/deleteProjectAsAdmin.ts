@@ -142,6 +142,7 @@ export async function deleteProjectAsAdmin(
           await payload.delete({
             collection: 'resources',
             id: resource.id,
+            overrideAccess: true,
           })
           console.log(`deleteProjectAsAdmin: Recurso eliminado: ${resource.id}`)
         }
@@ -163,6 +164,7 @@ export async function deleteProjectAsAdmin(
       await payload.delete({
         collection: 'projects',
         id: projectId,
+        overrideAccess: true,
       })
 
       console.log(`deleteProjectAsAdmin: Proyecto eliminado exitosamente`)

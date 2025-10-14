@@ -204,6 +204,8 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
 
   // Campos fijos + campos dinámicos desde analyzeResult.fields
   const fixedHeaders = [
+    'ID',
+    'Código',
     'Título',
     'Enlace al Documento',
     'Cliente',
@@ -305,6 +307,8 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
       aoa.push(headers)
       for (const d of docs) {
         const base = [
+          String(d.id || ''),
+          String(d.codigo || ''),
           d.title || '',
           documentUrls.get(d.id) || '',
           d.nombre_cliente || '',
@@ -338,8 +342,9 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
 
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Analytics')
-      const buf: Buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-      return new NextResponse(buf, {
+      const ab: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
+      const u8 = new Uint8Array(ab)
+      return new NextResponse(u8, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'Content-Disposition': 'attachment; filename="analytics.xlsx"',
@@ -356,6 +361,8 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
     const tbody = docs
       .map((d) => {
         const base = [
+          String(d.id || ''),
+          String(d.codigo || ''),
           d.title || '',
           documentUrls.get(d.id) || '',
           d.nombre_cliente || '',
@@ -406,6 +413,8 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
   // CSV por defecto (UTF-8 con BOM)
   const rows = docs.map((d) => {
     const base = [
+      String(d.id || ''),
+      String(d.codigo || ''),
       d.title || '',
       documentUrls.get(d.id) || '',
       d.nombre_cliente || '',

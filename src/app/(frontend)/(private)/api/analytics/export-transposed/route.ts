@@ -277,6 +277,9 @@ export async function POST(req: NextRequest) {
   // Cabecera
   lines.push(
     [
+      'ID',
+      'Código',
+      'Título',
       'Nombre de cliente o filial',
       'Tipo de suministro',
       'Tipo de producto',
@@ -344,7 +347,20 @@ export async function POST(req: NextRequest) {
     const link = await generateDocumentUrl(r)
     const list = tipoProductos.length ? tipoProductos : ['']
     for (const tp of list) {
-      const row = [cliente, tipoSuministro, tp, proveedor, inicio, fin, cantidad, unidad, link]
+      const row = [
+        String(r.id || ''),
+        String(r.codigo || ''),
+        String(r.title || ''),
+        cliente,
+        tipoSuministro,
+        tp,
+        proveedor,
+        inicio,
+        fin,
+        cantidad,
+        unidad,
+        link,
+      ]
       rows.push(row)
     }
   }
@@ -353,6 +369,9 @@ export async function POST(req: NextRequest) {
       const XLSX: any = await import('xlsx')
       const aoa: (string | number)[][] = []
       aoa.push([
+        'ID',
+        'Código',
+        'Título',
         'Nombre de cliente o filial',
         'Tipo de suministro',
         'Tipo de producto',
@@ -365,7 +384,7 @@ export async function POST(req: NextRequest) {
       ])
       rows.forEach((r) => aoa.push(r))
       const ws = XLSX.utils.aoa_to_sheet(aoa)
-      const linkCol = 8
+      const linkCol = Array.isArray(aoa[0]) ? (aoa[0] as any[]).indexOf('link a la factura') : 10
       for (let i = 1; i < aoa.length; i++) {
         const addr = XLSX.utils.encode_cell({ r: i, c: linkCol })
         const url = aoa[i][linkCol]
