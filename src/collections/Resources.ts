@@ -279,6 +279,43 @@ export const Resources: CollectionConfig = {
       },
     },
     {
+      name: 'processed',
+      type: 'checkbox',
+      required: false,
+      defaultValue: false,
+      admin: {
+        description: 'Marcado cuando el documento ha sido procesado externamente',
+        position: 'sidebar',
+      },
+      index: true,
+    },
+    {
+      name: 'processedAt',
+      type: 'date',
+      required: false,
+      admin: {
+        description: 'Fecha y hora de procesamiento',
+        position: 'sidebar',
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+      },
+      index: true,
+    },
+    {
+      name: 'lastDownloadedAt',
+      type: 'date',
+      admin: {
+        description: 'Fecha y hora de última descarga',
+        position: 'sidebar',
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+      },
+      required: false,
+      index: true,
+    },
+    {
       name: 'namespace',
       type: 'text',
       required: true,

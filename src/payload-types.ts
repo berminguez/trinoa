@@ -304,6 +304,18 @@ export interface Resource {
    */
   codigo?: string | null;
   /**
+   * Marcado cuando el documento ha sido procesado externamente
+   */
+  processed?: boolean | null;
+  /**
+   * Fecha y hora de procesamiento
+   */
+  processedAt?: string | null;
+  /**
+   * Fecha y hora de última descarga
+   */
+  lastDownloadedAt?: string | null;
+  /**
    * Namespace para organizar contenidos (ej: curso-matematicas, empresa-acme)
    */
   namespace: string;
@@ -1189,6 +1201,9 @@ export interface ResourcesSelect<T extends boolean = true> {
   project?: T;
   empresa?: T;
   codigo?: T;
+  processed?: T;
+  processedAt?: T;
+  lastDownloadedAt?: T;
   namespace?: T;
   lastUpdatedBy?: T;
   executionId?: T;

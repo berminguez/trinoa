@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import Filters from './Filters'
 import AdminClientSelector from './AdminClientSelector'
+import UploadProcessedDialog from './UploadProcessedDialog'
 import ConfirmBeforeDownload from '@/app/(frontend)/(private)/analytics/components/ConfirmBeforeDownload'
 import {
   Table,
@@ -18,7 +19,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { IconChevronLeft, IconChevronRight, IconArrowUp, IconArrowDown } from '@tabler/icons-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconArrowUp,
+  IconArrowDown,
+  IconCircleCheck,
+  IconDownload,
+} from '@tabler/icons-react'
 import { ConfidenceBadgeSimple } from '@/components/ui/confidence-badge'
 import { getClients } from '@/actions/clients/getClients'
 
@@ -45,6 +54,8 @@ export default async function PageContent({
   const clientId = user.role === 'admin' ? searchParams?.clientId || '' : ''
   const projectId = searchParams?.projectId || ''
   const provider = searchParams?.provider || ''
+  const downloaded = (searchParams?.downloaded as 'yes' | 'no' | undefined) || undefined
+  const processed = (searchParams?.processed as 'yes' | 'no' | undefined) || undefined
   const page = Number(searchParams?.page || '1')
   const sort = searchParams?.sort || '' // e.g. title, -createdAt
 
@@ -58,6 +69,8 @@ export default async function PageContent({
     clientId: clientId || undefined,
     projectId: projectId || undefined,
     provider: provider || undefined,
+    downloaded,
+    processed,
     page,
     limit: 10,
   })
@@ -99,6 +112,7 @@ export default async function PageContent({
                 format='xlsx'
                 label={`${t('download')} Admin`}
               />
+              <UploadProcessedDialog ids={data.allDocumentIds} />
             </>
           )}
           {/* Nuevas descargas transpuestas: visibles para todos */}
@@ -199,6 +213,8 @@ export default async function PageContent({
             projectId={projectId}
             providerOptions={providerOptions}
             provider={provider}
+            downloaded={(downloaded as any) || 'todos'}
+            processed={(processed as any) || 'todos'}
           />
         </CardContent>
       </Card>
@@ -212,7 +228,7 @@ export default async function PageContent({
         </CardHeader>
         <CardContent>
           <div className='overflow-x-auto'>
-            <Table className='min-w-[820px]'>
+            <Table className='min-w-[980px]'>
               <TableHeader>
                 <TableRow>
                   <TableHead>
@@ -236,6 +252,8 @@ export default async function PageContent({
                       ) : null}
                     </Link>
                   </TableHead>
+                  <TableHead>{t('table.downloaded')}</TableHead>
+                  <TableHead>{t('table.processed')}</TableHead>
                   <TableHead>
                     <Link
                       href={`/analytics?${(() => {
@@ -299,27 +317,7 @@ export default async function PageContent({
                       ) : null}
                     </Link>
                   </TableHead>
-                  <TableHead>
-                    <Link
-                      href={`/analytics?${(() => {
-                        const p = new URLSearchParams()
-                        Object.entries(searchParams || {}).forEach(([k, v]) => {
-                          if (k !== 'sort' && typeof v === 'string' && v) p.set(k, v)
-                        })
-                        const next = sort === 'createdAt' ? '-createdAt' : 'createdAt'
-                        p.set('sort', next)
-                        return p.toString()
-                      })()}`}
-                      className='inline-flex items-center gap-1'
-                    >
-                      {t('table.uploadDate')}{' '}
-                      {sort === 'createdAt' ? (
-                        <IconArrowUp className='h-3 w-3' />
-                      ) : sort === '-createdAt' ? (
-                        <IconArrowDown className='h-3 w-3' />
-                      ) : null}
-                    </Link>
-                  </TableHead>
+                  <TableHead>{t('table.uploadDate')}</TableHead>
                   <TableHead>
                     <Link
                       href={`/analytics?${(() => {
@@ -407,6 +405,38 @@ export default async function PageContent({
                       >
                         {d.title}
                       </Link>
+                    </TableCell>
+                    <TableCell>
+                      {(d as any).lastDownloadedAt ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className='inline-flex'>
+                              <IconDownload className='h-4 w-4 text-sky-600' />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {new Date((d as any).lastDownloadedAt as any).toLocaleString('es-ES')}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        ''
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {(d as any).processedAt ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className='inline-flex'>
+                              <IconCircleCheck className='h-4 w-4 text-green-600' />
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {new Date((d as any).processedAt as any).toLocaleString('es-ES')}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        ''
+                      )}
                     </TableCell>
                     <TableCell>{d.tipo || ''}</TableCell>
                     <TableCell>{d.caso || ''}</TableCell>

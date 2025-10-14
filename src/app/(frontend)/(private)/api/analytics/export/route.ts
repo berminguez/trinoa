@@ -402,6 +402,7 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
       })
       .join('')
     const html = `<!DOCTYPE html><html><head><meta charset="utf-8" /></head><body><table>${thead}${tbody}</table></body></html>`
+
     return new NextResponse(html, {
       headers: {
         'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
