@@ -376,14 +376,14 @@ export async function POST(req: NextRequest) {
         }
       }
       const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Transpuesto')
+      XLSX.utils.book_append_sheet(wb, ws, '')
       // Usar ArrayBuffer para cumplir tipos del runtime y linter
       const ab: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
       const u8 = new Uint8Array(ab)
       return new NextResponse(u8, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'Content-Disposition': 'attachment; filename="analytics_transpuesto.xlsx"',
+          'Content-Disposition': 'attachment; filename="analytics_cliente.xlsx"',
         },
       })
     } catch {}
@@ -393,7 +393,7 @@ export async function POST(req: NextRequest) {
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="analitica_transpuesto.csv"',
+      'Content-Disposition': 'attachment; filename="analitica_cliente.csv"',
     },
   })
 }

@@ -91,13 +91,13 @@ export default async function PageContent({
               <ConfirmBeforeDownload
                 ids={data.allDocumentIds}
                 format='csv'
-                label={t('downloadCSV')}
+                label={`${t('downloadCSV')} Admin`}
                 variant='outline'
               />
               <ConfirmBeforeDownload
                 ids={data.allDocumentIds}
                 format='xlsx'
-                label={t('download')}
+                label={`${t('download')} Admin`}
               />
             </>
           )}
@@ -105,14 +105,14 @@ export default async function PageContent({
           <ConfirmBeforeDownload
             ids={data.allDocumentIds}
             format='csv'
-            label={`${t('downloadCSV')} (Transpuesto)`}
+            label={`${t('downloadCSV')}`}
             variant='outline'
             transposed
           />
           <ConfirmBeforeDownload
             ids={data.allDocumentIds}
             format='xlsx'
-            label={`${t('download')} (Transpuesto)`}
+            label={`${t('download')}`}
             transposed
           />
         </div>
