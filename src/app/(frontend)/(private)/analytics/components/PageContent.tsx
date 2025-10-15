@@ -20,14 +20,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconArrowUp,
-  IconArrowDown,
-  IconCircleCheck,
-  IconDownload,
-} from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight, IconArrowUp, IconArrowDown } from '@tabler/icons-react'
+import { Badge } from '@/components/ui/badge'
 import { ConfidenceBadgeSimple } from '@/components/ui/confidence-badge'
 import { getClients } from '@/actions/clients/getClients'
 
@@ -56,6 +50,7 @@ export default async function PageContent({
   const provider = searchParams?.provider || ''
   const downloaded = (searchParams?.downloaded as 'yes' | 'no' | undefined) || undefined
   const processed = (searchParams?.processed as 'yes' | 'no' | undefined) || undefined
+  const confidence = searchParams?.confidence || ''
   const page = Number(searchParams?.page || '1')
   const sort = searchParams?.sort || '' // e.g. title, -createdAt
 
@@ -71,6 +66,7 @@ export default async function PageContent({
     provider: provider || undefined,
     downloaded,
     processed,
+    confidence: (confidence as any) || undefined,
     page,
     limit: 10,
   })
@@ -215,6 +211,7 @@ export default async function PageContent({
             provider={provider}
             downloaded={(downloaded as any) || 'todos'}
             processed={(processed as any) || 'todos'}
+            confidence={confidence || 'todos'}
           />
         </CardContent>
       </Card>
@@ -252,8 +249,6 @@ export default async function PageContent({
                       ) : null}
                     </Link>
                   </TableHead>
-                  <TableHead>{t('table.downloaded')}</TableHead>
-                  <TableHead>{t('table.processed')}</TableHead>
                   <TableHead>
                     <Link
                       href={`/analytics?${(() => {
@@ -396,48 +391,52 @@ export default async function PageContent({
                   return docs
                 })().map((d) => (
                   <TableRow key={d.id}>
-                    <TableCell className='max-w-[320px] truncate'>
-                      <Link
-                        href={`/projects/${encodeURIComponent(d.projectId || '')}/resource/${encodeURIComponent(d.id)}`}
-                        className='text-primary hover:underline'
-                        target='_blank'
-                        rel='noopener noreferrer'
-                      >
-                        {d.title}
-                      </Link>
+                    <TableCell className='max-w-[430px]'>
+                      <div className='flex items-center gap-1'>
+                        {/* Reservar espacio con contenedores fijos para evitar saltos */}
+                        <div className='w-[180px] flex gap-1.5 shrink-0 whitespace-nowrap'>
+                          {(d as any).lastDownloadedAt ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge className='bg-sky-100 text-sky-800 border border-sky-200 text-xs px-1.5 py-0.5 shrink-0'>
+                                  {t('table.downloaded')}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {new Date((d as any).lastDownloadedAt as any).toLocaleString(
+                                  'es-ES',
+                                )}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className='inline-block w-[100px]' />
+                          )}
+                          {(d as any).processedAt ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Badge className='bg-green-100 text-green-800 border border-green-200 text-xs px-1.5 py-0.5 shrink-0'>
+                                  {t('table.processed')}
+                                </Badge>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {new Date((d as any).processedAt as any).toLocaleString('es-ES')}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <span className='inline-block w-[100px]' />
+                          )}
+                        </div>
+                        <Link
+                          href={`/projects/${encodeURIComponent(d.projectId || '')}/resource/${encodeURIComponent(d.id)}`}
+                          className='text-primary hover:underline truncate flex-1 min-w-0'
+                          target='_blank'
+                          rel='noopener noreferrer'
+                        >
+                          {d.title}
+                        </Link>
+                      </div>
                     </TableCell>
-                    <TableCell>
-                      {(d as any).lastDownloadedAt ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className='inline-flex'>
-                              <IconDownload className='h-4 w-4 text-sky-600' />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {new Date((d as any).lastDownloadedAt as any).toLocaleString('es-ES')}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        ''
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {(d as any).processedAt ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className='inline-flex'>
-                              <IconCircleCheck className='h-4 w-4 text-green-600' />
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {new Date((d as any).processedAt as any).toLocaleString('es-ES')}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        ''
-                      )}
-                    </TableCell>
+
                     <TableCell>{d.tipo || ''}</TableCell>
                     <TableCell>{d.caso || ''}</TableCell>
                     <TableCell>{d.providerName || ''}</TableCell>

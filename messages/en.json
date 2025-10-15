@@ -563,6 +563,12 @@
       "clear": "Clear filters",
       "downloaded": "Downloaded",
       "processed": "Processed",
+      "confidence": "Confidence",
+      "confidence_empty": "Empty",
+      "confidence_needs_revision": "Needs revision",
+      "confidence_trusted": "Trusted",
+      "confidence_verified": "Verified",
+      "confidence_wrong_document": "Wrong document",
       "downloaded_yes": "Yes",
       "downloaded_no": "No",
       "all": "all"

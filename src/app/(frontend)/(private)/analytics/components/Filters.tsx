@@ -30,6 +30,7 @@ interface FiltersProps {
   provider?: string
   downloaded?: 'yes' | 'no' | 'todos'
   processed?: 'yes' | 'no' | 'todos'
+  confidence?: string
 }
 
 export default function Filters({
@@ -47,8 +48,10 @@ export default function Filters({
   provider,
   downloaded,
   processed,
+  confidence,
 }: FiltersProps) {
   const t = useTranslations('analytics.filters')
+  const tDocs = useTranslations('documents')
   const router = useRouter()
   const searchParams = useSearchParams()
   const [fromValue, setFromValue] = useState<string>(dateFrom || '')
@@ -61,6 +64,7 @@ export default function Filters({
   const [providerValue, setProviderValue] = useState<string>(provider || 'todos')
   const [downloadedValue, setDownloadedValue] = useState<string>(downloaded || 'todos')
   const [processedValue, setProcessedValue] = useState<string>(processed || 'todos')
+  const [confidenceValue, setConfidenceValue] = useState<string>(confidence || 'todos')
 
   useEffect(() => setFromValue(dateFrom || ''), [dateFrom])
   useEffect(() => setToValue(dateTo || ''), [dateTo])
@@ -72,6 +76,7 @@ export default function Filters({
   useEffect(() => setProviderValue(provider || 'todos'), [provider])
   useEffect(() => setDownloadedValue(downloaded || 'todos'), [downloaded])
   useEffect(() => setProcessedValue(processed || 'todos'), [processed])
+  useEffect(() => setConfidenceValue(confidence || 'todos'), [confidence])
 
   const pushWith = useCallback(
     (patch: Record<string, string | undefined>) => {
@@ -140,7 +145,7 @@ export default function Filters({
       </div>
 
       {/* Fila: Resto de filtros */}
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 items-end'>
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-3 items-end'>
         <div className='flex flex-col gap-1'>
           <Label>{t('type')}</Label>
           <Select value={tipoValue} onValueChange={(v) => setTipoValue(v)}>
@@ -235,30 +240,56 @@ export default function Filters({
           </Select>
         </div>
 
-        <div className='flex gap-2 items-center justify-center col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-6'>
-          <Button
-            variant='default'
-            onClick={() =>
-              pushWith({
-                from: fromValue || undefined,
-                to: toValue || undefined,
-                invoiceFrom: invoiceFromValue || undefined,
-                invoiceTo: invoiceToValue || undefined,
-                tipo: tipoValue === 'todos' ? undefined : tipoValue,
-                caso: casoValue === 'todos' ? undefined : casoValue,
-                projectId: projectValue === 'todos' ? undefined : projectValue,
-                provider: providerValue === 'todos' ? undefined : providerValue,
-                downloaded: downloadedValue === 'todos' ? undefined : (downloadedValue as any),
-                processed: processedValue === 'todos' ? undefined : (processedValue as any),
-              })
-            }
-          >
-            <IconFilter className='h-4 w-4 mr-2' /> {t('apply')}
-          </Button>
-          <Button variant='ghost' size='icon' onClick={clearAll} aria-label={t('clear')}>
-            <IconX className='h-4 w-4' />
-          </Button>
+        <div className='flex flex-col gap-1'>
+          <Label>{t('confidence')}</Label>
+          <Select value={confidenceValue} onValueChange={(v) => setConfidenceValue(v)}>
+            <SelectTrigger className='w-full'>
+              <SelectValue placeholder={t('confidence')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='todos'>{t('all')}</SelectItem>
+              <SelectItem value='empty'>{t('confidence_empty')}</SelectItem>
+              <SelectItem value='needs_revision'>
+                {tDocs('confidenceBadge.states.needs_revision.label')}
+              </SelectItem>
+              <SelectItem value='trusted'>
+                {tDocs('confidenceBadge.states.trusted.label')}
+              </SelectItem>
+              <SelectItem value='verified'>
+                {tDocs('confidenceBadge.states.verified.label')}
+              </SelectItem>
+              <SelectItem value='wrong_document'>
+                {tDocs('confidenceBadge.states.wrong_document.label')}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+      </div>
+
+      <div className='flex items-center justify-center gap-2'>
+        <Button
+          variant='default'
+          onClick={() =>
+            pushWith({
+              from: fromValue || undefined,
+              to: toValue || undefined,
+              invoiceFrom: invoiceFromValue || undefined,
+              invoiceTo: invoiceToValue || undefined,
+              tipo: tipoValue === 'todos' ? undefined : tipoValue,
+              caso: casoValue === 'todos' ? undefined : casoValue,
+              projectId: projectValue === 'todos' ? undefined : projectValue,
+              provider: providerValue === 'todos' ? undefined : providerValue,
+              downloaded: downloadedValue === 'todos' ? undefined : (downloadedValue as any),
+              processed: processedValue === 'todos' ? undefined : (processedValue as any),
+              confidence: confidenceValue === 'todos' ? undefined : confidenceValue,
+            })
+          }
+        >
+          <IconFilter className='h-4 w-4 mr-2' /> {t('apply')}
+        </Button>
+        <Button variant='ghost' size='icon' onClick={clearAll} aria-label={t('clear')}>
+          <IconX className='h-4 w-4' />
+        </Button>
       </div>
     </div>
   )
