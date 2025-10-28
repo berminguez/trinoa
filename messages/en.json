@@ -525,8 +525,8 @@
     "accumulatedByCase": "Accumulated by Case",
     "accumulatedByUnit": "Accumulated by Unit",
     "filtersTitle": "Filters",
-    "from": "From",
-    "to": "To",
+    "from": "Uploaded from",
+    "to": "Uploaded to",
     "invoiceFrom": "Invoice date from",
     "invoiceTo": "Invoice date to",
     "type": "Type",
@@ -541,7 +541,10 @@
       "provider": "Provider",
       "uploadDate": "Upload date",
       "invoiceDate": "Invoice date",
-      "confidence": "Confidence"
+      "confidence": "Confidence",
+      "lastDownloadedAt": "Last downloaded at",
+      "downloaded": "Downloaded",
+      "processed": "Processed"
     },
     "pagination": {
       "page": "Page",
@@ -556,9 +559,19 @@
       "case": "Case",
       "project": "Project",
       "provider": "Provider",
-      "all": "all",
       "apply": "Apply",
-      "clear": "Clear filters"
+      "clear": "Clear filters",
+      "downloaded": "Downloaded",
+      "processed": "Processed",
+      "confidence": "Confidence",
+      "confidence_empty": "Empty",
+      "confidence_needs_revision": "Needs revision",
+      "confidence_trusted": "Trusted",
+      "confidence_verified": "Verified",
+      "confidence_wrong_document": "Wrong document",
+      "downloaded_yes": "Yes",
+      "downloaded_no": "No",
+      "all": "all"
     },
     "adminClientSelector": {
       "client": "Client",

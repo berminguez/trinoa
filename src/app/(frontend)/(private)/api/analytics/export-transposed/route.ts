@@ -3,35 +3,13 @@ import { getPayload } from 'payload'
 import config from '@payload-config'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { getSafeMediaUrl } from '@/lib/utils/fileUtils'
+import { parseAndFormatDate } from '@/utils/dateParser'
 
-function toDDMMYYYY(dateISO: string | null | undefined): string {
-  if (!dateISO) return ''
-  const d = new Date(dateISO)
-  if (isNaN(d.getTime())) return ''
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}/${mm}/${yyyy}`
-}
 function formatDateFlexible(input: any): string {
   if (!input) return ''
   const raw = String(input).trim()
-  const iso = toDDMMYYYY(raw)
-  if (iso) return iso
-  // dd/mm/yyyy o variantes con separadores
-  const m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/)
-  if (m) {
-    const [, dd, mm, yyyy] = m
-    return `${dd.padStart(2, '0')}/${mm.padStart(2, '0')}/${yyyy}`
-  }
-  // dd/mm/yy -> dd/mm/20yy
-  const m2 = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2})$/)
-  if (m2) {
-    const [, dd, mm, yy] = m2
-    const yyyy = `20${yy}`
-    return `${dd.padStart(2, '0')}/${mm.padStart(2, '0')}/${yyyy}`
-  }
-  return raw
+  const formatted = parseAndFormatDate(raw)
+  return formatted || raw
 }
 
 function formatMax2Decimals(input: string): string {
@@ -145,39 +123,46 @@ function extractPeriodoConsumo(res: any): { inicio: string; fin: string } {
   const inicioLegacy = res?.factura_suministros?.periodo_consumo?.fecha_inicio
   const finLegacy = res?.factura_suministros?.periodo_consumo?.fecha_fin
   let inicio =
-    inicioField?.valueDate ||
-    inicioField?.content ||
     inicioField?.valueString ||
+    inicioField?.content ||
+    inicioField?.value ||
+    inicioField?.valueDate ||
     inicioLegacy ||
     null
-  let fin = finField?.valueDate || finField?.content || finField?.valueString || finLegacy || null
+  let fin =
+    finField?.valueString ||
+    finField?.content ||
+    finField?.value ||
+    finField?.valueDate ||
+    finLegacy ||
+    null
   // Fallbacks en analyzeResult.fields: primero FechaInicio/FechaFin (valueString/content), luego InvoiceDate
   if (!inicio)
     inicio =
-      fields?.FechaInicio?.valueDate ||
-      fields?.fechaInicio?.valueDate ||
       fields?.FechaInicio?.valueString ||
       fields?.fechaInicio?.valueString ||
       fields?.FechaInicio?.content ||
       fields?.fechaInicio?.content ||
+      fields?.FechaInicio?.valueDate ||
+      fields?.fechaInicio?.valueDate ||
       null
   if (!inicio)
     inicio =
-      fields?.InvoiceDate?.valueDate ||
-      fields?.invoiceDate?.valueDate ||
-      fields?.InvoiceDate?.content ||
-      fields?.invoiceDate?.content ||
       fields?.InvoiceDate?.valueString ||
       fields?.invoiceDate?.valueString ||
+      fields?.InvoiceDate?.content ||
+      fields?.invoiceDate?.content ||
+      fields?.InvoiceDate?.valueDate ||
+      fields?.invoiceDate?.valueDate ||
       null
   if (!fin)
     fin =
-      fields?.FechaFin?.valueDate ||
-      fields?.fechaFin?.valueDate ||
       fields?.FechaFin?.valueString ||
       fields?.fechaFin?.valueString ||
       fields?.FechaFin?.content ||
       fields?.fechaFin?.content ||
+      fields?.FechaFin?.valueDate ||
+      fields?.fechaFin?.valueDate ||
       null
   return { inicio: formatDateFlexible(inicio), fin: formatDateFlexible(fin) }
 }
@@ -292,6 +277,9 @@ export async function POST(req: NextRequest) {
   // Cabecera
   lines.push(
     [
+      'ID',
+      'Código',
+      'Título',
       'Nombre de cliente o filial',
       'Tipo de suministro',
       'Tipo de producto',
@@ -359,7 +347,20 @@ export async function POST(req: NextRequest) {
     const link = await generateDocumentUrl(r)
     const list = tipoProductos.length ? tipoProductos : ['']
     for (const tp of list) {
-      const row = [cliente, tipoSuministro, tp, proveedor, inicio, fin, cantidad, unidad, link]
+      const row = [
+        String(r.id || ''),
+        String(r.codigo || ''),
+        String(r.title || ''),
+        cliente,
+        tipoSuministro,
+        tp,
+        proveedor,
+        inicio,
+        fin,
+        cantidad,
+        unidad,
+        link,
+      ]
       rows.push(row)
     }
   }
@@ -368,6 +369,9 @@ export async function POST(req: NextRequest) {
       const XLSX: any = await import('xlsx')
       const aoa: (string | number)[][] = []
       aoa.push([
+        'ID',
+        'Código',
+        'Título',
         'Nombre de cliente o filial',
         'Tipo de suministro',
         'Tipo de producto',
@@ -380,7 +384,7 @@ export async function POST(req: NextRequest) {
       ])
       rows.forEach((r) => aoa.push(r))
       const ws = XLSX.utils.aoa_to_sheet(aoa)
-      const linkCol = 8
+      const linkCol = Array.isArray(aoa[0]) ? (aoa[0] as any[]).indexOf('link a la factura') : 10
       for (let i = 1; i < aoa.length; i++) {
         const addr = XLSX.utils.encode_cell({ r: i, c: linkCol })
         const url = aoa[i][linkCol]
@@ -391,14 +395,14 @@ export async function POST(req: NextRequest) {
         }
       }
       const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Transpuesto')
+      XLSX.utils.book_append_sheet(wb, ws, '')
       // Usar ArrayBuffer para cumplir tipos del runtime y linter
       const ab: ArrayBuffer = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
       const u8 = new Uint8Array(ab)
       return new NextResponse(u8, {
         headers: {
           'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'Content-Disposition': 'attachment; filename="analytics_transpuesto.xlsx"',
+          'Content-Disposition': 'attachment; filename="analytics_cliente.xlsx"',
         },
       })
     } catch {}
@@ -408,7 +412,7 @@ export async function POST(req: NextRequest) {
   return new NextResponse(csv, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="analitica_transpuesto.csv"',
+      'Content-Disposition': 'attachment; filename="analitica_cliente.csv"',
     },
   })
 }

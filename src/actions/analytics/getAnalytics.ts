@@ -14,6 +14,9 @@ export interface AnalyticsFilters {
   clientId?: string
   projectId?: string
   provider?: string
+  downloaded?: 'yes' | 'no'
+  processed?: 'yes' | 'no'
+  confidence?: 'empty' | 'needs_revision' | 'trusted' | 'verified' | 'wrong_document'
   page?: number
   limit?: number
 }
@@ -31,6 +34,9 @@ export interface AnalyticsResult {
       projectId?: string | null
       providerName?: string | null
       invoiceDate?: string | null
+      lastDownloadedAt?: string | null
+      processed?: boolean | null
+      processedAt?: string | null
       confidence?: Resource['confidence']
       documentoErroneo?: boolean | null
     }
@@ -204,6 +210,23 @@ export async function getAnalytics(filters: AnalyticsFilters = {}): Promise<Anal
   const whereDocs: any = { ...whereBase }
   if (filters.tipo) whereDocs.tipo = { equals: filters.tipo }
   if (filters.caso) whereDocs.caso = { equals: filters.caso }
+  if (filters.confidence) {
+    if (filters.confidence === 'wrong_document') {
+      whereDocs.documentoErroneo = { equals: true }
+    } else {
+      whereDocs.confidence = { equals: filters.confidence }
+      // Excluir documentos erróneos si no se está filtrando por ellos explícitamente
+      whereDocs.documentoErroneo = { not_equals: true }
+    }
+  }
+  if (filters.downloaded === 'yes') whereDocs.lastDownloadedAt = { exists: true }
+  if (filters.downloaded === 'no') whereDocs.lastDownloadedAt = { exists: false }
+  if (filters.processed === 'yes') whereDocs.processed = { equals: true }
+  if (filters.processed === 'no') {
+    const ors = [{ processed: { equals: false } }, { processed: { exists: false } }]
+    if (whereDocs.or && Array.isArray(whereDocs.or)) whereDocs.or.push(...ors)
+    else whereDocs.or = ors
+  }
 
   const resourcesRes = await payload.find({
     collection: 'resources' as any,
@@ -257,6 +280,9 @@ export async function getAnalytics(filters: AnalyticsFilters = {}): Promise<Anal
       projectId: typeof r.project === 'string' ? r.project : r.project?.id || null,
       providerName: providerName || null,
       invoiceDate: extractInvoiceDate(r),
+      lastDownloadedAt: (r as any).lastDownloadedAt || null,
+      processed: (r as any).processed ?? null,
+      processedAt: (r as any).processedAt || null,
       confidence: (r as any).confidence,
       documentoErroneo: (r as any).documentoErroneo,
     })

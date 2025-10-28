@@ -37,6 +37,7 @@ export async function deleteDocument(data: DeleteDocumentData): Promise<DeleteDo
       collection: 'resources',
       id: data.resourceId,
       depth: 2,
+      user,
     })
 
     // Verificar que el recurso pertenece al proyecto correcto
@@ -46,6 +47,15 @@ export async function deleteDocument(data: DeleteDocumentData): Promise<DeleteDo
       return {
         success: false,
         error: 'Resource does not belong to this project',
+      }
+    }
+
+    // Bloquear si el documento está verificado y el usuario no es admin
+    if ((resource as any)?.confidence === 'verified' && user.role !== 'admin') {
+      return {
+        success: false,
+        error:
+          'Este documento está verificado y no puede ser borrado por tu rol. Contacta con un administrador si necesitas eliminarlo.',
       }
     }
 
@@ -62,6 +72,8 @@ export async function deleteDocument(data: DeleteDocumentData): Promise<DeleteDo
     await payload.delete({
       collection: 'resources',
       id: data.resourceId,
+      user,
+      overrideAccess: user.role === 'admin',
     })
 
     console.log('✅ [DELETE-DOC] Resource deleted successfully')
@@ -72,6 +84,8 @@ export async function deleteDocument(data: DeleteDocumentData): Promise<DeleteDo
         await payload.delete({
           collection: 'media',
           id: mediaFileId,
+          user,
+          overrideAccess: user.role === 'admin',
         })
         console.log('✅ [DELETE-DOC] Media file deleted successfully')
       } catch (mediaError) {

@@ -86,6 +86,7 @@ import { deleteDocument } from '@/actions/documents/deleteDocument'
 import { deleteBulkDocuments } from '@/actions/documents/deleteBulkDocuments'
 import { toast } from 'sonner'
 import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
+import { useUserRole } from '@/hooks/useUserRole'
 
 // Interfaz para métodos expuestos del DocumentTable
 export interface DocumentTableRef {
@@ -126,6 +127,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
     },
     ref,
   ) => {
+    const { isAdmin } = useUserRole()
     const t = useTranslations()
     const tCommon = useTranslations('common')
     // Link con tooltip sólo si hay truncado visual
@@ -890,52 +892,54 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
                   <span className='text-xs text-muted-foreground'>{t('documents.noFile')}</span>
                 )}
 
-                {/* Botón de borrar con confirmación */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      className='h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
-                      title={t('documents.delete')}
-                      disabled={deletingResourceId === resource.id}
-                    >
-                      {deletingResourceId === resource.id ? (
-                        <IconLoader2 className='h-4 w-4 animate-spin' />
-                      ) : (
-                        <IconTrash className='h-4 w-4' />
-                      )}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>{t('documents.delete')}</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t('documents.deleteConfirm')} &quot;{resource.title}&quot;?{' '}
-                        {t('documents.deleteMultipleDescription')}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel disabled={deletingResourceId === resource.id}>
-                        {tCommon('cancel')}
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => handleDeleteDocument(resource.id, resource.title)}
+                {/* Botón de borrar con confirmación (oculto si verificado y no admin) */}
+                {isAdmin || resource.confidence !== 'verified' ? (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        className='h-8 w-8 p-0 text-muted-foreground hover:text-red-600'
+                        title={t('documents.delete')}
                         disabled={deletingResourceId === resource.id}
-                        className='bg-red-600 hover:bg-red-700 focus:ring-red-600'
                       >
                         {deletingResourceId === resource.id ? (
-                          <>
-                            <IconLoader2 className='h-4 w-4 mr-2 animate-spin' />
-                            {t('documents.deleting', { default: 'Deleting...' })}
-                          </>
+                          <IconLoader2 className='h-4 w-4 animate-spin' />
                         ) : (
-                          tCommon('delete')
+                          <IconTrash className='h-4 w-4' />
                         )}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{t('documents.delete')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {t('documents.deleteConfirm')} &quot;{resource.title}&quot;?{' '}
+                          {t('documents.deleteMultipleDescription')}
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deletingResourceId === resource.id}>
+                          {tCommon('cancel')}
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteDocument(resource.id, resource.title)}
+                          disabled={deletingResourceId === resource.id}
+                          className='bg-red-600 hover:bg-red-700 focus:ring-red-600'
+                        >
+                          {deletingResourceId === resource.id ? (
+                            <>
+                              <IconLoader2 className='h-4 w-4 mr-2 animate-spin' />
+                              {t('documents.deleting', { default: 'Deleting...' })}
+                            </>
+                          ) : (
+                            tCommon('delete')
+                          )}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                ) : null}
               </div>
             )
           },

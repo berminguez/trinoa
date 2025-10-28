@@ -60,7 +60,7 @@
   },
   "dashboardUser": {
     "myDashboard": "Mi Dashboard",
-    "welcomeBack": "Bienvenido de vuelta, {{name}}",
+    "welcomeBack": "Bienvenido, {{name}}",
     "user": "Usuario",
     "personalView": "Vista personal"
   },
@@ -540,6 +540,9 @@
       "provider": "Proveedor",
       "uploadDate": "Fecha subida",
       "invoiceDate": "Fecha factura",
+      "lastDownloadedAt": "Última descarga",
+      "downloaded": "Descargado",
+      "processed": "Procesado",
       "confidence": "Confianza"
     },
     "pagination": {
@@ -547,14 +550,24 @@
       "of": "de"
     },
     "filters": {
-      "from": "Desde",
-      "to": "Hasta",
+      "from": "Fecha subida desde",
+      "to": "Fecha subida hasta",
       "invoiceFrom": "Fecha factura desde",
       "invoiceTo": "Fecha factura hasta",
       "type": "Tipo",
       "case": "Caso",
       "project": "Proyecto",
       "provider": "Proveedor",
+      "downloaded": "Descargados",
+      "processed": "Procesados",
+      "confidence": "Confianza",
+      "confidence_empty": "Vacío",
+      "confidence_needs_revision": "Necesita revisión",
+      "confidence_trusted": "Confiable",
+      "confidence_verified": "Verificado",
+      "confidence_wrong_document": "Documento erróneo",
+      "downloaded_yes": "Sí",
+      "downloaded_no": "No",
       "all": "todos",
       "apply": "Aplicar",
       "clear": "Limpiar filtros"

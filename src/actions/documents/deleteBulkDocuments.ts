@@ -52,6 +52,7 @@ export async function deleteBulkDocuments(
           collection: 'resources',
           id: resourceId,
           depth: 2,
+          user,
         })
 
         // Verificar que el recurso pertenece al proyecto correcto
@@ -61,6 +62,16 @@ export async function deleteBulkDocuments(
           errors.push({
             resourceId,
             error: 'Resource does not belong to this project',
+          })
+          continue
+        }
+
+        // Bloquear si el documento está verificado y el usuario no es admin
+        if ((resource as any)?.confidence === 'verified' && user.role !== 'admin') {
+          errors.push({
+            resourceId,
+            error:
+              'Documento verificado: solo administradores pueden eliminar este tipo de documento',
           })
           continue
         }
@@ -78,6 +89,8 @@ export async function deleteBulkDocuments(
         await payload.delete({
           collection: 'resources',
           id: resourceId,
+          user,
+          overrideAccess: user.role === 'admin',
         })
 
         // Eliminar también el archivo de media asociado si existe
@@ -86,6 +99,8 @@ export async function deleteBulkDocuments(
             await payload.delete({
               collection: 'media',
               id: mediaFileId,
+              user,
+              overrideAccess: user.role === 'admin',
             })
             console.log('✅ [BULK-DELETE] Media file deleted:', mediaFileId)
           } catch (mediaError) {
