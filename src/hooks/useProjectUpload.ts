@@ -8,6 +8,7 @@ import { pregenerateCodes } from '@/actions/documents/uploadFromUrls'
 import { toast } from 'sonner'
 import { addFileId } from '@/lib/utils/fileUtils'
 import { getProjectPreResources } from '@/actions/projects/getProjectPreResources'
+import { CONFIG } from '@/lib/config'
 
 export interface UploadFile extends File {
   id: string
@@ -776,20 +777,59 @@ export function useProjectUpload({
 
       console.log('[UPLOAD MAIN] Creating upload promises for', validFiles.length, 'files')
 
-      // Subir archivos de forma simultánea con códigos pre-asignados
-      const uploadPromises = validFiles.map((file, index) => {
-        const preAssignedCode = pregeneratedCodes[index]
-        console.log(
-          `[UPLOAD MAIN] Creating promise ${index + 1} for file:`,
-          file.name,
-          'with code:',
-          preAssignedCode,
-        )
-        return uploadSingleFile(file, preAssignedCode)
+      // 🚀 CONTROL DE CONCURRENCIA: Procesar en batches para evitar sobrecargar S3
+      const MAX_CONCURRENT_UPLOADS = CONFIG.UPLOAD_MAX_CONCURRENT
+      const DELAY_BETWEEN_BATCHES = CONFIG.UPLOAD_BATCH_DELAY_MS
+
+      console.log('[UPLOAD MAIN] Using batched upload strategy:', {
+        maxConcurrent: MAX_CONCURRENT_UPLOADS,
+        delayBetweenBatches: DELAY_BETWEEN_BATCHES,
+        totalFiles: validFiles.length,
+        totalBatches: Math.ceil(validFiles.length / MAX_CONCURRENT_UPLOADS),
       })
 
-      console.log('[UPLOAD MAIN] Waiting for all upload promises to settle')
-      const results = await Promise.allSettled(uploadPromises)
+      const allResults: PromiseSettledResult<UploadFile>[] = []
+
+      for (let i = 0; i < validFiles.length; i += MAX_CONCURRENT_UPLOADS) {
+        const batch = validFiles.slice(i, i + MAX_CONCURRENT_UPLOADS)
+        const batchNumber = Math.floor(i / MAX_CONCURRENT_UPLOADS) + 1
+        const totalBatches = Math.ceil(validFiles.length / MAX_CONCURRENT_UPLOADS)
+
+        console.log(`[UPLOAD MAIN] Processing batch ${batchNumber} of ${totalBatches}`)
+        console.log(`[UPLOAD MAIN] Batch files: ${batch.map((f) => f.name).join(', ')}`)
+
+        // Subir batch actual con códigos pre-asignados
+        const batchPromises = batch.map((file, batchIndex) => {
+          const fileIndex = i + batchIndex
+          const preAssignedCode = pregeneratedCodes[fileIndex]
+          console.log(
+            `[UPLOAD MAIN] Creating promise ${fileIndex + 1} for file:`,
+            file.name,
+            'with code:',
+            preAssignedCode,
+          )
+          return uploadSingleFile(file, preAssignedCode)
+        })
+
+        // Esperar a que termine el batch actual
+        console.log(`[UPLOAD MAIN] Waiting for batch ${batchNumber} to complete...`)
+        const batchResults = await Promise.allSettled(batchPromises)
+        allResults.push(...batchResults)
+
+        console.log(`[UPLOAD MAIN] Batch ${batchNumber} completed:`, {
+          successful: batchResults.filter((r) => r.status === 'fulfilled').length,
+          failed: batchResults.filter((r) => r.status === 'rejected').length,
+        })
+
+        // Delay entre batches (excepto en el último)
+        if (i + MAX_CONCURRENT_UPLOADS < validFiles.length) {
+          console.log(`[UPLOAD MAIN] Waiting ${DELAY_BETWEEN_BATCHES}ms before next batch...`)
+          await new Promise((resolve) => setTimeout(resolve, DELAY_BETWEEN_BATCHES))
+        }
+      }
+
+      console.log('[UPLOAD MAIN] All batches completed')
+      const results = allResults
 
       console.log('[UPLOAD MAIN] All promises settled, results:', results)
 

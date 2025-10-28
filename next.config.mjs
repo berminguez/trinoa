@@ -25,6 +25,29 @@ const nextConfig = {
 
     return webpackConfig
   },
+  // Configurar headers para aumentar timeout en endpoints de upload
+  async headers() {
+    return [
+      {
+        source: '/api/resources/upload',
+        headers: [
+          {
+            key: 'x-vercel-max-duration',
+            value: '300', // 5 minutos
+          },
+        ],
+      },
+      {
+        source: '/api/pre-resources/upload',
+        headers: [
+          {
+            key: 'x-vercel-max-duration',
+            value: '300', // 5 minutos
+          },
+        ],
+      },
+    ]
+  },
 }
 
 export default withNextIntl(withPayload(nextConfig, { devBundleServerPackages: false }))

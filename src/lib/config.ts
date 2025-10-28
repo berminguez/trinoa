@@ -48,6 +48,10 @@ export const CONFIG = {
   RATE_LIMIT_UPLOAD: parseInt(process.env.RATE_LIMIT_UPLOAD || '10'),
   RATE_LIMIT_API: parseInt(process.env.RATE_LIMIT_API || '100'),
 
+  // Upload concurrency control
+  UPLOAD_MAX_CONCURRENT: parseInt(process.env.UPLOAD_MAX_CONCURRENT || '5'),
+  UPLOAD_BATCH_DELAY_MS: parseInt(process.env.UPLOAD_BATCH_DELAY_MS || '1000'),
+
   // MCP (Model Context Protocol)
   MCP_HOST: process.env.EIDETIK_MCP_HOST || 'localhost:8081',
 } as const
