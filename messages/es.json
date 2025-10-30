@@ -364,6 +364,7 @@
       "electricidad": "Electricidad",
       "agua": "Agua",
       "gas": "Gas",
+      "combustible": "Combustible",
       "taxi_vtc": "Taxi / VTC",
       "otros": "Otros"
     },
