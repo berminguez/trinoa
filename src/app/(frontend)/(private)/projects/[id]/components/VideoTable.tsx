@@ -10,6 +10,7 @@ import React, {
   useRef,
 } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   createColumnHelper,
   flexRender,
@@ -130,6 +131,13 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
     const { isAdmin } = useUserRole()
     const t = useTranslations()
     const tCommon = useTranslations('common')
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
+    // Leer página inicial desde URL (parámetro 'docPage')
+    const initialPageFromUrl = parseInt(searchParams.get('docPage') || '1', 10)
+    const initialPageIndex = Math.max(0, initialPageFromUrl - 1) // Convertir de 1-based a 0-based
+
     // Link con tooltip sólo si hay truncado visual
     const TruncatedTitleLink: React.FC<{ href: string; text: string }> = ({ href, text }) => {
       const ref = useRef<HTMLAnchorElement | null>(null)
@@ -950,6 +958,12 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
       [handleDeleteDocument, deletingResourceId, projectId, getResourceUrl, t, tCommon], // Include getResourceUrl so links stay in sync
     )
 
+    // Estado de paginación
+    const [pagination, setPagination] = useState({
+      pageIndex: initialPageIndex,
+      pageSize: 12,
+    })
+
     // Crear instancia de tabla
     const table = useReactTable({
       data: resources,
@@ -964,6 +978,7 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
       onColumnVisibilityChange: setColumnVisibility,
       onRowSelectionChange: setRowSelection,
       onGlobalFilterChange: setGlobalFilter,
+      onPaginationChange: setPagination,
       globalFilterFn: 'includesString',
       state: {
         sorting,
@@ -971,13 +986,43 @@ export const DocumentTable = forwardRef<DocumentTableRef, DocumentTableProps>(
         columnVisibility,
         rowSelection,
         globalFilter,
-      },
-      initialState: {
-        pagination: {
-          pageSize: 12,
-        },
+        pagination,
       },
     })
+
+    // Sincronizar cambios de paginación con la URL
+    useEffect(() => {
+      const currentPage = pagination.pageIndex + 1 // Convertir a 1-based para URL
+      const urlPage = parseInt(searchParams.get('docPage') || '1', 10)
+
+      // Solo actualizar URL si la página cambió (evitar loops)
+      if (currentPage !== urlPage) {
+        const params = new URLSearchParams(searchParams.toString())
+
+        if (currentPage === 1) {
+          // Si es página 1, remover el parámetro para URL más limpia
+          params.delete('docPage')
+        } else {
+          params.set('docPage', currentPage.toString())
+        }
+
+        const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`
+
+        // Usar shallow routing para no recargar la página
+        router.push(newUrl, { scroll: false })
+      }
+    }, [pagination.pageIndex, router, searchParams])
+
+    // Resetear a página 1 si la página actual está fuera de rango
+    useEffect(() => {
+      const totalPages = table.getPageCount()
+      if (totalPages > 0 && pagination.pageIndex >= totalPages) {
+        console.log(
+          `⚠️ [TABLE] Current page ${pagination.pageIndex + 1} is out of range (total: ${totalPages}). Resetting to page 1.`,
+        )
+        table.setPageIndex(0)
+      }
+    }, [resources.length, pagination.pageIndex, table])
 
     // Polling: verificar cada 2s los resources en "processing" y actualizar estado (status, caso, tipo, progress)
     const processingResources = useMemo(
