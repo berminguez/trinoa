@@ -163,6 +163,48 @@ export const Configuracion: GlobalConfig = {
           ],
         },
         {
+          label: 'Seguridad',
+          fields: [
+            {
+              name: 'mediaAccess',
+              type: 'group',
+              label: 'Acceso a Archivos Media',
+              admin: {
+                description:
+                  'Configura una contraseña para permitir el acceso a archivos media sin necesidad de estar autenticado.',
+              },
+              fields: [
+                {
+                  name: 'enabled',
+                  type: 'checkbox',
+                  label: 'Activar acceso con contraseña',
+                  defaultValue: false,
+                  admin: {
+                    description:
+                      'Permite acceso a archivos media mediante HTTP Basic Authentication cuando el usuario no está logueado',
+                  },
+                },
+                {
+                  name: 'password',
+                  type: 'text',
+                  label: 'Contraseña de acceso',
+                  admin: {
+                    description:
+                      'Contraseña requerida para acceder a archivos media sin autenticación (usuario: "media")',
+                    condition: (data) => data?.mediaAccess?.enabled === true,
+                  },
+                  validate: (value: string | null | undefined, { data }: { data: any }) => {
+                    if (data?.mediaAccess?.enabled && (!value || value.length < 8)) {
+                      return 'La contraseña debe tener al menos 8 caracteres'
+                    }
+                    return true
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
           label: 'Endpoint de automatización',
           fields: [
             {

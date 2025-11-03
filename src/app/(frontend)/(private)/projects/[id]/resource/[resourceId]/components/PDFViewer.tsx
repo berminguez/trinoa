@@ -7,6 +7,8 @@ import { Document, Page } from 'react-pdf'
 import ensurePdfWorker from '@/lib/pdf'
 import { Button } from '@/components/ui/button'
 import useVisualizadorStore from '@/stores/visualizador-store'
+import { MediaPasswordDialog } from '@/components/MediaPasswordDialog'
+import { toast } from 'sonner'
 import {
   IconZoomIn,
   IconZoomOut,
@@ -32,12 +34,25 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
   const [fileData, setFileData] = useState<Uint8Array | null>(null)
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  
+  // Estado para manejo de contraseña
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false)
+  const [password, setPassword] = useState<string | null>(null)
+  const [isLoadingWithPassword, setIsLoadingWithPassword] = useState(false)
 
   useEffect(() => {
     ensurePdfWorker()
   }, [])
 
-  // Prefetch del PDF como ArrayBuffer para evitar problemas de CORS/range requests
+  // Obtener contraseña guardada del sessionStorage
+  useEffect(() => {
+    const savedPassword = sessionStorage.getItem('media-password')
+    if (savedPassword) {
+      setPassword(savedPassword)
+    }
+  }, [])
+
+  // Prefetch del PDF con manejo de autenticación
   useEffect(() => {
     let aborted = false
     setFileData(null)
@@ -47,10 +62,38 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
       return null
     })
     setLoadError(null)
+    setIsLoadingWithPassword(true)
+    
     ;(async () => {
       try {
-        const res = await fetch(url, { method: 'GET', credentials: 'omit', mode: 'cors' })
-        if (!res.ok) throw new Error(`HTTP ${res.status} al descargar PDF`)
+        // Intentar cargar sin contraseña primero (usuario podría estar logueado)
+        let res = await fetch(url, { method: 'GET', credentials: 'include', mode: 'cors' })
+        
+        // Si falla con 401 y tenemos contraseña, intentar con ella
+        if (!res.ok && res.status === 401 && password) {
+          const credentials = btoa(`:${password}`)
+          res = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+            mode: 'cors',
+            headers: {
+              Authorization: `Basic ${credentials}`,
+            },
+          })
+        }
+        
+        if (!res.ok) {
+          if (res.status === 401) {
+            // Necesita contraseña - mostrar diálogo
+            if (!aborted) {
+              setShowPasswordDialog(true)
+              setIsLoadingWithPassword(false)
+            }
+            return
+          }
+          throw new Error(`HTTP ${res.status} al descargar PDF`)
+        }
+        
         const buf = await res.arrayBuffer()
         if (!aborted) {
           const uint = new Uint8Array(buf)
@@ -58,10 +101,14 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
           const blob = new Blob([uint], { type: 'application/pdf' })
           const objectUrl = URL.createObjectURL(blob)
           setBlobUrl(objectUrl)
+          setIsLoadingWithPassword(false)
         }
       } catch (e) {
         console.error('Error predescargando PDF:', e)
-        if (!aborted) setLoadError(String((e as any)?.message || e))
+        if (!aborted) {
+          setLoadError(String((e as any)?.message || e))
+          setIsLoadingWithPassword(false)
+        }
       }
     })()
     return () => {
@@ -71,7 +118,54 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
         return null
       })
     }
-  }, [url])
+  }, [url, password])
+
+  const handlePasswordSubmit = async (submittedPassword: string) => {
+    setIsLoadingWithPassword(true)
+    const credentials = btoa(`:${submittedPassword}`)
+
+    try {
+      const res = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        mode: 'cors',
+        headers: {
+          Authorization: `Basic ${credentials}`,
+        },
+      })
+
+      if (res.ok) {
+        const buf = await res.arrayBuffer()
+        const uint = new Uint8Array(buf)
+        setFileData(uint)
+        const blob = new Blob([uint], { type: 'application/pdf' })
+        const objectUrl = URL.createObjectURL(blob)
+        setBlobUrl(objectUrl)
+        setShowPasswordDialog(false)
+
+        // Guardar contraseña para futuros accesos
+        sessionStorage.setItem('media-password', submittedPassword)
+        setPassword(submittedPassword)
+
+        toast.success('PDF desbloqueado correctamente')
+        setIsLoadingWithPassword(false)
+      } else {
+        toast.error('Contraseña incorrecta', {
+          description: 'Por favor, verifica la contraseña e intenta de nuevo',
+        })
+        setIsLoadingWithPassword(false)
+      }
+    } catch (error) {
+      console.error('Error authenticating:', error)
+      toast.error('Error al verificar la contraseña')
+      setIsLoadingWithPassword(false)
+    }
+  }
+
+  const handleCancelPassword = () => {
+    setShowPasswordDialog(false)
+    toast.info('Acceso cancelado')
+  }
 
   useEffect(() => {
     const el = containerRef.current
@@ -212,6 +306,14 @@ export default function PDFViewer({ url, filename }: PDFViewerProps) {
           `}</style>
         </div>
       </div>
+      
+      {/* Diálogo de contraseña */}
+      <MediaPasswordDialog
+        open={showPasswordDialog}
+        onPasswordSubmit={handlePasswordSubmit}
+        onCancel={handleCancelPassword}
+        fileName={filename || 'documento.pdf'}
+      />
     </div>
   )
 }

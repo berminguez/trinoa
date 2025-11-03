@@ -1536,6 +1536,19 @@ export interface Configuracion {
     confidenceThreshold?: number | null;
   };
   /**
+   * Configura una contraseña para permitir el acceso a archivos media sin necesidad de estar autenticado.
+   */
+  mediaAccess?: {
+    /**
+     * Permite acceso a archivos media mediante HTTP Basic Authentication cuando el usuario no está logueado
+     */
+    enabled?: boolean | null;
+    /**
+     * Contraseña requerida para acceder a archivos media sin autenticación (usuario: "media")
+     */
+    password?: string | null;
+  };
+  /**
    * Configura el webhook de N8n que se invoca al crear un Recurso.
    */
   automationEndpoint?: {
@@ -1639,6 +1652,12 @@ export interface ConfiguracionSelect<T extends boolean = true> {
     | T
     | {
         confidenceThreshold?: T;
+      };
+  mediaAccess?:
+    | T
+    | {
+        enabled?: T;
+        password?: T;
       };
   automationEndpoint?:
     | T

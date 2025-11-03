@@ -42,6 +42,7 @@ const PUBLIC_ROUTES = [
   '/',
   '/pricing',
   '/test-usage',
+  '/media',
   '/api',
   '/_next',
   '/favicon.ico',

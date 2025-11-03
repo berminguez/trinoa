@@ -16,6 +16,8 @@ import {
   IconFileDescription,
   IconUser,
   IconClipboardList,
+  IconKey,
+  IconFlask,
 } from '@tabler/icons-react'
 import * as React from 'react'
 import { useTranslations } from 'next-intl'
@@ -168,6 +170,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: t('clients'),
           url: '/clients',
           icon: IconUserCog,
+        },
+        {
+          title: t('mediaPassword'),
+          url: '/settings/media-password',
+          icon: IconKey,
         },
       ]
       // Insertar "Clients" después de "Projects" (posición 2)
