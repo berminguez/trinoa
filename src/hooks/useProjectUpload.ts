@@ -660,7 +660,6 @@ export function useProjectUpload({
         toast.warning('⚠️ Límite de 25 archivos', {
           description: `Has seleccionado ${filesSelected} archivo${filesSelected !== 1 ? 's' : ''}, pero solo se pueden añadir ${filesAccepted}. Se han tomado los primeros ${filesAccepted} archivos y se han descartado ${filesRejected}.`,
           duration: 8000,
-          important: true,
         })
         
         filesToAdd = validFiles.slice(0, availableSlots)
