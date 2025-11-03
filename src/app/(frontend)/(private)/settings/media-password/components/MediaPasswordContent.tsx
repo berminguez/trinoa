@@ -7,9 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import { IconKey, IconCheck, IconAlertCircle, IconCopy, IconEye, IconEyeOff } from '@tabler/icons-react'
+import { IconKey, IconCheck, IconEye, IconEyeOff } from '@tabler/icons-react'
 import { updateMediaPassword } from '@/actions/configuracion/updateMediaPassword'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface MediaPasswordContentProps {
   initialEnabled: boolean
@@ -52,14 +51,6 @@ export default function MediaPasswordContent({
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const copyExampleUrl = () => {
-    const exampleUrl = `${window.location.origin}/media/ruta/archivo.pdf`
-    navigator.clipboard.writeText(exampleUrl)
-    toast.success('URL copiada', {
-      description: 'La URL de ejemplo se ha copiado al portapapeles',
-    })
   }
 
   return (
@@ -175,56 +166,6 @@ export default function MediaPasswordContent({
         </CardContent>
       </Card>
 
-      {/* Ejemplo de uso */}
-      {enabled && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Compartir archivos protegidos</CardTitle>
-            <CardDescription>
-              Comparte archivos con personas que no tienen cuenta en la plataforma
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div>
-                <Label className="text-gray-700 font-medium mb-2 block">
-                  URLs compatibles para compartir:
-                </Label>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <Input
-                      readOnly
-                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/media/ruta/archivo.pdf`}
-                      className="font-mono text-xs"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={copyExampleUrl}
-                      title="Copiar URL"
-                    >
-                      <IconCopy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    También funciona con URLs antiguas:{' '}
-                    <code className="bg-gray-100 px-1 py-0.5 rounded">/api/media?key=...</code>
-                  </p>
-                </div>
-              </div>
-
-              <Alert>
-                <IconAlertCircle className="h-4 w-4" />
-                <AlertDescription className="text-sm">
-                  Los usuarios sin login verán un diálogo pidiendo esta contraseña. Los usuarios
-                  logueados accederán directamente sin contraseña.
-                </AlertDescription>
-              </Alert>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
