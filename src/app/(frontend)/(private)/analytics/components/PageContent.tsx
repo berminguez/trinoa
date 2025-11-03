@@ -83,7 +83,14 @@ export default async function PageContent({
     try {
       const res = await getClients({ limit: 1000, role: 'user' })
       if (!res.success || !res.data) return []
-      return res.data.clients.map((c: any) => ({ id: String(c.id), name: c.name || c.email }))
+      return res.data.clients.map((c: any) => {
+        // Obtener nombre de empresa
+        let empresaName = ''
+        if (c.empresa && typeof c.empresa === 'object' && 'name' in c.empresa) {
+          empresaName = c.empresa.name
+        }
+        return { id: String(c.id), name: empresaName || c.email }
+      })
     } catch {
       return [] as { id: string; name: string }[]
     }

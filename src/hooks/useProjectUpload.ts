@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import axios, { type AxiosProgressEvent } from 'axios'
 import { runSplitterPipeline } from '@/actions/splitter/runPipeline'
 import { revalidateProjectPages } from '@/actions/projects/revalidateProjectPages'
@@ -58,6 +58,12 @@ export function useProjectUpload({
 }: UseProjectUploadOptions): UseProjectUploadReturn {
   const [files, setFiles] = useState<UploadFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const filesRef = useRef<UploadFile[]>([])
+  
+  // Mantener filesRef sincronizado con files
+  useEffect(() => {
+    filesRef.current = files
+  }, [files])
 
   // Función para validar documentos
   const validateDocumentFile = useCallback(
@@ -631,8 +637,37 @@ export function useProjectUpload({
         )
       }
 
+      // Límite de 25 archivos - usar ref para obtener el estado actual
+      const MAX_FILES = 25
+      const currentFilesCount = filesRef.current.length
+      const availableSlots = MAX_FILES - currentFilesCount
+      
+      if (availableSlots <= 0) {
+        toast.error('Límite alcanzado', {
+          description: 'Ya has añadido el máximo de 25 archivos. Elimina algunos para añadir más.',
+          duration: 5000,
+        })
+        return
+      }
+
+      let filesToAdd = validFiles
+      
+      if (validFiles.length > availableSlots) {
+        const filesSelected = validFiles.length
+        const filesAccepted = availableSlots
+        const filesRejected = filesSelected - filesAccepted
+        
+        toast.warning('⚠️ Límite de 25 archivos', {
+          description: `Has seleccionado ${filesSelected} archivo${filesSelected !== 1 ? 's' : ''}, pero solo se pueden añadir ${filesAccepted}. Se han tomado los primeros ${filesAccepted} archivos y se han descartado ${filesRejected}.`,
+          duration: 8000,
+          important: true,
+        })
+        
+        filesToAdd = validFiles.slice(0, availableSlots)
+      }
+
       // Crear archivos iniciales con estado pending
-      const newFiles: UploadFile[] = validFiles.map((file) => {
+      const newFiles: UploadFile[] = filesToAdd.map((file) => {
         // Crear un nuevo objeto que combine File con UploadFile propiedades
         const uploadFile = {
           // Preservar todas las propiedades del File original

@@ -59,38 +59,32 @@ export default async function PersonalProjects({ userId }: PersonalProjectsProps
             </div>
           ) : (
             projects.map((project) => (
-              <div
+              <Link
                 key={project.id}
+                href={`/projects/${project.id}`}
                 className='flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors'
               >
-                <Link
-                  href={`/projects/${project.id}`}
-                  className='flex items-center justify-between w-full'
-                >
-                  <div className='flex items-center gap-3 cursor-pointer'>
-                    <div className='h-10 w-10 bg-blue-500 rounded-lg flex items-center justify-center'>
-                      <IconFolder className='h-5 w-5 text-white' />
-                    </div>
-                    <div>
-                      <p className='font-medium text-sm'>{project.title}</p>
-                      <div className='flex items-center gap-2 mt-1'>
-                        <div className='flex items-center gap-1 text-xs text-gray-600'>
-                          <IconFiles className='h-3 w-3' />
-                          {project.resourcesCount || 0} documentos
-                        </div>
-                        <Badge variant='outline' className='text-xs py-0'>
-                          {project.lastUpdated}
-                        </Badge>
+                <div className='flex items-center gap-3'>
+                  <div className='h-10 w-10 bg-blue-500 rounded-lg flex items-center justify-center'>
+                    <IconFolder className='h-5 w-5 text-white' />
+                  </div>
+                  <div>
+                    <p className='font-medium text-sm'>{project.title}</p>
+                    <div className='flex items-center gap-2 mt-1'>
+                      <div className='flex items-center gap-1 text-xs text-gray-600'>
+                        <IconFiles className='h-3 w-3' />
+                        {project.resourcesCount || 0} documentos
                       </div>
+                      <Badge variant='outline' className='text-xs py-0'>
+                        {project.lastUpdated}
+                      </Badge>
                     </div>
                   </div>
-                  <Button variant='ghost' size='sm' asChild>
-                    <a href={`/projects/${project.id}`}>
-                      <IconExternalLink className='h-4 w-4' />
-                    </a>
-                  </Button>
-                </Link>
-              </div>
+                </div>
+                <div className='text-gray-400'>
+                  <IconExternalLink className='h-4 w-4' />
+                </div>
+              </Link>
             ))
           )}
         </div>
@@ -98,10 +92,10 @@ export default async function PersonalProjects({ userId }: PersonalProjectsProps
         {/* Botón para crear nuevo proyecto */}
         <div className='mt-6 pt-4 border-t'>
           <Button variant='outline' className='w-full' asChild>
-            <a href='/projects' className='flex items-center gap-2'>
+            <Link href='/projects' className='flex items-center gap-2'>
               <IconListDetails className='h-4 w-4' />
               Ver todos los proyectos
-            </a>
+            </Link>
           </Button>
         </div>
       </CardContent>

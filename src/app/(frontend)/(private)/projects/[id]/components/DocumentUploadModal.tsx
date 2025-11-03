@@ -329,6 +329,9 @@ export function DocumentUploadModal({
                 <p>
                   <strong>{tModal('dragDrop.formats')}:</strong> PDF, JPG, JPEG, PNG, WebP
                 </p>
+                <p>
+                  <strong>Límite máximo:</strong> 25 archivos por subida
+                </p>
                 <p className='text-orange-600'>{tModal('dragDrop.validation')}</p>
               </div>
 
@@ -357,6 +360,9 @@ export function DocumentUploadModal({
                 <div className='flex items-center justify-between'>
                   <h4 className='text-sm font-medium'>
                     {tModal('fileList.selectedFiles', { count: files.length })}
+                    <span className={`ml-2 ${files.length >= 25 ? 'text-orange-600 font-bold' : 'text-muted-foreground'}`}>
+                      ({files.length}/25)
+                    </span>
                   </h4>
                   {!isUploading && (
                     <Button
