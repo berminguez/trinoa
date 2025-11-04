@@ -192,14 +192,15 @@ async function generateExport(
       const media = typeof resource.file === 'object' ? resource.file : null
       if (!media) return ''
 
-      // Generar URL segura usando el helper de fileUtils con headers del request
+      // Generar URL segura usando el proxy interno para mantener autenticación
+      // preferSigned: true hace que use /api/media?key=... en lugar de URLs directas de S3
       const documentUrl = await getSafeMediaUrl(media, {
         headers: req?.headers,
-        preferSigned: false, // Para exports, usar URLs públicas directas
+        preferSigned: true, // Usar proxy interno para mantener protección
       })
       if (!documentUrl) return ''
 
-      // Si la URL es relativa, convertirla a absoluta usando la URL del request
+      // Si la URL es relativa (proxy interno), convertirla a absoluta usando el dominio del request
       if (documentUrl.startsWith('/')) {
         // Intentar derivar base URL desde headers del request
         const proto = req?.headers.get('x-forwarded-proto') || 'https'

@@ -300,25 +300,26 @@ export async function POST(req: NextRequest) {
     try {
       const media = typeof resource.file === 'object' ? resource.file : null
       if (!media) return ''
-      
-      // Generar URL segura usando el helper de fileUtils con headers del request
+
+      // Generar URL segura usando el proxy interno para mantener autenticación
+      // preferSigned: true hace que use /api/media?key=... en lugar de URLs directas de S3
       const documentUrl = await getSafeMediaUrl(media, {
         headers: req.headers,
-        preferSigned: false // Para exports, usar URLs públicas directas
+        preferSigned: true, // Usar proxy interno para mantener protección
       })
       if (!documentUrl) return ''
-      
+
       if (documentUrl.startsWith('/')) {
         // Intentar derivar base URL desde headers del request
         const proto = req.headers.get('x-forwarded-proto') || 'https'
         const host = req.headers.get('x-forwarded-host') || req.headers.get('host')
-        
-        const baseUrl = host 
+
+        const baseUrl = host
           ? `${proto}://${host}`
-          : (process.env.PAYLOAD_PUBLIC_SERVER_URL ||
-             process.env.NEXT_PUBLIC_SERVER_URL ||
-             'https://trinoa.com')
-        
+          : process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+            process.env.NEXT_PUBLIC_SERVER_URL ||
+            'https://atria.trinoa.es'
+
         return `${baseUrl}${documentUrl}`
       }
       return documentUrl
