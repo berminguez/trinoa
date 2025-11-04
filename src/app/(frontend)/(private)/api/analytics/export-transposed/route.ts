@@ -300,13 +300,25 @@ export async function POST(req: NextRequest) {
     try {
       const media = typeof resource.file === 'object' ? resource.file : null
       if (!media) return ''
-      const documentUrl = await getSafeMediaUrl(media)
+      
+      // Generar URL segura usando el helper de fileUtils con headers del request
+      const documentUrl = await getSafeMediaUrl(media, {
+        headers: req.headers,
+        preferSigned: false // Para exports, usar URLs públicas directas
+      })
       if (!documentUrl) return ''
+      
       if (documentUrl.startsWith('/')) {
-        const baseUrl =
-          process.env.PAYLOAD_PUBLIC_SERVER_URL ||
-          process.env.NEXT_PUBLIC_SERVER_URL ||
-          'https://trinoa.com'
+        // Intentar derivar base URL desde headers del request
+        const proto = req.headers.get('x-forwarded-proto') || 'https'
+        const host = req.headers.get('x-forwarded-host') || req.headers.get('host')
+        
+        const baseUrl = host 
+          ? `${proto}://${host}`
+          : (process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+             process.env.NEXT_PUBLIC_SERVER_URL ||
+             'https://trinoa.com')
+        
         return `${baseUrl}${documentUrl}`
       }
       return documentUrl

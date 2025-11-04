@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     if (documentIdsJson) {
       const idsArray = JSON.parse(documentIdsJson)
       if (Array.isArray(idsArray) && idsArray.length > 0) {
-        return handleOptimizedExport(idsArray, format, user)
+        return handleOptimizedExport(idsArray, format, user, req)
       }
     }
   } catch (_e) {
@@ -38,7 +38,12 @@ export async function POST(req: NextRequest) {
 }
 
 // ✅ MODO OPTIMIZADO: Usar solo IDs específicos
-async function handleOptimizedExport(documentIds: string[], format: string, _user: any) {
+async function handleOptimizedExport(
+  documentIds: string[],
+  format: string,
+  _user: any,
+  req: NextRequest,
+) {
   const payload = await getPayload({ config })
 
   // Obtener solo documentos específicos con relación a media
@@ -74,7 +79,7 @@ async function handleOptimizedExport(documentIds: string[], format: string, _use
     })
   }
 
-  return generateExport(docs, projectIdToTitle, format)
+  return generateExport(docs, projectIdToTitle, format, req)
 }
 
 // ⚠️ MODO LEGACY: Lógica original completa para GET
@@ -166,11 +171,16 @@ async function handleLegacyExport(req: NextRequest, user: any) {
     })
   }
 
-  return generateExport(docs, projectIdToTitle, format)
+  return generateExport(docs, projectIdToTitle, format, req)
 }
 
 // 📊 FUNCIÓN ÚNICA DE EXPORTACIÓN
-async function generateExport(docs: any[], projectIdToTitle: Map<string, string>, format: string) {
+async function generateExport(
+  docs: any[],
+  projectIdToTitle: Map<string, string>,
+  format: string,
+  req?: NextRequest,
+) {
   const payload = await getPayload({ config })
 
   // Función para generar URL del documento
@@ -182,16 +192,24 @@ async function generateExport(docs: any[], projectIdToTitle: Map<string, string>
       const media = typeof resource.file === 'object' ? resource.file : null
       if (!media) return ''
 
-      // Generar URL segura usando el helper de fileUtils
-      const documentUrl = await getSafeMediaUrl(media)
+      // Generar URL segura usando el helper de fileUtils con headers del request
+      const documentUrl = await getSafeMediaUrl(media, {
+        headers: req?.headers,
+        preferSigned: false, // Para exports, usar URLs públicas directas
+      })
       if (!documentUrl) return ''
 
-      // Si la URL es relativa, convertirla a absoluta
+      // Si la URL es relativa, convertirla a absoluta usando la URL del request
       if (documentUrl.startsWith('/')) {
-        const baseUrl =
-          process.env.PAYLOAD_PUBLIC_SERVER_URL ||
-          process.env.NEXT_PUBLIC_SERVER_URL ||
-          'https://trinoa.com'
+        // Intentar derivar base URL desde headers del request
+        const proto = req?.headers.get('x-forwarded-proto') || 'https'
+        const host = req?.headers.get('x-forwarded-host') || req?.headers.get('host')
+
+        const baseUrl = host
+          ? `${proto}://${host}`
+          : process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+            process.env.NEXT_PUBLIC_SERVER_URL ||
+            'https://atria.trinoa.es'
         return `${baseUrl}${documentUrl}`
       }
 
