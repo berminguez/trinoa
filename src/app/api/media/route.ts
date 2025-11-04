@@ -67,7 +67,7 @@ async function verifyMediaPassword(authHeader: string | null): Promise<boolean> 
     const base64Credentials = authHeader.split(' ')[1]
     const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8')
     const parts = credentials.split(':')
-    
+
     // Extraer la contraseña (puede venir como "usuario:contraseña" o solo "contraseña")
     // Aceptamos ambos formatos para flexibilidad
     const providedPassword = parts.length > 1 ? parts[1] : parts[0]
@@ -112,12 +112,12 @@ export async function GET(req: NextRequest): Promise<Response> {
       // Si falla la decodificación, usar la key tal cual
       console.warn('No se pudo decodificar la key, usando original:', key)
     }
-    
+
     console.log('📂 Key decodificada para S3:', key)
 
     // Verificar autenticación: usuario logueado tiene prioridad
     const isAuthenticated = await isUserAuthenticated(req)
-    
+
     // Si no está autenticado, verificar contraseña mediante Authorization header
     if (!isAuthenticated) {
       const authHeader = req.headers.get('authorization')
@@ -125,20 +125,25 @@ export async function GET(req: NextRequest): Promise<Response> {
 
       if (!hasValidPassword) {
         console.log('⛔ Acceso denegado a media: sin autenticación ni contraseña válida')
-        
+
         // Detectar si la petición viene de un navegador (Accept: text/html)
         const acceptHeader = req.headers.get('accept') || ''
         const isBrowserRequest = acceptHeader.includes('text/html')
-        
+
         if (isBrowserRequest) {
           // Redirigir a la página bonita con el diálogo personalizado
-          // No usar interpolación para evitar doble encoding
-          const mediaPageUrl = new URL(url.origin)
+          // Usar URL pública correcta (no el 0.0.0.0 interno del contenedor)
+          const publicUrl =
+            process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+            process.env.NEXT_PUBLIC_SERVER_URL ||
+            `${req.headers.get('x-forwarded-proto') || 'https'}://${req.headers.get('host')}`
+
+          const mediaPageUrl = new URL(publicUrl)
           mediaPageUrl.pathname = `/media/${key}`
-          console.log('🔀 Redirigiendo a página bonita:', mediaPageUrl.pathname)
+          console.log('🔀 Redirigiendo a página bonita:', mediaPageUrl.toString())
           return Response.redirect(mediaPageUrl.toString(), 302)
         }
-        
+
         // Para peticiones programáticas (API), devolver JSON
         return new Response(
           JSON.stringify({
