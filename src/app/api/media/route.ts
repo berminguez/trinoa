@@ -187,7 +187,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     headers.set('Access-Control-Allow-Origin', '*')
 
     const status = range ? 206 : 200
-    return new Response(buffer, { status, headers })
+    return new Response(new Uint8Array(buffer), { status, headers })
   } catch (error: any) {
     const status = error?.$metadata?.httpStatusCode || 500
     return new Response(`Error al obtener media: ${error?.message || 'desconocido'}`, { status })
