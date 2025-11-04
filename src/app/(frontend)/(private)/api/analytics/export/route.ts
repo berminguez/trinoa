@@ -192,29 +192,42 @@ async function generateExport(
       const media = typeof resource.file === 'object' ? resource.file : null
       if (!media) return ''
 
-      // Generar URL segura usando el proxy interno para mantener autenticación
-      // preferSigned: true hace que use /api/media?key=... en lugar de URLs directas de S3
-      const documentUrl = await getSafeMediaUrl(media, {
-        headers: req?.headers,
-        preferSigned: true, // Usar proxy interno para mantener protección
-      })
-      if (!documentUrl) return ''
+      // IMPORTANTE: Siempre usar el proxy interno para mantener autenticación
+      // Construir manualmente la URL del proxy en lugar de usar getSafeMediaUrl
+      // que podría devolver URLs directas de S3
 
-      // Si la URL es relativa (proxy interno), convertirla a absoluta usando el dominio del request
-      if (documentUrl.startsWith('/')) {
-        // Intentar derivar base URL desde headers del request
-        const proto = req?.headers.get('x-forwarded-proto') || 'https'
-        const host = req?.headers.get('x-forwarded-host') || req?.headers.get('host')
+      let proxyPath = ''
 
-        const baseUrl = host
-          ? `${proto}://${host}`
-          : process.env.PAYLOAD_PUBLIC_SERVER_URL ||
-            process.env.NEXT_PUBLIC_SERVER_URL ||
-            'https://atria.trinoa.es'
-        return `${baseUrl}${documentUrl}`
+      // Prioridad 1: Usar filename si está disponible (más confiable)
+      if (media.filename) {
+        proxyPath = `/api/media?key=${encodeURIComponent(media.filename)}`
+      }
+      // Prioridad 2: Extraer filename desde la URL si es relativa
+      else if (media.url && typeof media.url === 'string' && !media.url.startsWith('http')) {
+        // Si url es algo como "/media/archivo.pdf", extraer "archivo.pdf"
+        const urlParts = media.url.split('/')
+        const filename = urlParts[urlParts.length - 1]
+        if (filename) {
+          proxyPath = `/api/media?key=${encodeURIComponent(filename)}`
+        }
       }
 
-      return documentUrl
+      if (!proxyPath) {
+        console.warn('No se pudo generar URL de proxy para media:', media.id)
+        return ''
+      }
+
+      // Convertir la ruta del proxy a URL absoluta
+      const proto = req?.headers.get('x-forwarded-proto') || 'https'
+      const host = req?.headers.get('x-forwarded-host') || req?.headers.get('host')
+
+      const baseUrl = host
+        ? `${proto}://${host}`
+        : process.env.PAYLOAD_PUBLIC_SERVER_URL ||
+          process.env.NEXT_PUBLIC_SERVER_URL ||
+          'https://atria.trinoa.es'
+
+      return `${baseUrl}${proxyPath}`
     } catch (error) {
       console.warn('Error generating document URL:', error)
       return ''
