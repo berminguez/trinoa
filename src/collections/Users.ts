@@ -8,7 +8,8 @@ export const Users: CollectionConfig = {
   auth: {
     useAPIKey: true,
     forgotPassword: {
-      generateEmailHTML: ({ token, user }) => {
+      generateEmailHTML: (args) => {
+        const { token, user } = args || {}
         const resetURL = `${process.env.NEXT_PUBLIC_SERVER_URL}/reset-password?token=${token}`
         return `
           <!DOCTYPE html>

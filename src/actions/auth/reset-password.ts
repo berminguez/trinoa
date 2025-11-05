@@ -39,6 +39,7 @@ export async function resetPassword(
         token,
         password: newPassword,
       },
+      overrideAccess: true, // Necesario para que la operación tenga los permisos requeridos
     })
 
     console.log('[RESET_PASSWORD] Contraseña actualizada exitosamente')
