@@ -2,6 +2,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { s3Storage } from '@payloadcms/storage-s3'
 import { buildConfig } from 'payload'
@@ -19,9 +20,6 @@ import { FieldTranslations } from './collections/FieldTranslations'
 import { Subscriptions } from './collections/Subscriptions'
 import { Users } from './collections/Users'
 import { Configuracion } from './globals/Configuracion'
-import { sendEmail } from './lib/email'
-
-import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
