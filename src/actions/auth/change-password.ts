@@ -1,8 +1,8 @@
 'use server'
 
 import { getPayload } from 'payload'
-import { cookies } from 'next/headers'
 import config from '@/payload.config'
+import { getCurrentUser } from '@/actions/auth/getUser'
 
 interface ChangePasswordResponse {
   success: boolean
@@ -11,12 +11,18 @@ interface ChangePasswordResponse {
 
 /**
  * Server Action para cambiar contraseña del usuario autenticado
+ *
+ * Flujo recomendado por PayloadCMS:
+ * 1. Obtener usuario autenticado desde la sesión
+ * 2. Verificar contraseña antigua haciendo login
+ * 3. Si es correcta, actualizar a la nueva contraseña
  */
 export async function changePassword(
   currentPassword: string,
   newPassword: string,
 ): Promise<ChangePasswordResponse> {
   try {
+    // Validaciones básicas
     if (!currentPassword || !newPassword) {
       return {
         success: false,
@@ -38,28 +44,20 @@ export async function changePassword(
       }
     }
 
-    const payload = await getPayload({ config })
-    const cookieStore = await cookies()
-    const token = cookieStore.get('payload-token')
+    // Paso 1: Obtener usuario autenticado usando la función del proyecto
+    const user = await getCurrentUser()
 
-    if (!token) {
+    if (!user) {
       return {
         success: false,
         message: 'Debes iniciar sesión para cambiar tu contraseña',
       }
     }
 
-    // Verificar el usuario actual
-    const { user } = await payload.auth({ headers: { Authorization: `JWT ${token.value}` } })
+    const payload = await getPayload({ config })
 
-    if (!user) {
-      return {
-        success: false,
-        message: 'Usuario no encontrado',
-      }
-    }
-
-    // Verificar la contraseña actual intentando hacer login
+    // Paso 2: Verificar que la contraseña actual es correcta
+    // Intentamos hacer login con el email y la contraseña actual
     try {
       await payload.login({
         collection: 'users',
@@ -69,13 +67,14 @@ export async function changePassword(
         },
       })
     } catch (error) {
+      console.log('[CHANGE_PASSWORD] Contraseña actual incorrecta para usuario:', user.email)
       return {
         success: false,
         message: 'La contraseña actual es incorrecta',
       }
     }
 
-    // Actualizar la contraseña
+    // Paso 3: Si la contraseña actual es correcta, actualizar a la nueva
     await payload.update({
       collection: 'users',
       id: user.id,

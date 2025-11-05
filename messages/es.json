@@ -200,6 +200,8 @@
       "updating": "Actualizando...",
       "emailWarning": "⚠️ Cambiar el email puede afectar tu acceso a la cuenta",
       "roleInfo": "Tu rol de usuario no puede ser modificado desde aquí. Para cambios de rol, contacta con un administrador.",
+      "adminRoleInfo": "Como administrador, tienes acceso completo al sistema y puedes gestionar otros usuarios.",
+      "userRoleInfo": "Como usuario, tienes acceso limitado al sistema y puedes solo gestionar tus propios proyectos y documentos.",
       "roles": {
         "admin": "Administrador",
         "user": "Usuario",
