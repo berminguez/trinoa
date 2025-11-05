@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { IconSettings, IconKey, IconShield, IconClock, IconExternalLink } from '@tabler/icons-react'
 import type { User } from '@/payload-types'
+import { ChangePasswordModal } from '@/components/change-password-modal'
 
 interface AccountSettingsProps {
   user: User
@@ -103,18 +104,20 @@ export function AccountSettings({ user }: AccountSettingsProps) {
           </h4>
 
           <div className='space-y-3'>
-            {/* Cambio de contraseña (próximamente) */}
-            <div className='flex items-center justify-between p-3 bg-muted/20 rounded-lg border border-dashed'>
+            {/* Cambio de contraseña */}
+            <div className='flex items-center justify-between p-3 bg-muted/50 rounded-lg border'>
               <div className='flex items-center gap-3'>
                 <IconKey className='h-4 w-4 text-muted-foreground' />
                 <div>
-                  <p className='text-sm font-medium text-muted-foreground'>{t('changePassword')}</p>
+                  <p className='text-sm font-medium'>{t('changePassword')}</p>
                   <p className='text-xs text-muted-foreground'>{t('changePasswordDesc')}</p>
                 </div>
               </div>
-              <Button variant='ghost' size='sm' disabled>
-                {t('comingSoon')}
-              </Button>
+              <ChangePasswordModal>
+                <Button variant='outline' size='sm'>
+                  <IconKey className='h-4 w-4' />
+                </Button>
+              </ChangePasswordModal>
             </div>
 
             {/* API Keys (próximamente para usuarios que las necesiten) */}

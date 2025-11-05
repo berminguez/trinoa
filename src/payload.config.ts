@@ -19,11 +19,26 @@ import { FieldTranslations } from './collections/FieldTranslations'
 import { Subscriptions } from './collections/Subscriptions'
 import { Users } from './collections/Users'
 import { Configuracion } from './globals/Configuracion'
+import { sendEmail } from './lib/email'
+
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  email: nodemailerAdapter({
+    defaultFromAddress: process.env.SMTP_USER || 'atria@trinoa.es',
+    defaultFromName: process.env.SMTP_FROM_NAME || 'Trinoa',
+    transportOptions: {
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    },
+  }),
   admin: {
     user: Users.slug,
     importMap: {

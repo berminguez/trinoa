@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { loginWithRedirect } from '@/actions/auth/login'
+import { ForgotPasswordDialog } from '@/components/forgot-password-dialog'
 
 // Esquema de validación con Zod
 const loginSchema = z.object({
@@ -146,7 +147,10 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                 name='password'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
+                    <div className='flex items-center justify-between'>
+                      <FormLabel>Contraseña</FormLabel>
+                      <ForgotPasswordDialog />
+                    </div>
                     <FormControl>
                       <div className='relative'>
                         <Input
