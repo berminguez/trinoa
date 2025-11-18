@@ -97,7 +97,7 @@ export default async function PageContent({ params }: PageContentProps) {
   const resourceList = await payload.find({
     collection: 'resources',
     where: { project: { equals: String(projectRes.id) } },
-    limit: 100,
+    limit: 50000, // Límite muy alto para navegación entre documentos
     sort: '-createdAt',
     depth: 0,
   })

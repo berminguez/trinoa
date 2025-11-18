@@ -229,7 +229,7 @@ export function ClientProjectsGrid({
               key={project.id}
               project={project}
               client={client}
-              confidenceStats={projectConfidenceStats?.[project.id]}
+              confidenceStats={(project as any).confidenceStats || projectConfidenceStats?.[project.id]}
             />
           ))}
         </div>

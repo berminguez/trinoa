@@ -128,12 +128,102 @@ export async function getClientProjects(
       `getClientProjects: Encontrados ${projects.length} proyectos de ${totalProjects} total para cliente ${client.email}`,
     )
 
-    // 5. Preparar resultado
+    // 5. Calcular estadísticas de recursos y confianza por proyecto
+    const projectsWithStats = await Promise.all(
+      projects.map(async (project) => {
+        try {
+          // Obtener todos los recursos del proyecto con estadísticas de confianza
+          const resourcesQuery = await payload.find({
+            collection: 'resources',
+            where: {
+              project: { equals: project.id },
+            },
+            limit: 1000, // Límite alto para obtener todos los recursos
+            depth: 0,
+          })
+
+          // Calcular estadísticas de confianza
+          const confidenceStats = {
+            empty: 0,
+            needs_revision: 0,
+            trusted: 0,
+            verified: 0,
+            total: resourcesQuery.totalDocs,
+          }
+
+          resourcesQuery.docs.forEach((resource: any) => {
+            const confidence = resource.confidence || 'empty'
+            if (confidence === 'empty') confidenceStats.empty++
+            else if (confidence === 'needs_revision') confidenceStats.needs_revision++
+            else if (confidence === 'trusted') confidenceStats.trusted++
+            else if (confidence === 'verified') confidenceStats.verified++
+          })
+
+          // Calcular última actividad del proyecto
+          // Considerando: updatedAt del proyecto y el recurso más reciente
+          const activityDates: Date[] = []
+
+          // 1. Fecha de actualización del proyecto
+          if (project.updatedAt) {
+            activityDates.push(new Date(project.updatedAt))
+          }
+
+          // 2. Recurso más reciente del proyecto
+          if (resourcesQuery.totalDocs > 0) {
+            const recentResource = await payload.find({
+              collection: 'resources',
+              where: {
+                project: { equals: project.id },
+              },
+              limit: 1,
+              sort: '-updatedAt',
+              depth: 0,
+            })
+
+            if (recentResource.docs.length > 0 && recentResource.docs[0].updatedAt) {
+              activityDates.push(new Date(recentResource.docs[0].updatedAt))
+            }
+          }
+
+          // Obtener la fecha más reciente
+          const lastActivityDate =
+            activityDates.length > 0
+              ? new Date(Math.max(...activityDates.map((d) => d.getTime())))
+              : new Date(project.updatedAt)
+
+          return {
+            ...project,
+            confidenceStats,
+            lastActivity: lastActivityDate.toISOString(),
+            resourceCount: resourcesQuery.totalDocs,
+          }
+        } catch (error) {
+          console.error(
+            `Error obteniendo estadísticas para proyecto ${project.id}:`,
+            error,
+          )
+          return {
+            ...project,
+            confidenceStats: {
+              empty: 0,
+              needs_revision: 0,
+              trusted: 0,
+              verified: 0,
+              total: 0,
+            },
+            lastActivity: project.updatedAt,
+            resourceCount: 0,
+          }
+        }
+      }),
+    )
+
+    // 6. Preparar resultado
     const result: ClientProjectsResult = {
       success: true,
       data: {
         client,
-        projects,
+        projects: projectsWithStats as any,
         totalProjects,
         page: validPage,
         limit: validLimit,

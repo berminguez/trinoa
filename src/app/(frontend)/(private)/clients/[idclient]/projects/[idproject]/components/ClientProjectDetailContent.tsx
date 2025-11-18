@@ -80,13 +80,51 @@ export async function ClientProjectDetailContent({
         where: {
           project: { equals: projectId },
         },
-        limit: 50,
+        limit: 50000, // Límite muy alto - la tabla tiene paginación frontend
         sort: '-createdAt',
         depth: 2,
       })
 
       console.log(
         `ClientProjectDetailContent: ${resources.docs.length} recursos encontrados para proyecto ${project.title}`,
+      )
+
+      // Calcular lastActivity del proyecto (igual que en getClientProjects)
+      const activityDates: Date[] = []
+      
+      // 1. Fecha de actualización del proyecto
+      if (project.updatedAt) {
+        activityDates.push(new Date(project.updatedAt))
+      }
+
+      // 2. Recurso más reciente del proyecto
+      if (resources.totalDocs > 0) {
+        const recentResource = await payload.find({
+          collection: 'resources',
+          where: {
+            project: { equals: project.id },
+          },
+          limit: 1,
+          sort: '-updatedAt',
+          depth: 0,
+        })
+
+        if (recentResource.docs.length > 0 && recentResource.docs[0].updatedAt) {
+          activityDates.push(new Date(recentResource.docs[0].updatedAt))
+        }
+      }
+
+      // Obtener la fecha más reciente
+      const lastActivityDate =
+        activityDates.length > 0
+          ? new Date(Math.max(...activityDates.map((d) => d.getTime())))
+          : new Date(project.updatedAt)
+
+      // Añadir lastActivity al proyecto
+      ;(project as any).lastActivity = lastActivityDate.toISOString()
+
+      console.log(
+        `ClientProjectDetailContent: lastActivity calculado: ${(project as any).lastActivity}`,
       )
     } catch (error) {
       console.error('ClientProjectDetailContent: Error obteniendo proyecto o cliente:', error)

@@ -9,9 +9,6 @@ import {
   IconX,
   IconFolder,
   IconUser,
-  IconClock,
-  IconCalendar,
-  IconFileText,
   IconSettings,
   IconShield,
 } from '@tabler/icons-react'
@@ -59,17 +56,19 @@ export function ClientProjectDetailHeaderEditable({
     day: 'numeric',
   })
 
-  const updatedDate = project.updatedAt
-    ? new Date(project.updatedAt).toLocaleDateString('es-ES', {
+  // Usar lastActivity si está disponible (calculado con recursos), sino usar updatedAt
+  const lastActivityDate = (project as any).lastActivity || project.updatedAt
+  const updatedDate = lastActivityDate
+    ? new Date(lastActivityDate).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       })
     : null
 
-  // Calcular días desde última actualización
-  const daysSinceUpdate = project.updatedAt
-    ? Math.floor((Date.now() - new Date(project.updatedAt).getTime()) / (1000 * 60 * 60 * 24))
+  // Calcular días desde última actualización usando lastActivity
+  const daysSinceUpdate = lastActivityDate
+    ? Math.floor((Date.now() - new Date(lastActivityDate).getTime()) / (1000 * 60 * 60 * 24))
     : Math.floor((Date.now() - new Date(project.createdAt).getTime()) / (1000 * 60 * 60 * 24))
 
   // Copiar ID del proyecto al clipboard
@@ -305,11 +304,6 @@ export function ClientProjectDetailHeaderEditable({
               <IconSettings className='h-4 w-4' />
               Configurar Proyecto
             </Button>
-
-            <Button variant='outline' className='w-full gap-2'>
-              <IconFileText className='h-4 w-4' />
-              Ver Logs del Proyecto
-            </Button>
           </div>
         </div>
       </div>
@@ -327,37 +321,15 @@ export function ClientProjectDetailHeaderEditable({
         </div>
 
         <div className='bg-muted/50 p-4 rounded-lg'>
-          <div className='text-2xl font-bold text-blue-600'>
-            {createdDate.split(' ')[2]} {/* Solo el año */}
-          </div>
-          <div className='text-sm text-muted-foreground'>Año de creación</div>
+          <div className='text-sm font-medium text-blue-600'>{createdDate}</div>
+          <div className='text-sm text-muted-foreground'>Creado</div>
         </div>
 
         <div className='bg-muted/50 p-4 rounded-lg'>
-          <div className='text-2xl font-bold text-purple-600'>
-            {project.slug?.split('-').length || 1}
+          <div className='text-sm font-medium text-purple-600'>
+            {updatedDate || createdDate}
           </div>
-          <div className='text-sm text-muted-foreground'>Palabras en slug</div>
-        </div>
-      </div>
-
-      {/* Información temporal detallada */}
-      <div className='flex flex-wrap gap-4 text-sm text-muted-foreground'>
-        <div className='flex items-center gap-2'>
-          <IconCalendar className='h-4 w-4' />
-          <span>Creado: {createdDate}</span>
-        </div>
-        {updatedDate && (
-          <div className='flex items-center gap-2'>
-            <IconClock className='h-4 w-4' />
-            <span>Actualizado: {updatedDate}</span>
-          </div>
-        )}
-        <div className='flex items-center gap-2'>
-          <IconFolder className='h-4 w-4' />
-          <span>
-            Última actividad: hace {daysSinceUpdate} día{daysSinceUpdate !== 1 ? 's' : ''}
-          </span>
+          <div className='text-sm text-muted-foreground'>Actualizado</div>
         </div>
       </div>
     </div>

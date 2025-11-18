@@ -146,14 +146,81 @@ export async function getClients(filters: ClientsFilters = {}): Promise<ClientsL
             depth: 0,
           })
 
-          // TODO: En el futuro se puede obtener lastActivity desde logs o timestamps
-          const lastActivity = client.updatedAt
+          // Calcular última actividad real del usuario
+          // Considerando: updatedAt del usuario, proyectos y recursos
+          const activityDates: Date[] = []
+
+          // 1. Fecha de actualización del usuario
+          if (client.updatedAt) {
+            activityDates.push(new Date(client.updatedAt))
+          }
+
+          // 2. Obtener el proyecto más reciente del usuario
+          const recentProject = await payload.find({
+            collection: 'projects',
+            where: {
+              createdBy: { equals: client.id },
+            },
+            limit: 1,
+            sort: '-updatedAt',
+            depth: 0,
+          })
+
+          if (recentProject.docs.length > 0 && recentProject.docs[0].updatedAt) {
+            activityDates.push(new Date(recentProject.docs[0].updatedAt))
+          }
+
+          // 3. Obtener el recurso (documento) más reciente de los proyectos del usuario
+          // Como Resources no tiene campo 'user', buscamos por los proyectos del usuario
+          if (projectsResponse.totalDocs > 0) {
+            // Obtener IDs de todos los proyectos del usuario
+            const userProjects = await payload.find({
+              collection: 'projects',
+              where: {
+                createdBy: { equals: client.id },
+              },
+              limit: 100, // Límite razonable para evitar problemas de performance
+              depth: 0,
+            })
+
+            if (userProjects.docs.length > 0) {
+              const projectIds = userProjects.docs.map((p) => p.id)
+
+              // Buscar el recurso más reciente de cualquiera de esos proyectos
+              const recentResource = await payload.find({
+                collection: 'resources',
+                where: {
+                  project: { in: projectIds },
+                },
+                limit: 1,
+                sort: '-updatedAt',
+                depth: 0,
+              })
+
+              if (recentResource.docs.length > 0 && recentResource.docs[0].updatedAt) {
+                activityDates.push(new Date(recentResource.docs[0].updatedAt))
+              }
+            }
+          }
+
+          // Obtener la fecha más reciente de todas las actividades
+          const lastActivityDate =
+            activityDates.length > 0
+              ? new Date(Math.max(...activityDates.map((d) => d.getTime())))
+              : new Date(client.updatedAt)
+
+          const lastActivity = lastActivityDate.toISOString()
+
+          // Determinar si el usuario está activo (actividad en los últimos 30 días)
+          const thirtyDaysAgo = new Date()
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+          const isActive = lastActivityDate > thirtyDaysAgo
 
           return {
             ...client,
             projectCount: projectsResponse.totalDocs,
             lastActivity,
-            isActive: true, // TODO: Definir lógica de actividad basada en última sesión
+            isActive,
           } as ClientWithStats
         } catch (error) {
           console.error(`Error obteniendo estadísticas para cliente ${client.id}:`, error)

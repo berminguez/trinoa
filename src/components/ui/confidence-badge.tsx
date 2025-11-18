@@ -214,7 +214,11 @@ function ConfidenceStats({
   }
 
   const statsEntries = (Object.entries(stats) as Array<[keyof typeof stats, number | undefined]>)
-    .filter(([_, count]) => count && count > 0)
+    .filter(([key, count]) => {
+      // Excluir 'total' ya que no es un estado de confianza
+      if (key === 'total') return false
+      return count && count > 0
+    })
     .sort(([a], [b]) => {
       // Ordenar por prioridad de estado
       const order = { empty: 0, needs_revision: 1, trusted: 2, verified: 3 }

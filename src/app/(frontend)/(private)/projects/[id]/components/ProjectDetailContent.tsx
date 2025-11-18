@@ -62,7 +62,7 @@ export async function ProjectDetailContent({ projectId }: ProjectDetailContentPr
     where: {
       project: { equals: projectId },
     },
-    limit: 50, // Límite temporal
+    limit: 50000, // Límite muy alto - la tabla tiene paginación frontend
     sort: '-createdAt',
     depth: 2,
   })

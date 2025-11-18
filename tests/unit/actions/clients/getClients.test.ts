@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getClients } from './getClients'
-import type { ClientsFilters } from './types'
+import { getClients } from '@/actions/clients/getClients'
+import type { ClientsFilters } from '@/actions/clients/types'
+import { requireAdminAccess } from '@/actions/auth/getUser'
+import { getPayload } from 'payload'
 
 // Mock de dependencias
 vi.mock('@/actions/auth/getUser', () => ({
@@ -17,10 +19,8 @@ vi.mock('@payload-config', () => ({
 }))
 
 describe('getClients', () => {
-  const mockRequireAdminAccess = vi.mocked(
-    (await import('@/actions/auth/getUser')).requireAdminAccess,
-  )
-  const mockGetPayload = vi.mocked((await import('payload')).getPayload)
+  const mockRequireAdminAccess = vi.mocked(requireAdminAccess)
+  const mockGetPayload = vi.mocked(getPayload)
 
   const mockAdminUser = {
     id: 'admin-123',
@@ -102,6 +102,16 @@ describe('getClients', () => {
           totalDocs: 1,
         })
       }
+      // Mock para obtener todos los proyectos del usuario (para buscar recursos)
+      if (params.collection === 'projects' && params.limit === 100) {
+        return Promise.resolve({
+          docs: [
+            { id: 'project-1', updatedAt: '2024-01-25T00:00:00.000Z' },
+            { id: 'project-2', updatedAt: '2024-01-24T00:00:00.000Z' },
+          ],
+          totalDocs: 2,
+        })
+      }
       // Mock respuesta de recurso más reciente
       if (params.collection === 'resources' && params.limit === 1) {
         return Promise.resolve({
@@ -125,15 +135,16 @@ describe('getClients', () => {
     expect(result.data?.page).toBe(1)
     expect(result.data?.limit).toBe(12)
 
-    // Verificar que se llamó correctamente
-    expect(mockPayload.find).toHaveBeenCalledWith({
-      collection: 'users',
-      where: {},
-      sort: '-createdAt',
-      page: 1,
-      limit: 12,
-      depth: 0,
-    })
+    // Verificar que se llamó correctamente (verificar solo la primera llamada a users)
+    expect(mockPayload.find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'users',
+        where: {},
+        sort: '-createdAt',
+        page: 1,
+        limit: 12,
+      }),
+    )
   })
 
   it('debe aplicar filtros de búsqueda correctamente', async () => {
@@ -165,6 +176,13 @@ describe('getClients', () => {
         return Promise.resolve({
           docs: [{ id: 'p1', updatedAt: new Date().toISOString() }],
           totalDocs: 1,
+        })
+      }
+      // Mock para obtener todos los proyectos del usuario (para buscar recursos)
+      if (params.collection === 'projects' && params.limit === 100) {
+        return Promise.resolve({
+          docs: [{ id: 'p1' }, { id: 'p2' }],
+          totalDocs: 2,
         })
       }
       // Mock recurso más reciente
@@ -220,6 +238,13 @@ describe('getClients', () => {
         return Promise.resolve({
           docs: [{ id: 'p1', updatedAt: new Date().toISOString() }],
           totalDocs: 1,
+        })
+      }
+      // Mock para obtener todos los proyectos del usuario (para buscar recursos)
+      if (params.collection === 'projects' && params.limit === 100) {
+        return Promise.resolve({
+          docs: [],
+          totalDocs: 0,
         })
       }
       // Mock recurso más reciente
@@ -309,6 +334,13 @@ describe('getClients', () => {
           totalDocs: 1,
         })
       }
+      // Mock para obtener todos los proyectos del usuario (para buscar recursos)
+      if (params.collection === 'projects' && params.limit === 100) {
+        return Promise.resolve({
+          docs: [{ id: 'project-1' }, { id: 'project-2' }],
+          totalDocs: 2,
+        })
+      }
       // Mock recurso más reciente
       if (params.collection === 'resources' && params.limit === 1) {
         return Promise.resolve({
@@ -388,6 +420,13 @@ describe('getClients', () => {
             },
           ],
           totalDocs: 1,
+        })
+      }
+      // Mock para obtener todos los proyectos del usuario (para buscar recursos)
+      if (params.collection === 'projects' && params.limit === 100) {
+        return Promise.resolve({
+          docs: [{ id: 'p1' }, { id: 'p2' }],
+          totalDocs: 2,
         })
       }
       // Mock recurso más reciente

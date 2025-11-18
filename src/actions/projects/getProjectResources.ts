@@ -71,7 +71,7 @@ export async function getProjectResources(projectId: string): Promise<GetProject
         },
       },
       sort: '-createdAt', // Más recientes primero
-      limit: 50, // Limite razonable
+      limit: 50000, // Límite muy alto - la tabla tiene paginación frontend
       depth: 2,
     })
 

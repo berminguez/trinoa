@@ -47,8 +47,10 @@ export function ClientProjectGridItem({
     day: 'numeric',
   })
 
-  const updatedDate = project.updatedAt
-    ? new Date(project.updatedAt).toLocaleDateString('es-ES', {
+  // Usar lastActivity si está disponible (calculado con recursos), sino usar updatedAt
+  const lastActivityDate = (project as any).lastActivity || project.updatedAt
+  const updatedDate = lastActivityDate
+    ? new Date(lastActivityDate).toLocaleDateString('es-ES', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
