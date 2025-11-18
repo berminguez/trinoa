@@ -135,10 +135,6 @@ export function ClientProjectDetailHeader({
               <IconSettings className='h-4 w-4' />
               Configurar Proyecto
             </Button>
-            <Button variant='outline' className='w-full gap-2'>
-              <IconFileText className='h-4 w-4' />
-              Ver Logs del Proyecto
-            </Button>
           </div>
         </div>
       </div>

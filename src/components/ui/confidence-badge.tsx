@@ -213,17 +213,19 @@ function ConfidenceStats({
     )
   }
 
-  const statsEntries = (Object.entries(stats) as Array<[keyof typeof stats, number | undefined]>)
+  // Definir los estados válidos de confidence
+  const validStates = ['empty', 'needs_revision', 'trusted', 'verified'] as const
+  
+  const statsEntries = (Object.entries(stats) as Array<[string, number | undefined]>)
     .filter(([key, count]) => {
-      // Excluir 'total' ya que no es un estado de confianza
-      if (key === 'total') return false
-      return count && count > 0
+      // Solo incluir estados válidos con count > 0
+      return validStates.includes(key as any) && count && count > 0
     })
     .sort(([a], [b]) => {
       // Ordenar por prioridad de estado
       const order = { empty: 0, needs_revision: 1, trusted: 2, verified: 3 }
-      return (order[a] || 0) - (order[b] || 0)
-    })
+      return (order[a as keyof typeof order] || 0) - (order[b as keyof typeof order] || 0)
+    }) as Array<['empty' | 'needs_revision' | 'trusted' | 'verified', number]>
 
   return (
     <div

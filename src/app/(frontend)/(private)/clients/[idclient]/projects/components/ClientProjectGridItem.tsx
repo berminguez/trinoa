@@ -170,16 +170,14 @@ export function ClientProjectGridItem({
 
           {/* Footer con botón de acción */}
           <CardFooter className='pt-2'>
-            <Link href={`/clients/${client.id}/projects/${project.id}`} className='w-full'>
-              <Button
-                variant='outline'
-                className='w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200'
-              >
-                <IconFolder className='h-4 w-4 mr-2' />
-                <span>Ver proyecto</span>
-                <IconChevronRight className='h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200' />
-              </Button>
-            </Link>
+            <Button
+              variant='outline'
+              className='w-full group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-200'
+            >
+              <IconFolder className='h-4 w-4 mr-2' />
+              <span>Ver proyecto</span>
+              <IconChevronRight className='h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform duration-200' />
+            </Button>
           </CardFooter>
         </Link>
       </Card>
