@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import type { Project, User, Resource } from '@/payload-types'
 import { updateProjectAsAdmin } from '@/actions/projects/updateProjectAsAdmin'
 import { DocumentUploadModal } from '@/app/(frontend)/(private)/projects/[id]/components/DocumentUploadModal'
+import type { DocumentTableContainerRef } from '@/app/(frontend)/(private)/projects/[id]/components/VideoTableContainer'
 
 interface ClientProjectDetailHeaderEditableProps {
   project: Project
@@ -28,6 +29,7 @@ interface ClientProjectDetailHeaderEditableProps {
   onResourceUploaded?: (resource: Resource) => void
   onResourceUploadFailed?: (tempResourceId: string) => void
   onResourceAdded?: (resource: Resource) => void
+  documentTableRef?: React.RefObject<DocumentTableContainerRef | null>
 }
 
 /**
@@ -44,6 +46,7 @@ export function ClientProjectDetailHeaderEditable({
   onResourceUploaded,
   onResourceUploadFailed,
   onResourceAdded,
+  documentTableRef,
 }: ClientProjectDetailHeaderEditableProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [editedTitle, setEditedTitle] = useState(project.title)
@@ -292,6 +295,7 @@ export function ClientProjectDetailHeaderEditable({
               project={project}
               onResourceUploaded={onResourceUploaded}
               onResourceUploadFailed={onResourceUploadFailed}
+              documentTableRef={documentTableRef}
               trigger={
                 <Button className='w-full gap-2'>
                   <IconUpload className='h-4 w-4' />

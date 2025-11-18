@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { User, Project, Resource } from '@/payload-types'
 import { AdminBreadcrumbs } from '@/components'
 import { ClientProjectDetailHeaderEditable } from './ClientProjectDetailHeaderEditable'
-import { ClientProjectResourcesTableContainer } from './ClientProjectResourcesTableContainer'
+import {
+  ClientProjectResourcesTableContainer,
+  type ClientProjectResourcesTableContainerRef,
+} from './ClientProjectResourcesTableContainer'
 
 interface ClientProjectDetailContentEditableProps {
   project: Project
@@ -26,18 +29,25 @@ export function ClientProjectDetailContentEditable({
   initialResources,
 }: ClientProjectDetailContentEditableProps) {
   const [totalResources, setTotalResources] = useState(initialResources.length)
+  const tableRef = useRef<ClientProjectResourcesTableContainerRef>(null)
 
   // Callbacks para manejar cambios en recursos
   const handleResourceAdded = useCallback((resource: Resource) => {
+    // Agregar recurso a la tabla mediante ref
+    tableRef.current?.addResource(resource)
     setTotalResources((prev) => prev + 1)
     console.log('ClientProjectDetailContentEditable: Recurso añadido', resource.id)
   }, [])
 
   const handleResourceUploadFailed = useCallback((tempResourceId: string) => {
+    // Marcar recurso como fallido en la tabla mediante ref
+    tableRef.current?.markResourceAsFailed(tempResourceId)
     console.log('ClientProjectDetailContentEditable: Falló subida de recurso', tempResourceId)
   }, [])
 
   const handleResourceUploaded = useCallback((resource: Resource) => {
+    // Agregar recurso a la tabla mediante ref
+    tableRef.current?.addResource(resource)
     console.log('ClientProjectDetailContentEditable: Recurso subido exitosamente', resource.id)
   }, [])
 
@@ -60,10 +70,12 @@ export function ClientProjectDetailContentEditable({
         onResourceAdded={handleResourceAdded}
         onResourceUploadFailed={handleResourceUploadFailed}
         onResourceUploaded={handleResourceUploaded}
+        documentTableRef={tableRef}
       />
 
       {/* Tabla de recursos con funcionalidad administrativa */}
       <ClientProjectResourcesTableContainer
+        ref={tableRef}
         project={project}
         client={client}
         adminUser={adminUser}
