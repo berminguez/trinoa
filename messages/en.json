@@ -83,6 +83,7 @@
       "processing-failed": "Processing Error",
       "processing-stuck": "Processing Stuck",
       "low-confidence": "Low Confidence",
+      "document-error": "Document Error",
       "default": "Alert"
     },
     "alertMessages": {
@@ -90,6 +91,7 @@
       "processingFailed": "Error processing document \"{{resourceTitle}}\" in project \"{{projectTitle}}\"",
       "processingStuck": "Processing of \"{{resourceTitle}}\" is stuck for more than 1 hour in \"{{projectTitle}}\"",
       "lowConfidence": "The resource \"{{resourceTitle}}\" has low processing confidence in \"{{projectTitle}}\"",
+      "documentError": "Document \"{{resourceTitle}}\" is marked as erroneous in project \"{{projectTitle}}\"",
       "default": "Alert for resource \"{{resourceTitle}}\" in project \"{{projectTitle}}\""
     },
     "viewResource": "View resource",

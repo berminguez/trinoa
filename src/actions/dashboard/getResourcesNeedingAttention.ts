@@ -16,7 +16,12 @@ export interface ResourceAlert {
     id: string
     title: string
   }
-  type: 'needs-review' | 'processing-failed' | 'low-confidence' | 'processing-stuck'
+  type:
+    | 'needs-review'
+    | 'processing-failed'
+    | 'low-confidence'
+    | 'processing-stuck'
+    | 'document-error'
   priority: 'high' | 'medium' | 'low'
   createdAt: string
   updatedAt: string
@@ -45,16 +50,67 @@ export async function getResourcesNeedingAttention(): Promise<{
       }
     }
 
+    // Obtener IDs de proyectos del usuario (o de su empresa si queremos ser más permisivos, pero para evitar mostrar proyectos ajenos vamos a filtrar por creador o empresa)
+    // ESTRATEGIA:
+    // 1. Obtener todos los proyectos creados por el usuario.
+    // 2. Obtener todos los proyectos creados por administradores (para permitir ver recursos subidos por admins).
+    // 3. Filtrar los recursos que estén en ESOS proyectos Y pertenezcan a la empresa del usuario.
+
+    let projectFilter: any = {}
+
+    if (!user.role || user.role !== 'admin') {
+      // ESTRICTO: Solo mostrar alertas de proyectos que el usuario ha creado.
+      // Esto alinea las alertas con la visibilidad de "Mis Proyectos".
+      // Si un admin crea un proyecto "para el usuario", debe asignarle la propiedad (createdBy) para que lo vea.
+      const projects = await payload.find({
+        collection: 'projects',
+        where: { createdBy: { equals: user.id } },
+        limit: 1000, // Limite razonable
+        depth: 0,
+      })
+
+      const projectIds = projects.docs.map((p) => p.id)
+
+      // Si no tiene proyectos, forzamos que no encuentre nada para evitar mostrar todo
+      if (projectIds.length === 0) {
+        console.log(`[Dashboard] User ${user.email} has no projects. Alerts will be empty.`)
+        return { success: true, data: [] }
+      }
+
+      projectFilter = {
+        project: { in: projectIds },
+      }
+    }
+
     // Construir filtros según el rol del usuario
-    const baseWhere: any =
-      user.role === 'admin'
-        ? {} // Admins ven todos los recursos
-        : {
-            // Usuarios ven solo recursos de sus proyectos
-            project: {
-              createdBy: { equals: user.id },
-            },
-          }
+    let baseWhere: any = {}
+
+    if (user.role === 'admin') {
+      baseWhere = {} // Admins globales ven todos los recursos
+    } else if (user.empresa) {
+      // Si el usuario tiene empresa, ver recursos de esa empresa
+      // PERO restringidos a proyectos válidos (del usuario o de admins) para evitar "fugas" de proyectos ajenos
+      const empresaId = typeof user.empresa === 'object' ? user.empresa.id : user.empresa
+      console.log(`[Dashboard] Filtering alerts by company: ${empresaId} for user ${user.email}`)
+
+      baseWhere = {
+        and: [
+          { empresa: { equals: empresaId } },
+          // Aplicar filtro de proyectos si hemos encontrado proyectos válidos
+          ...(projectFilter.project ? [projectFilter] : []),
+        ],
+      }
+    } else {
+      // Si no tiene empresa (freelancer), ver recursos de sus proyectos
+      console.log(
+        `[Dashboard] Filtering alerts by project creator: ${user.id} for user ${user.email}`,
+      )
+      baseWhere = {
+        project: {
+          createdBy: { equals: user.id },
+        },
+      }
+    }
 
     // Obtener recursos que necesitan revisión
     const needsReviewResources = await payload.find({
@@ -94,6 +150,18 @@ export async function getResourcesNeedingAttention(): Promise<{
       depth: 2,
     })
 
+    // Obtener recursos marcados como erróneos manualmente
+    const erroneousResources = await payload.find({
+      collection: 'resources',
+      where: {
+        ...baseWhere,
+        documentoErroneo: { equals: true },
+      },
+      limit: 5,
+      sort: '-updatedAt',
+      depth: 2,
+    })
+
     // Transformar a alertas
     const alerts: ResourceAlert[] = []
 
@@ -110,6 +178,25 @@ export async function getResourcesNeedingAttention(): Promise<{
           },
           type: 'needs-review',
           priority: 'medium',
+          createdAt: resource.createdAt,
+          updatedAt: resource.updatedAt,
+        })
+      }
+    })
+
+    // Alertas de documentos erróneos
+    erroneousResources.docs.forEach((resource) => {
+      const project = typeof resource.project === 'object' ? resource.project : null
+      if (project) {
+        alerts.push({
+          id: resource.id,
+          title: resource.title,
+          project: {
+            id: project.id,
+            title: project.title,
+          },
+          type: 'document-error',
+          priority: 'high',
           createdAt: resource.createdAt,
           updatedAt: resource.updatedAt,
         })
@@ -191,6 +278,7 @@ export async function getAlertsStats(): Promise<{
       needsReview: number
       processingFailed: number
       processingStuck: number
+      documentError: number
     }
   }
   error?: string
@@ -215,6 +303,7 @@ export async function getAlertsStats(): Promise<{
         needsReview: alerts.filter((a) => a.type === 'needs-review').length,
         processingFailed: alerts.filter((a) => a.type === 'processing-failed').length,
         processingStuck: alerts.filter((a) => a.type === 'processing-stuck').length,
+        documentError: alerts.filter((a) => a.type === 'document-error').length,
       },
     }
 

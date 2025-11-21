@@ -66,6 +66,8 @@ export default async function AlertsPanel() {
         return t('alertTypes.processing-stuck')
       case 'low-confidence':
         return t('alertTypes.low-confidence')
+      case 'document-error':
+        return t('alertTypes.document-error')
       default:
         return t('alertTypes.default')
     }
@@ -90,6 +92,11 @@ export default async function AlertsPanel() {
         })
       case 'low-confidence':
         return t('alertMessages.lowConfidence', {
+          resourceTitle: alert.title,
+          projectTitle: alert.project?.title || '',
+        })
+      case 'document-error':
+        return t('alertMessages.documentError', {
           resourceTitle: alert.title,
           projectTitle: alert.project?.title || '',
         })

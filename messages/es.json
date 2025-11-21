@@ -83,6 +83,7 @@
       "processing-failed": "Error de Procesamiento",
       "processing-stuck": "Procesamiento Atascado",
       "low-confidence": "Baja Confianza",
+      "document-error": "Documento Erróneo",
       "default": "Alerta"
     },
     "alertMessages": {
@@ -90,6 +91,7 @@
       "processingFailed": "Error en el procesamiento del documento \"{{resourceTitle}}\" en el proyecto \"{{projectTitle}}\"",
       "processingStuck": "El procesamiento de \"{{resourceTitle}}\" está atascado por más de 1 hora en \"{{projectTitle}}\"",
       "lowConfidence": "El recurso \"{{resourceTitle}}\" tiene baja confianza de procesamiento en \"{{projectTitle}}\"",
+      "documentError": "El documento \"{{resourceTitle}}\" está marcado como erróneo en el proyecto \"{{projectTitle}}\"",
       "default": "Alerta para el recurso \"{{resourceTitle}}\" en el proyecto \"{{projectTitle}}\""
     },
     "viewResource": "Ver recurso",
