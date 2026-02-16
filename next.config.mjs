@@ -1,5 +1,10 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import createNextIntlPlugin from 'next-intl/plugin'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const withNextIntl = createNextIntlPlugin('./src/i18n.ts')
 
@@ -7,6 +12,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n.ts')
 const nextConfig = {
   // Your Next.js config here
   output: 'standalone', // Necesario para Docker builds
+  outputFileTracingRoot: path.join(__dirname),
   experimental: {
     serverActions: {
       bodySizeLimit: '64mb',
