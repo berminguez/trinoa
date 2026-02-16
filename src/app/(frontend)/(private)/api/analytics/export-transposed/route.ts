@@ -4,6 +4,7 @@ import config from '@payload-config'
 import { getCurrentUser } from '@/actions/auth/getUser'
 import { getSafeMediaUrl } from '@/lib/utils/fileUtils'
 import { parseAndFormatDate } from '@/utils/dateParser'
+import { normalizeNumericString, parseNormalizedFloat } from '@/lib/utils/number-normalization'
 
 function formatDateFlexible(input: any): string {
   if (!input) return ''
@@ -14,8 +15,8 @@ function formatDateFlexible(input: any): string {
 
 function formatMax2Decimals(input: string): string {
   if (input == null) return ''
-  const s = String(input).replace(/,/g, '.')
-  const n = Number(s)
+  const normalized = normalizeNumericString(input)
+  const n = parseFloat(normalized)
   if (isNaN(n)) return String(input)
   const fixed = n.toFixed(2)
   return fixed.replace(/\.00$/, '').replace(/\.(\d)0$/, '.$1')
@@ -63,8 +64,7 @@ function extractCantidadConsumida(res: any, tipoSuministro?: string): string {
           const v =
             (f && (f.value ?? f.valueString ?? f.content)) ??
             (typeof f === 'number' || typeof f === 'string' ? f : undefined)
-          const num =
-            typeof v === 'string' ? parseFloat((v as string).replace(/,/g, '.')) : Number(v)
+          const num = parseNormalizedFloat(v)
           if (!isNaN(num)) {
             sumE += num
             foundE = true
@@ -78,8 +78,16 @@ function extractCantidadConsumida(res: any, tipoSuministro?: string): string {
     for (const k of keys) {
       for (const pool of pools) {
         const f = (pool as any)?.[k]
-        const v = f?.value ?? f?.valueString ?? f?.content ?? f
-        if ((typeof v === 'number' && !isNaN(v)) || (typeof v === 'string' && String(v).trim()))
+        const v =
+          f?.value ??
+          f?.valueString ??
+          f?.content ??
+          (typeof f === 'number' || typeof f === 'string' ? f : undefined)
+        if (
+          v !== undefined &&
+          v !== null &&
+          ((typeof v === 'number' && !isNaN(v)) || (typeof v === 'string' && String(v).trim()))
+        )
           return String(v)
       }
     }
@@ -93,8 +101,12 @@ function extractCantidadConsumida(res: any, tipoSuministro?: string): string {
     for (const key of Object.keys(pool)) {
       if (/^CantidadCombustible\d+$/i.test(key)) {
         const f = (pool as any)[key]
-        const v = f?.value ?? f?.valueString ?? f?.content ?? f
-        const num = typeof v === 'string' ? parseFloat((v as string).replace(/,/g, '.')) : Number(v)
+        const v =
+          f?.value ??
+          f?.valueString ??
+          f?.content ??
+          (typeof f === 'number' || typeof f === 'string' ? f : undefined)
+        const num = parseNormalizedFloat(v)
         if (!isNaN(num)) {
           sum += num
           found = true

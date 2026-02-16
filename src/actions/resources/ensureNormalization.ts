@@ -4,6 +4,7 @@ import { getPayload } from 'payload'
 import config from '@/payload.config'
 import type { Resource } from '@/payload-types'
 import { parseAndFormatDate } from '@/utils/dateParser'
+import { normalizeNumericString } from '@/lib/utils/number-normalization'
 
 interface Result {
   success: boolean
@@ -98,44 +99,7 @@ export async function ensureNormalization(resourceId: string): Promise<Result> {
     }
 
     // Normalizar numéricos con preservación de decimales (coma/punto → punto)
-    const normalizeNumericString = (orig: string): string => {
-      let s = (orig || '').replace(/[\s€$]/g, '')
-      let sign = ''
-      if (s.startsWith('-')) {
-        sign = '-'
-        s = s.slice(1)
-      }
-      const hasComma = s.includes(',')
-      const hasDot = s.includes('.')
-      if (hasComma && hasDot) {
-        const decPos = Math.max(s.lastIndexOf(','), s.lastIndexOf('.'))
-        const intPart = s
-          .slice(0, decPos)
-          .replace(/[\.,]/g, '')
-          .replace(/[^0-9]/g, '')
-        const fracPart = s
-          .slice(decPos + 1)
-          .replace(/[\.,]/g, '')
-          .replace(/[^0-9]/g, '')
-        return sign + intPart + (fracPart ? '.' + fracPart : '')
-      } else if (hasComma) {
-        const parts = s.split(',')
-        const intPart = parts[0].replace(/\./g, '').replace(/[^0-9]/g, '')
-        const fracPart = parts
-          .slice(1)
-          .join('')
-          .replace(/[^0-9]/g, '')
-        return sign + intPart + (fracPart ? '.' + fracPart : '')
-      } else if (hasDot) {
-        const parts = s.split('.')
-        const intPart = [parts[0], ...parts.slice(1, -1)].join('').replace(/[^0-9]/g, '')
-        const fracPart = parts.slice(-1)[0].replace(/[^0-9]/g, '')
-        return sign + intPart + (fracPart ? '.' + fracPart : '')
-      } else {
-        const digits = s.replace(/[^0-9]/g, '')
-        return sign + digits
-      }
-    }
+    // Función de normalización numérica movida a src/lib/utils/number-normalization.ts
 
     for (const nk of numericKeys) {
       const field = f[nk]

@@ -9,6 +9,7 @@ import {
   getConfidenceThreshold,
 } from '../lib/utils/calculateResourceConfidence'
 import { normalizeCurrencyString } from '../lib/utils/currency-normalization'
+import { normalizeNumericString } from '../lib/utils/number-normalization'
 import type { CollectionConfig } from 'payload'
 import { parseAndFormatDate } from '../utils/dateParser'
 
@@ -1958,62 +1959,7 @@ export const Resources: CollectionConfig = {
                     .toUpperCase() // Convertir a mayúsculas para consistencia
                 }
 
-                // Función de normalización numérica (formato estándar con punto decimal)
-                const normalizeNumericString = (orig: string): string => {
-                  let s = (orig || '').replace(/[\s€$£¥₹₽₩₦₴₱₪₫฿]/g, '')
-                  let sign = ''
-                  if (s.startsWith('-')) {
-                    sign = '-'
-                    s = s.slice(1)
-                  }
-                  const hasComma = s.includes(',')
-                  const hasDot = s.includes('.')
-                  if (hasComma && hasDot) {
-                    // Determinar cuál es el separador decimal (el último)
-                    const lastCommaPos = s.lastIndexOf(',')
-                    const lastDotPos = s.lastIndexOf('.')
-                    const decPos = Math.max(lastCommaPos, lastDotPos)
-                    const intPart = s
-                      .slice(0, decPos)
-                      .replace(/[\.,]/g, '')
-                      .replace(/[^0-9]/g, '')
-                    const fracPart = s
-                      .slice(decPos + 1)
-                      .replace(/[\.,]/g, '')
-                      .replace(/[^0-9]/g, '')
-                    return sign + intPart + (fracPart ? '.' + fracPart : '')
-                  } else if (hasComma) {
-                    // Si solo hay comas, la última es decimal
-                    const parts = s.split(',')
-                    if (parts.length === 2 && parts[1].length <= 3) {
-                      // Formato: 1234,56 (coma decimal) → convertir a punto
-                      const intPart = parts[0].replace(/[^0-9]/g, '')
-                      const fracPart = parts[1].replace(/[^0-9]/g, '')
-                      return sign + intPart + (fracPart ? '.' + fracPart : '')
-                    } else {
-                      // Formato: 1,234,567 (comas como separadores de miles)
-                      const intPart = parts.join('').replace(/[^0-9]/g, '')
-                      return sign + intPart
-                    }
-                  } else if (hasDot) {
-                    // Si solo hay puntos, el último es decimal si hay 1-3 dígitos después
-                    const parts = s.split('.')
-                    const lastPart = parts[parts.length - 1]
-                    if (parts.length === 2 && lastPart.length <= 3) {
-                      // Formato: 1234.56 (punto decimal) → mantener punto
-                      const intPart = parts[0].replace(/[^0-9]/g, '')
-                      const fracPart = lastPart.replace(/[^0-9]/g, '')
-                      return sign + intPart + (fracPart ? '.' + fracPart : '')
-                    } else {
-                      // Formato: 1.234.567 (puntos como separadores de miles)
-                      const intPart = parts.join('').replace(/[^0-9]/g, '')
-                      return sign + intPart
-                    }
-                  } else {
-                    const digits = s.replace(/[^0-9]/g, '')
-                    return sign + digits
-                  }
-                }
+                // Función de normalización numérica movida a src/lib/utils/number-normalization.ts
 
                 if (
                   dateKeys.size > 0 ||
